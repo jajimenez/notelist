@@ -1,5 +1,7 @@
 """Application module."""
 
+import os
+
 from flask import Flask, render_template
 from flask_restful import Api
 from flask_jwt_extended import JWTManager
@@ -12,12 +14,19 @@ from notelist.resources import get_response_data
 from notelist.resources.users import UserListResource, UserResource
 
 
+# Application setup
 app = Flask(__name__)
 app.config["DEBUG"] = True
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["PROPAGATE_EXCEPTIONS"] = True
-app.secret_key = "secret_key"
+
+# The Secret Key is used for storing session information specific to a user
+# from one request to the next. This is implemented on top of cookies which are
+# signed cryptographically with the Secret Key. This means that the user could
+# look at the contents of the cookies but not modify it unless they knew the
+# Secret Key. A secret key should be as random as possible.
+app.secret_key = os.urandom(16)  # Random value (bytes)
 
 db.init_app(app)
 ma.init_app(app)
