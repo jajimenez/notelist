@@ -1,4 +1,4 @@
-"""Notelist Run script."""
+"""Notelist "__main__" script."""
 
 from notelist.app import run
 
