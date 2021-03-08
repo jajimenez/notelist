@@ -12,8 +12,6 @@ from notelist.resources import get_response_data
 from notelist.resources.users import UserListResource, UserResource
 
 
-__version__ = "0.1.0"
-
 app = Flask(__name__)
 app.config["DEBUG"] = True
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data.db"
