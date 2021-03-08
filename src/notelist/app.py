@@ -8,24 +8,28 @@ from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from marshmallow import ValidationError
 
+import notelist.config as conf
 from notelist.db import db
 from notelist.ma import ma
 from notelist.resources import get_response_data
 from notelist.resources.users import UserListResource, UserResource
 
 
+CONF_NOT_SET = "Configuration parameters not defined."
+
+
 # Application setup
 app = Flask(__name__)
-app.config["DEBUG"] = True
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data.db"
+app.config["DEBUG"] = False
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["PROPAGATE_EXCEPTIONS"] = True
 
 # The Secret Key is used for storing session information specific to a user
 # from one request to the next. This is implemented on top of cookies which are
-# signed cryptographically with the Secret Key. This means that the user could
+# signed cryptographically with the secret key. This means that the user could
 # look at the contents of the cookies but not modify it unless they knew the
-# Secret Key. A secret key should be as random as possible.
+# secret key. A secret key should be as random as possible.
 app.secret_key = os.urandom(16)  # Random value (bytes)
 
 # Database
@@ -63,4 +67,10 @@ def home():
 
 def run():
     """Run the application."""
-    app.run(port=5000, debug=True)
+    host, port, db_uri = conf.get_config()
+
+    if host and port and db_uri:
+        app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
+        app.run(host=host, port=port, debug=False)
+    else:
+        print(CONF_NOT_SET)
