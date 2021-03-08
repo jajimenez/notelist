@@ -1,7 +1,7 @@
 """Module with the user schemas."""
 
-from ma import ma
-from models.users import User
+from notelist.ma import ma
+from notelist.models.users import User
 
 
 class UserSchema(ma.SQLAlchemyAutoSchema):

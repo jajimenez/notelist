@@ -1,7 +1,7 @@
 """Module with the database user models."""
 
 from typing import List
-from db import db
+from notelist.db import db
 
 
 class User(db.Model):

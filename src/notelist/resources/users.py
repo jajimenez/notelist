@@ -3,9 +3,9 @@
 from flask import request
 from flask_restful import Resource
 
-from models.users import User
-from schemas.users import UserSchema
-from resources import get_response_data
+from notelist.models.users import User
+from notelist.schemas.users import UserSchema
+from notelist.resources import get_response_data
 
 
 USERS_RETRIEVED_1 = "1 user retrieved."

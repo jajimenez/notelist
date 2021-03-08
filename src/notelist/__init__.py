@@ -1,4 +1,7 @@
-"""Notelist application script."""
+"""Notelist main package.
+
+Notelist is a REST API based note taking web application.
+"""
 
 from flask import Flask, render_template
 from flask_restful import Api
@@ -6,11 +9,13 @@ from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from marshmallow import ValidationError
 
-from db import db
-from ma import ma
-from resources import get_response_data
-from resources.users import UserListResource, UserResource
+from notelist.db import db
+from notelist.ma import ma
+from notelist.resources import get_response_data
+from notelist.resources.users import UserListResource, UserResource
 
+
+__version__ = "0.1.0"
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
@@ -48,7 +53,3 @@ def home():
 
 api.add_resource(UserListResource, "/users")
 api.add_resource(UserResource, "/user/<string:username>")
-
-
-if __name__ == "__main__":
-    app.run(port=5000, debug=True)
