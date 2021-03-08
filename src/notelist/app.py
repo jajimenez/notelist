@@ -28,12 +28,18 @@ app.config["PROPAGATE_EXCEPTIONS"] = True
 # Secret Key. A secret key should be as random as possible.
 app.secret_key = os.urandom(16)  # Random value (bytes)
 
+# Database
 db.init_app(app)
 ma.init_app(app)
-
-api = Api(app)
-jwt = JWTManager(app)
 mig = Migrate(app, db)
+
+# Resources
+api = Api(app)
+api.add_resource(UserListResource, "/users")
+api.add_resource(UserResource, "/user/<string:username>")
+
+# User login
+jwt = JWTManager(app)
 
 
 @app.before_first_request
@@ -53,10 +59,6 @@ def validation_error(e):
 def home():
     """Root route request handler."""
     return render_template("home.html")
-
-
-api.add_resource(UserListResource, "/users")
-api.add_resource(UserResource, "/user/<string:username>")
 
 
 def run():
