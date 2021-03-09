@@ -14,12 +14,9 @@ def main():
     """Run the application."""
     count = len(sys.argv)
 
-    r = count == 1
-    c = count == 2 and sys.argv[1] == CONF_ARG
-
-    if r:
+    if count == 1:
         run()
-    elif c:
+    elif count == 2 and sys.argv[1] == CONF_ARG:
         config()
     else:
         print(INVALID_ARGS)
