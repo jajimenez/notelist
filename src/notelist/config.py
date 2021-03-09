@@ -32,7 +32,7 @@ def config():
     Parameters:
     - Host. E.g. "localhost", "127.0.0.1", "0.0.0.0".
     - Port. E.g. 5000.
-    - Database URI. E.g. "sqlite:///data.db", "postgresql:///".
+    - Database URI. E.g. "sqlite:///data.db".
     """
     border = f'+{"-" * (len(TITLE) + 2)}+'
 
