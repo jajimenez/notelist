@@ -15,9 +15,6 @@ from notelist.resources import get_response_data
 from notelist.resources.users import UserListResource, UserResource
 
 
-CONF_NOT_SET = "Configuration parameters not defined."
-
-
 # Application setup
 app = Flask(__name__)
 app.config["DEBUG"] = False
@@ -73,4 +70,4 @@ def run():
         app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
         app.run(host=host, port=port, debug=False)
     else:
-        print(CONF_NOT_SET)
+        print(conf.CONF_NOT_SET)
