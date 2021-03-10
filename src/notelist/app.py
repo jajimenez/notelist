@@ -49,7 +49,7 @@ jwt = JWTManager(app)
 
 
 @app.before_first_request
-def create_tables():
+def on_first_request():
     """Create all the datatabase tables."""
     db.create_all()
 
@@ -63,7 +63,7 @@ def create_tables():
 
 
 @app.errorhandler(ValidationError)
-def validation_error(e):
+def on_validation_error(e):
     """Handle validation errors."""
     fields = ", ".join([i for i in e.messages.keys()])
     return get_response_data(f"Validation error: {fields}."), 400
