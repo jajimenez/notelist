@@ -13,7 +13,12 @@ from notelist.db import db
 from notelist.ma import ma
 from notelist.resources import get_response_data
 from notelist.resources.users import UserListResource, UserResource
+from notelist.models.users import User
 
+
+CONF_NOT_SET = (
+    'Configuration parameters not defined.\nRun "notelist configure" to set '
+    'the parameters.')
 
 # Application setup
 app = Flask(__name__)
@@ -48,6 +53,11 @@ def create_tables():
     """Create all the datatabase tables."""
     db.create_all()
 
+    # Create administrator user ("admin") with an initial password
+    User(
+        username="admin", password=conf.get_config()[3], enabled=True,
+        admin=True, name="Administrator").save()
+
 
 @app.errorhandler(ValidationError)
 def validation_error(e):
@@ -64,10 +74,10 @@ def home():
 
 def run():
     """Run the application."""
-    host, port, db_uri = conf.get_config()
+    host, port, db_uri, _ = conf.get_config()
 
     if host and port and db_uri:
         app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
         app.run(host=host, port=port, debug=False)
     else:
-        print(conf.CONF_NOT_SET)
+        print(CONF_NOT_SET)

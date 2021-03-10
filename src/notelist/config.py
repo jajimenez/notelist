@@ -1,6 +1,7 @@
 """Configuration module."""
 
 from typing import Tuple, Optional
+import hashlib as hl
 import userconf as uc
 
 from notelist import tools
@@ -9,19 +10,19 @@ from notelist import tools
 Config = Tuple[Optional[str], Optional[int], Optional[str]]
 uc.set_application_id("notelist")
 
-CONF_NOT_SET = (
-    'Configuration parameters not defined.\nRun "notelist configure" to set '
-    'the parameters.')
 
 HOST_ID = "host"
 PORT_ID = "port"
 DB_URI_ID = "db_uri"
+ADMIN_INIT_PW_ID = "admin_init_pw"  # "admin" user initial password
+
 
 TITLE = "Notelist - Configuration"
 DESC = "Please type each parameter value (without quotes) and press Enter:\n"
 HOST_DESC = 'Host (e.g. "localhost", "127.0.0.1", "0.0.0.0"): '
 PORT_DESC = "Port (e.g. 5000): "
 DB_URI_DESC = 'Database URI (e.g. "sqlite:///data.db"): '
+ADMIN_INIT_PW_DESC = 'Initial "admin" user password: '
 
 
 def get_config() -> Config:
@@ -32,7 +33,8 @@ def get_config() -> Config:
     return (
         uc.get_setting_value(HOST_ID),
         uc.get_setting_value(PORT_ID),
-        uc.get_setting_value(DB_URI_ID))
+        uc.get_setting_value(DB_URI_ID),
+        uc.get_setting_value(ADMIN_INIT_PW_ID))
 
 
 def config():
@@ -65,6 +67,16 @@ def config():
     if db_uri == "":
         db_uri = None
 
+    admin_pw = input(ADMIN_INIT_PW_DESC)
+
+    if admin_pw != "":
+        s = hl.sha256()
+        s.update(bytes(admin_pw, encoding="utf-8"))
+        admin_pw = s.hexdigest()
+    else:
+        admin_pw = None
+
     uc.set_setting_value(HOST_ID, host)
     uc.set_setting_value(PORT_ID, port)
     uc.set_setting_value(DB_URI_ID, db_uri)
+    uc.set_setting_value(ADMIN_INIT_PW_ID, admin_pw)
