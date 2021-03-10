@@ -53,10 +53,13 @@ def create_tables():
     """Create all the datatabase tables."""
     db.create_all()
 
-    # Create administrator user ("admin") with an initial password
-    User(
-        username="admin", password=conf.get_config()[3], enabled=True,
-        admin=True, name="Administrator").save()
+    # Create the administrator user ("admin") if it doesn't exist, with an
+    # initial password.
+    if not User.get_by_username("admin"):
+        User(
+            username="admin", password=conf.get_config()[3], enabled=True,
+            admin=True, name="Administrator"
+        ).save()
 
 
 @app.errorhandler(ValidationError)
