@@ -1,11 +1,18 @@
 """Module with the user resources."""
 
+import hashlib as hl
+
 from flask import request
+from werkzeug.security import safe_str_cmp
 from flask_restful import Resource
+from flask_jwt_extended import (
+    jwt_required, create_access_token, create_refresh_token, get_jwt,
+    get_jwt_identity)
 
 from notelist.models.users import User
 from notelist.schemas.users import UserSchema
-from notelist.resources import get_response_data
+from notelist.resources import get_response_data, Response
+from notelist import tools
 
 
 USERS_RETRIEVED_1 = "1 user retrieved."
@@ -17,16 +24,22 @@ USER_DELETED = "User deleted."
 USER_NOT_FOUND = "User not found."
 USER_EXISTS = "User already exists."
 INVALID_PASSWORD = "Invalid password. It must have 4-100 characters."
+USER_LOGGED_IN_1 = "User logged in (fresh access token)."
+USER_LOGGED_IN_2 = "User logged in (not fresh access token)."
+INVALID_CREDENTIALS = "Invalid credentials."
+USER_LOGGED_OUT = "User logged out."
 
 
 user_list_schema = UserSchema(many=True)
 user_schema = UserSchema()
+blocklist = set()
 
 
 class UserListResource(Resource):
     """User List resource."""
 
-    def get(self):
+    @jwt_required()
+    def get(self) -> Response:
         """Handle a User List Get request.
 
         Return all the users.
@@ -45,7 +58,8 @@ class UserListResource(Resource):
 class UserResource(Resource):
     """User resource."""
 
-    def get(self, username: int):
+    @jwt_required()
+    def get(self, username: int) -> Response:
         """Handle a User Get request.
 
         Return the user with the given username.
@@ -59,7 +73,8 @@ class UserResource(Resource):
 
         return get_response_data(USER_RETRIEVED, user_schema.dump(user)), 200
 
-    def post(self, username: str):
+    @jwt_required()
+    def post(self, username: str) -> Response:
         """Handle a User Post request.
 
         Save a new user with the given username and data.
@@ -81,10 +96,15 @@ class UserResource(Resource):
         if len(user.password) < 4:
             return get_response_data(INVALID_PASSWORD), 400
 
+        # We get the hash of the password, to store the password encrypted in
+        # the database.
+        user.password = tools.get_hash(user.password)
+
         user.save()
         return get_response_data(USER_CREATED), 201
 
-    def put(self, username: str):
+    @jwt_required()
+    def put(self, username: str) -> Response:
         """Handle a User Put request.
 
         Save a new or existing user with the given username and data.
@@ -134,10 +154,15 @@ class UserResource(Resource):
         if len(user.password) < 4:
             return get_response_data(INVALID_PASSWORD), 400
 
+        # We get the hash of the password, to store the password encrypted in
+        # the database.
+        user.password = tools.get_hash(user.password)
+
         user.save()
         return get_response_data(message), code
 
-    def delete(self, username: str):
+    @jwt_required(fresh=True)
+    def delete(self, username: str) -> Response:
         """Handle a User Delete request.
 
         Delete an existing user given its username.
@@ -151,3 +176,54 @@ class UserResource(Resource):
 
         user.delete()
         return get_response_data(USER_DELETED), 200
+
+
+class LoginResource(Resource):
+    """User Login resource."""
+
+    def post(self) -> Response:
+        """Handle a Login Post request."""
+        req_user = user_schema.load(request.get_json())
+        user = User.get_by_username(req_user.username)
+
+        # We get the hash of the request password, as passwords are stored
+        # encrypted in the database.
+        req_pw = tools.get_hash(req_user.password)
+
+        if user and safe_str_cmp(req_pw, user.password):
+            # The user ID is the Identity of the tokens (not to be confused
+            # with the JTI (unique identifier) of the tokens).
+            result = {
+                "access_token": create_access_token(user.id, fresh=True),
+                "refresh_token": create_refresh_token(user.id)}
+
+            return get_response_data(USER_LOGGED_IN_1, result), 200
+
+        return get_response_data(INVALID_CREDENTIALS), 401
+
+
+class TokenRefreshResource(Resource):
+    """Token Refresh resource."""
+
+    @jwt_required(refresh=True)
+    def post(self) -> Response:
+        """Handle a Token Refresh Post request."""
+        user_id = get_jwt_identity()
+
+        # New, not fresh, access token
+        result = {"access_token": create_access_token(user_id, fresh=False)}
+        return get_response_data(USER_LOGGED_IN_2, result), 200
+
+
+class LogoutResource(Resource):
+    """Logout resource."""
+
+    @jwt_required()
+    def post(self) -> Response:
+        """Handle a Logout Post request."""
+        # Add the JTI (unique identifier) of the JWT of the current request
+        # to the Block List in order to revoke the JWT.
+        jti = get_jwt()["jti"]
+        blocklist.add(jti)
+
+        return get_response_data(USER_LOGGED_OUT), 200

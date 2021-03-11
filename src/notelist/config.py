@@ -1,7 +1,6 @@
 """Configuration module."""
 
 from typing import Tuple, Optional
-import hashlib as hl
 import userconf as uc
 
 from notelist import tools
@@ -68,13 +67,7 @@ def config():
         db_uri = None
 
     admin_pw = input(ADMIN_INIT_PW_DESC)
-
-    if admin_pw != "":
-        s = hl.sha256()
-        s.update(bytes(admin_pw, encoding="utf-8"))
-        admin_pw = s.hexdigest()
-    else:
-        admin_pw = None
+    admin_pw = tools.get_hash(admin_pw) if admin_pw != "" else None
 
     uc.set_setting_value(HOST_ID, host)
     uc.set_setting_value(PORT_ID, port)

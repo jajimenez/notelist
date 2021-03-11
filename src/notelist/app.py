@@ -1,6 +1,7 @@
 """Application module."""
 
 import os
+from typing import List, Dict, Union
 
 from flask import Flask, render_template
 from flask_restful import Api
@@ -11,11 +12,18 @@ from marshmallow import ValidationError
 import notelist.config as conf
 from notelist.db import db
 from notelist.ma import ma
-from notelist.resources import get_response_data
-from notelist.resources.users import UserListResource, UserResource
+from notelist.resources import get_response_data, Response
+from notelist.resources.users import (
+    UserListResource, UserResource, LoginResource, TokenRefreshResource,
+    LogoutResource, blocklist)
 from notelist.models.users import User
 
 
+# Typing types
+ValErrorData = Dict[str, List[str]]
+JwtData = Dict[str, Union[int, str]]
+
+# Constants
 CONF_NOT_SET = (
     'Configuration parameters not defined.\nRun "notelist configure" to set '
     'the parameters.')
@@ -43,18 +51,26 @@ mig = Migrate(app, db)
 api = Api(app)
 api.add_resource(UserListResource, "/users")
 api.add_resource(UserResource, "/user/<string:username>")
+api.add_resource(LoginResource, "/login")
+api.add_resource(TokenRefreshResource, "/refresh")
+api.add_resource(LogoutResource, "/logout")
 
 # User login
 jwt = JWTManager(app)
 
 
 @app.before_first_request
-def on_first_request():
-    """Create all the datatabase tables."""
+def before_first_request():
+    """Create all the datatabase tables (callback function).
+
+    This method is called before accessing the database for the first time. It
+    creates the administrator user ("admin") if it doesn't exist, with an
+    initial password.
+    """
+    # Create tables
     db.create_all()
 
-    # Create the administrator user ("admin") if it doesn't exist, with an
-    # initial password.
+    # Create the administrator user
     if not User.get_by_username("admin"):
         User(
             username="admin", password=conf.get_config()[3], enabled=True,
@@ -63,14 +79,28 @@ def on_first_request():
 
 
 @app.errorhandler(ValidationError)
-def on_validation_error(e):
-    """Handle validation errors."""
+def validation_error_handler(e: ValErrorData) -> Response:
+    """Handle validation errors (callback function).
+
+    :param e: Object containing the error messages.
+    """
     fields = ", ".join([i for i in e.messages.keys()])
     return get_response_data(f"Validation error: {fields}."), 400
 
 
+@jwt.token_in_blocklist_loader
+def blocklist_loader(header: JwtData, payload: JwtData) -> bool:
+    """Check if a JWT has been revoked (callback function).
+
+    :param header: Header data of the JWT.
+    :param payload: Payload data of the JWT.
+    :return: Whether the given JWT has been revoked or not.
+    """
+    return payload["jti"] in blocklist
+
+
 @app.route("/")
-def home():
+def home() -> str:
     """Root route request handler."""
     return render_template("home.html")
 
