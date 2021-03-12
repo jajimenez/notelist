@@ -1,6 +1,6 @@
 """Package with the resources."""
 
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 
 Response = Dict[str, Union[str, Dict]]
@@ -14,9 +14,11 @@ def get_response_data(message: str, result: Optional[Dict] = None) -> Response:
 
     :param message: Message.
     :param result: Result (if any).
-    :return: Dictionary with `message` and `result`.
+    :return: Dictionary with `message` and, optionally, `result`.
     """
-    return {
-        "message": message,
-        "result": result
-    }
+    response = {"message": message}
+
+    if result is not None:
+        response["result"] = result
+
+    return response
