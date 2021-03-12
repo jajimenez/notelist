@@ -15,6 +15,7 @@ from notelist.resources import get_response_data, Response
 from notelist import tools
 
 
+USER_UNAUTHORIZED = "User unauthorized."
 USERS_RETRIEVED_1 = "1 user retrieved."
 USERS_RETRIEVED_N = "{} users retrieved."
 USER_RETRIEVED = "User retrieved."
@@ -24,8 +25,7 @@ USER_DELETED = "User deleted."
 USER_NOT_FOUND = "User not found."
 USER_EXISTS = "User already exists."
 INVALID_PASSWORD = "Invalid password. It must have 4-100 characters."
-USER_LOGGED_IN_1 = "User logged in (fresh access token)."
-USER_LOGGED_IN_2 = "User logged in (not fresh access token)."
+USER_LOGGED_IN = "User logged in."
 INVALID_CREDENTIALS = "Invalid credentials."
 USER_LOGGED_OUT = "User logged out."
 
@@ -42,8 +42,12 @@ class UserListResource(Resource):
     def get(self) -> Response:
         """Handle a User List Get request.
 
-        Return all the users.
+        Return all the users. This endpoint requires administrator permissions.
         """
+        # Check permissions
+        if not get_jwt()["admin"]:
+            return get_response_data(USER_UNAUTHORIZED), 403
+
         users = User.get_all()
         count = len(users)
 
@@ -62,10 +66,18 @@ class UserResource(Resource):
     def get(self, username: int) -> Response:
         """Handle a User Get request.
 
-        Return the user with the given username.
+        Return the user with the given username. The current request user can
+        only call this endpoint for their own user, unless it's an
+        administrator.
 
         :param username: Username.
         """
+        # Check permissions
+        jwt = get_jwt()  # JWT payload data
+
+        if not jwt["admin"] and username != jwt["username"]:
+            return get_response_data(USER_UNAUTHORIZED), 403
+
         user = User.get_by_username(username)
 
         if not user:
@@ -77,10 +89,15 @@ class UserResource(Resource):
     def post(self, username: str) -> Response:
         """Handle a User Post request.
 
-        Save a new user with the given username and data.
+        Save a new user with the given username and data. This endpoint
+        requires administrator permissions.
 
         :param username: Username.
         """
+        # Check permissions
+        if not get_jwt()["admin"]:
+            return get_response_data(USER_UNAUTHORIZED), 403
+
         data = request.get_json()
 
         # We set the username as the one provided in the request URL,
@@ -107,10 +124,15 @@ class UserResource(Resource):
     def put(self, username: str) -> Response:
         """Handle a User Put request.
 
-        Save a new or existing user with the given username and data.
+        Save a new or existing user with the given username and data. This
+        endpoint requires administrator permissions.
 
         :param username: Username.
         """
+        # Check permissions
+        if not get_jwt()["admin"]:
+            return get_response_data(USER_UNAUTHORIZED), 403
+
         user = User.get_by_username(username)
         data = request.get_json()
 
@@ -165,10 +187,15 @@ class UserResource(Resource):
     def delete(self, username: str) -> Response:
         """Handle a User Delete request.
 
-        Delete an existing user given its username.
+        Delete an existing user given its username. This endpoint requires
+        administrator permissions.
 
         :param username: Username.
         """
+        # Check permissions
+        if not get_jwt()["admin"]:
+            return get_response_data(USER_UNAUTHORIZED), 403
+
         user = User.get_by_username(username)
 
         if not user:
@@ -197,7 +224,7 @@ class LoginResource(Resource):
                 "access_token": create_access_token(user.id, fresh=True),
                 "refresh_token": create_refresh_token(user.id)}
 
-            return get_response_data(USER_LOGGED_IN_1, result), 200
+            return get_response_data(USER_LOGGED_IN, result), 200
 
         return get_response_data(INVALID_CREDENTIALS), 401
 
@@ -212,7 +239,7 @@ class TokenRefreshResource(Resource):
 
         # New, not fresh, access token
         result = {"access_token": create_access_token(user_id, fresh=False)}
-        return get_response_data(USER_LOGGED_IN_2, result), 200
+        return get_response_data(USER_LOGGED_IN, result), 200
 
 
 class LogoutResource(Resource):

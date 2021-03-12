@@ -31,7 +31,7 @@ CONF_NOT_SET = (
 # Application setup
 app = Flask(__name__)
 app.config["DEBUG"] = False
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"  # Temporal URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["PROPAGATE_EXCEPTIONS"] = True
 
@@ -97,6 +97,17 @@ def blocklist_loader(header: JwtData, payload: JwtData) -> bool:
     :return: Whether the given JWT has been revoked or not.
     """
     return payload["jti"] in blocklist
+
+
+@jwt.additional_claims_loader
+def additional_claims_loader(identity) -> Dict[str, bool]:
+    """Add additional information to the JWT payload when creating a JWT.
+
+    :param identity: JWT identity. In this case, it's the user ID.
+    :return: Dictionary with additional information about the request user.
+    """
+    user = User.get_by_id(identity)
+    return {"username": user.username, "admin": user.admin}
 
 
 @app.route("/")
