@@ -54,7 +54,7 @@ mig = Migrate(app, db)
 # Resources
 api = Api(app)
 api.add_resource(UserListResource, "/users")
-api.add_resource(UserResource, "/user/<string:username>")
+api.add_resource(UserResource, "/user", "/user/<int:_id>")
 api.add_resource(LoginResource, "/login")
 api.add_resource(TokenRefreshResource, "/refresh")
 api.add_resource(LogoutResource, "/logout")
@@ -89,7 +89,7 @@ def validation_error_handler(error: ValErrorData) -> Response:
     :param error: Object containing the error messages.
     :return: Dictionary containing the error message.
     """
-    fields = ", ".join([i for i in e.messages.keys()])
+    fields = ", ".join([i for i in error.messages.keys()])
     return get_response_data(VALIDATION_ERROR.format(fields)), 400
 
 
@@ -141,7 +141,7 @@ def additional_claims_loader(identity) -> Dict[str, bool]:
     :return: Dictionary with additional information about the request user.
     """
     user = User.get_by_id(identity)
-    return {"username": user.username, "admin": user.admin}
+    return {"id": user.id, "admin": user.admin}
 
 
 @app.route("/")

@@ -23,7 +23,7 @@ USER_CREATED = "User created."
 USER_UPDATED = "User updated."
 USER_DELETED = "User deleted."
 USER_NOT_FOUND = "User not found."
-USER_EXISTS = "User already exists."
+USER_EXISTS = 'User with username {} already exists.'
 INVALID_PASSWORD = "Invalid password. It must have 4-100 characters."
 USER_LOGGED_IN = "User logged in."
 INVALID_CREDENTIALS = "Invalid credentials."
@@ -43,6 +43,8 @@ class UserListResource(Resource):
         """Handle a User List Get request.
 
         Return all the users. This endpoint requires administrator permissions.
+
+        :return: Dictionary with the message and result.
         """
         # Check permissions
         if not get_jwt()["admin"]:
@@ -63,22 +65,22 @@ class UserResource(Resource):
     """User resource."""
 
     @jwt_required()
-    def get(self, username: int) -> Response:
+    def get(self, _id: int) -> Response:
         """Handle a User Get request.
 
-        Return the user with the given username. The current request user can
-        only call this endpoint for their own user, unless it's an
-        administrator.
+        Return the user with the given ID. The current request user can only
+        call this endpoint for their own user, unless it's an administrator.
 
-        :param username: Username.
+        :param _id: User ID.
+        :return: Dictionary with the message and result.
         """
         # Check permissions
         jwt = get_jwt()  # JWT payload data
 
-        if not jwt["admin"] and username != jwt["username"]:
+        if not jwt["admin"] and _id != jwt["id"]:
             return get_response_data(USER_UNAUTHORIZED), 403
 
-        user = User.get_by_username(username)
+        user = User.get_by_id(_id)
 
         if not user:
             return get_response_data(USER_NOT_FOUND), 404
@@ -86,28 +88,24 @@ class UserResource(Resource):
         return get_response_data(USER_RETRIEVED, user_schema.dump(user)), 200
 
     @jwt_required()
-    def post(self, username: str) -> Response:
+    def post(self) -> Response:
         """Handle a User Post request.
 
-        Save a new user with the given username and data. This endpoint
-        requires administrator permissions.
+        Save a new user with the given data. This endpoint requires
+        administrator permissions.
 
-        :param username: Username.
+        :return: Dictionary with the message.
         """
         # Check permissions
         if not get_jwt()["admin"]:
             return get_response_data(USER_UNAUTHORIZED), 403
 
-        data = request.get_json()
-
-        # We set the username as the one provided in the request URL,
-        # overwriting the username value in the request body (if any).
-        data["username"] = username
-        user = user_schema.load(data)
+        user = user_schema.load(request.get_json())
 
         # Check if the user already exists
         if User.get_by_username(user.username):
-            return get_response_data(USER_EXISTS), 400
+            message = USER_EXISTS.format(user.username)
+            return get_response_data(message), 400
 
         # Validate password length
         if len(user.password) < 4:
@@ -116,35 +114,42 @@ class UserResource(Resource):
         # We get the hash of the password, to store the password encrypted in
         # the database.
         user.password = tools.get_hash(user.password)
-
         user.save()
+
         return get_response_data(USER_CREATED), 201
 
     @jwt_required()
-    def put(self, username: str) -> Response:
+    def put(self) -> Response:
         """Handle a User Put request.
 
-        Save a new or existing user with the given username and data. This
-        endpoint requires administrator permissions.
+        Save a new or existing user with the given data. This endpoint requires
+        administrator permissions.
 
-        :param username: Username.
+        :return: Dictionary with the message.
         """
         # Check permissions
         if not get_jwt()["admin"]:
             return get_response_data(USER_UNAUTHORIZED), 403
 
-        user = User.get_by_username(username)
         data = request.get_json()
 
-        if user:  # The user already exists, so we update it.
+        # If there isn't any ID in the request data, we create a new user.
+        # Otherwise we update the user with the given ID.
+        if "id" in data:  # We update the user
+            user = User.get_by_id(data["id"])
+
+            if not user:
+                return get_response_data(USER_NOT_FOUND), 404
+
             if "username" in data:
                 # Check if the value of the username is new and if there is
                 # another existing user with the same username.
                 if (
-                    data["username"] != username and
+                    data["username"] != user.username and
                     User.get_by_username(data["username"])
                 ):
-                    return get_response_data(USER_EXISTS), 400
+                    message = USER_EXISTS.format(data["username"])
+                    return get_response_data(message), 400
 
                 user.username = data["username"]
 
@@ -165,9 +170,14 @@ class UserResource(Resource):
 
             message = USER_UPDATED
             code = 200
-        else:  # The user doesn't exist, so we create it.
-            data["username"] = username
+        else:  # We create a new user
+            # We validate the data. If any of the User model required fields is
+            # missing, an exception is raised.
             user = user_schema.load(data)
+
+            if User.get_by_username(user.username):
+                message = USER_EXISTS.format(user.username)
+                return get_response_data(message), 400
 
             message = USER_CREATED
             code = 201
@@ -184,19 +194,20 @@ class UserResource(Resource):
         return get_response_data(message), code
 
     @jwt_required(fresh=True)
-    def delete(self, username: str) -> Response:
+    def delete(self, _id: int) -> Response:
         """Handle a User Delete request.
 
-        Delete an existing user given its username. This endpoint requires
+        Delete an existing user given its ID. This endpoint requires
         administrator permissions.
 
-        :param username: Username.
+        :param _id: User ID.
+        :return: Dictionary with the message.
         """
         # Check permissions
         if not get_jwt()["admin"]:
             return get_response_data(USER_UNAUTHORIZED), 403
 
-        user = User.get_by_username(username)
+        user = User.get_by_id(_id)
 
         if not user:
             return get_response_data(USER_NOT_FOUND), 404
@@ -209,7 +220,10 @@ class LoginResource(Resource):
     """User Login resource."""
 
     def post(self) -> Response:
-        """Handle a Login Post request."""
+        """Handle a Login Post request.
+
+        :return: Dictionary with the message.
+        """
         req_user = user_schema.load(request.get_json())
         user = User.get_by_username(req_user.username)
 
@@ -234,7 +248,10 @@ class TokenRefreshResource(Resource):
 
     @jwt_required(refresh=True)
     def post(self) -> Response:
-        """Handle a Token Refresh Post request."""
+        """Handle a Token Refresh Post request.
+
+        :return: Dictionary with the message and a new, not fresh access token.
+        """
         user_id = get_jwt_identity()
 
         # New, not fresh, access token
@@ -247,7 +264,10 @@ class LogoutResource(Resource):
 
     @jwt_required()
     def post(self) -> Response:
-        """Handle a Logout Post request."""
+        """Handle a Logout Post request.
+
+        :return: Dictionary with the message.
+        """
         # Add the JTI (unique identifier) of the JWT of the current request
         # to the Block List in order to revoke the JWT.
         jti = get_jwt()["jti"]
