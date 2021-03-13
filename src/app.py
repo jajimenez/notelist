@@ -3,7 +3,6 @@
 Notelist is a REST API based note taking web application.
 """
 
-
 from notelist.main import main
 
 
