@@ -24,6 +24,10 @@ ValErrorData = Dict[str, List[str]]
 JwtData = Dict[str, Union[int, str]]
 
 # Constants
+VALIDATION_ERROR = "Validation error: {}."
+ACCESS_TOKEN_MISSING = "Access token missing."
+FRESH_ACCESS_TOKEN_REQ = "Fresh access token required."
+INVALID_ACCESS_TOKEN = "Invalid access token."
 CONF_NOT_SET = (
     'Configuration parameters not defined.\nRun "notelist configure" to set '
     'the parameters.')
@@ -79,13 +83,43 @@ def before_first_request():
 
 
 @app.errorhandler(ValidationError)
-def validation_error_handler(e: ValErrorData) -> Response:
+def validation_error_handler(error: ValErrorData) -> Response:
     """Handle validation errors (callback function).
 
-    :param e: Object containing the error messages.
+    :param error: Object containing the error messages.
+    :return: Dictionary containing the error message.
     """
     fields = ", ".join([i for i in e.messages.keys()])
-    return get_response_data(f"Validation error: {fields}."), 400
+    return get_response_data(VALIDATION_ERROR.format(fields)), 400
+
+
+@jwt.unauthorized_loader
+def unauthorized_loader(error: str) -> Response:
+    """Handle requests with no JWT.
+
+    :param error: Error message.
+    :return: Dictionary containing the error message.
+    """
+    return get_response_data(ACCESS_TOKEN_MISSING), 401
+
+
+@jwt.needs_fresh_token_loader
+def needs_fresh_token_loader(header: JwtData, payload: JwtData) -> Response:
+    """Handle requests with a not fresh JWT.
+
+    :return: Dictionary containing the error message.
+    """
+    return get_response_data(FRESH_ACCESS_TOKEN_REQ), 401
+
+
+@jwt.invalid_token_loader
+def invalid_token_loader(error: str) -> Response:
+    """Handle requests with an invalid JWT.
+
+    :param error: Error message.
+    :return: Dictionary containing the error message.
+    """
+    return get_response_data(INVALID_ACCESS_TOKEN), 422
 
 
 @jwt.token_in_blocklist_loader
