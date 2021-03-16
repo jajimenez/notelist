@@ -26,8 +26,7 @@ if __name__ == "__main__":
         classifiers=[
             "Programming Language :: Python :: 3",
             "Operating System :: OS Independent",
-            "License :: OSI Approved :: MIT License",
-            "Framework :: Flask"],
+            "License :: OSI Approved :: MIT License"],
         python_requires=">=3.9.2",
         install_requires=install_req,
         packages=[
