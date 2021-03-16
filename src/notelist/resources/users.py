@@ -5,29 +5,29 @@ import hashlib as hl
 from flask import request
 from werkzeug.security import safe_str_cmp
 from flask_restful import Resource
-from flask_jwt_extended import (
-    jwt_required, create_access_token, create_refresh_token, get_jwt,
-    get_jwt_identity)
+from flask_jwt_extended import jwt_required, create_access_token, \
+    create_refresh_token, get_jwt, get_jwt_identity
 
 from notelist.models.users import User
 from notelist.schemas.users import UserSchema
-from notelist.resources import get_response_data, Response
+from notelist.resources import Response, OPERATION_NOT_ALLOWED, \
+    USER_UNAUTHORIZED, get_response_data
 from notelist import tools
 
 
-USER_UNAUTHORIZED = "User unauthorized."
+USER_LOGGED_IN = "User logged in."
+USER_LOGGED_OUT = "User logged out."
 USERS_RETRIEVED_1 = "1 user retrieved."
 USERS_RETRIEVED_N = "{} users retrieved."
 USER_RETRIEVED = "User retrieved."
 USER_CREATED = "User created."
 USER_UPDATED = "User updated."
 USER_DELETED = "User deleted."
-USER_NOT_FOUND = "User not found."
-USER_EXISTS = 'User with username {} already exists.'
-INVALID_PASSWORD = "Invalid password. It must have 4-100 characters."
-USER_LOGGED_IN = "User logged in."
 INVALID_CREDENTIALS = "Invalid credentials."
-USER_LOGGED_OUT = "User logged out."
+USER_NOT_FOUND = "User not found."
+USER_EXISTS = "Another user with the same username already exists."
+MIN_PASSWORD = 8
+INVALID_PASSWORD = "Invalid password. It must have 8-100 characters."
 
 
 user_list_schema = UserSchema(many=True)
@@ -69,7 +69,8 @@ class UserResource(Resource):
         """Handle a User Get request.
 
         Return the user with the given ID. The current request user can only
-        call this endpoint for their own user, unless it's an administrator.
+        call this endpoint for their own user, unless they are an
+        administrator.
 
         :param _id: User ID.
         :return: Dictionary with the message and result.
@@ -77,7 +78,7 @@ class UserResource(Resource):
         # Check permissions
         jwt = get_jwt()  # JWT payload data
 
-        if not jwt["admin"] and _id != jwt["id"]:
+        if not jwt["admin"] and jwt["id"] != _id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
         user = User.get_by_id(_id)
@@ -96,19 +97,24 @@ class UserResource(Resource):
 
         :return: Dictionary with the message.
         """
+        # Check that the request is not for updating an existing user
+        data = request.get_json()
+
+        if "id" in data:
+            return get_response_data(OPERATION_NOT_ALLOWED), 403
+
         # Check permissions
         if not get_jwt()["admin"]:
             return get_response_data(USER_UNAUTHORIZED), 403
 
-        user = user_schema.load(request.get_json())
+        user = user_schema.load(data)
 
         # Check if the user already exists
         if User.get_by_username(user.username):
-            message = USER_EXISTS.format(user.username)
-            return get_response_data(message), 400
+            return get_response_data(USER_EXISTS), 400
 
         # Validate password length
-        if len(user.password) < 4:
+        if len(user.password) < MIN_PASSWORD:
             return get_response_data(INVALID_PASSWORD), 400
 
         # We get the hash of the password, to store the password encrypted in
@@ -122,15 +128,14 @@ class UserResource(Resource):
     def put(self) -> Response:
         """Handle a User Put request.
 
-        Save a new or existing user with the given data. This endpoint requires
-        administrator permissions.
+        Save a new or existing user with the given data. The current user, if
+        they aren't an administrator, can only call this endpoint to update
+        their own user's fields, except their "username", "admin" or "enable"
+        fields.
 
         :return: Dictionary with the message.
         """
-        # Check permissions
-        if not get_jwt()["admin"]:
-            return get_response_data(USER_UNAUTHORIZED), 403
-
+        jwt = get_jwt()  # JWT payload data
         data = request.get_json()
 
         # If there isn't any ID in the request data, we create a new user.
@@ -138,8 +143,16 @@ class UserResource(Resource):
         if "id" in data:  # We update the user
             user = User.get_by_id(data["id"])
 
-            if not user:
+            if jwt["admin"] and not user:
                 return get_response_data(USER_NOT_FOUND), 404
+
+            # Check permissions
+            if (
+                not jwt["admin"] and (
+                    not user or jwt["id"] != user.id or "username" in data
+                    or "admin" in data or "enable" in data)
+            ):
+                return get_response_data(USER_UNAUTHORIZED), 403
 
             if "username" in data:
                 # Check if the value of the username is new and if there is
@@ -148,8 +161,7 @@ class UserResource(Resource):
                     data["username"] != user.username and
                     User.get_by_username(data["username"])
                 ):
-                    message = USER_EXISTS.format(data["username"])
-                    return get_response_data(message), 400
+                    return get_response_data(USER_EXISTS), 400
 
                 user.username = data["username"]
 
@@ -172,18 +184,18 @@ class UserResource(Resource):
             code = 200
         else:  # We create a new user
             # We validate the data. If any of the User model required fields is
-            # missing, an exception is raised.
+            # missing, a "marshmallow.ValidationError" exception is raised.
             user = user_schema.load(data)
 
+            # Check if there is another existing user with the same username
             if User.get_by_username(user.username):
-                message = USER_EXISTS.format(user.username)
-                return get_response_data(message), 400
+                return get_response_data(USER_EXISTS), 400
 
             message = USER_CREATED
             code = 201
 
         # Validate password length
-        if len(user.password) < 4:
+        if len(user.password) < MIN_PASSWORD:
             return get_response_data(INVALID_PASSWORD), 400
 
         # We get the hash of the password, to store the password encrypted in

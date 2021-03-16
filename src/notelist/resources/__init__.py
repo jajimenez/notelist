@@ -5,6 +5,9 @@ from typing import Any, Dict, Optional, Union
 
 Response = Dict[str, Union[str, Dict]]
 
+OPERATION_NOT_ALLOWED = "Operation not allowed."
+USER_UNAUTHORIZED = "User unauthorized."
+
 
 def get_response_data(message: str, result: Optional[Dict] = None) -> Response:
     """Return the response data of a request.
