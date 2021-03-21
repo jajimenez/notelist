@@ -16,7 +16,8 @@ class User(db.Model):
     enabled = db.Column(db.Boolean, nullable=False, default=False)
     name = db.Column(db.String(100))
     email = db.Column(db.String(100))
-    notebooks = db.relationship("Notebook", lazy="dynamic")
+    notebooks = db.relationship(
+        "Notebook", backref="user", cascade_backrefs="all, delete", lazy=True)
 
     @classmethod
     def get_all(cls) -> List["User"]:

@@ -14,11 +14,10 @@ class Tag(db.Model):
     color = db.Column(db.String(7))
     notebook_id = db.Column(
         db.Integer, db.ForeignKey("notebooks.id"), nullable=False)
-    notebook = db.relationship("Notebook", cascade="all, delete")
 
     # Constraint: A notebook can't have 2 or more tags with the same name
     __table_args__ = (
-        db.UniqueConstraint(notebook_id, name), name="un_tags_nid_name",)
+        db.UniqueConstraint(notebook_id, name, name="un_tags_nid_name"),)
 
     @classmethod
     def get_all(cls, notebook_id: int) -> List["Tag"]:
