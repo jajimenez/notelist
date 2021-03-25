@@ -248,7 +248,8 @@ class LoginResource(Resource):
             # with the JTI (unique identifier) of the tokens).
             result = {
                 "access_token": create_access_token(user.id, fresh=True),
-                "refresh_token": create_refresh_token(user.id)}
+                "refresh_token": create_refresh_token(user.id),
+                "user_id": user.id}
 
             return get_response_data(USER_LOGGED_IN, result), 200
 
