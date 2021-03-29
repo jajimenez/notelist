@@ -51,7 +51,7 @@ class TagResource(Resource):
         call this endpoint if the tag notebook is one of theirs, unless they
         are an administrator.
 
-        :return: Dictionary with the message.
+        :return: Dictionary with the message and the tag ID as the result.
         """
         # Check that the request is not for updating an existing tag
         data = request.get_json()
@@ -66,8 +66,10 @@ class TagResource(Resource):
         if not jwt["admin"] and jwt["id"] != tag.notebook.user.id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
+        # Save the tag
         tag.save()
-        return get_response_data(TAG_CREATED), 201
+
+        return get_response_data(TAG_CREATED, tag.id), 201
 
     @jwt_required()
     def put(self) -> Response:
@@ -77,15 +79,19 @@ class TagResource(Resource):
         user can only call this endpoint if the tag notebook is one of theirs,
         unless they are an administrator.
 
-        :return: Dictionary with the message.
+        :return: Dictionary with the message and, if the tag has been created,
+        the tag ID as the result.
         """
         jwt = get_jwt()  # JWT payload data
         data = request.get_json()
 
         # If there isn't any ID in the request data, we create a new tag.
-        # Otherwise we update the tag with the given ID.
-        if "id" in data:  # We update the tag
+        # Otherwise we edit the existing tag with the given ID.
+        edit = "id" in data
+
+        if edit:  # We edit the existing tag
             tag = Tag.get_by_id(data["id"])
+            result = False
 
             if jwt["admin"] and not tag:
                 return get_response_data(TAG_NOT_FOUND), 404
@@ -117,6 +123,7 @@ class TagResource(Resource):
             # We validate the data. If any of the Tag model required fields is
             # missing, a "marshmallow.ValidationError" exception is raised.
             tag = tag_schema.load(data)
+            result = True
 
             # Check permissions
             if not jwt["admin"] and jwt["id"] != tag.notebook.user.id:
@@ -130,8 +137,11 @@ class TagResource(Resource):
             message = TAG_CREATED
             code = 201
 
+        # Save the tag
         tag.save()
-        return get_response_data(message), code
+        result = tag.id if result else None
+
+        return get_response_data(message, result), code
 
     @jwt_required()
     def delete(self, _id: int) -> Response:

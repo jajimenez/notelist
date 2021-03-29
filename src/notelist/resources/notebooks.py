@@ -56,7 +56,7 @@ class NotebookResource(Resource):
         only call this endpoint if the notebook is one of theirs, unless they
         are an administrator.
 
-        :return: Dictionary with the message.
+        :return: Dictionary with the message and the notebook ID as the result.
         """
         # Check that the request is not for updating an existing notebook
         data = request.get_json()
@@ -66,13 +66,15 @@ class NotebookResource(Resource):
 
         # Check permissions
         jwt = get_jwt()  # JWT payload data
-        n = notebook_schema.load(data)
+        notebook = notebook_schema.load(data)
 
-        if not jwt["admin"] and jwt["id"] != n.user.id:
+        if not jwt["admin"] and jwt["id"] != nnotebook.user.id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
-        n.save()
-        return get_response_data(NOTEBOOK_CREATED), 201
+        # Save the notebook
+        notebook.save()
+
+        return get_response_data(NOTEBOOK_CREATED, notebook.id), 201
 
     @jwt_required()
     def put(self) -> Response:
@@ -82,15 +84,19 @@ class NotebookResource(Resource):
         request user can only call this endpoint if the notebook is one of
         theirs, unless they are an administrator.
 
-        :return: Dictionary with the message.
+        :return: Dictionary with the message and, if the notebook has been
+        created, the notebook ID as the result.
         """
         jwt = get_jwt()  # JWT payload data
         data = request.get_json()
 
         # If there isn't any ID in the request data, we create a new notebook.
-        # Otherwise we update the notebook with the given ID.
-        if "id" in data:  # We update the notebook
+        # Otherwise we edit the existing notebook with the given ID.
+        edit = "id" in data
+
+        if edit:  # We edit the existing notebook
             notebook = Notebook.get_by_id(data["id"])
+            result = False
 
             if jwt["admin"] and not notebook:
                 return get_response_data(NOTEBOOK_NOT_FOUND), 404
@@ -131,6 +137,7 @@ class NotebookResource(Resource):
             # fields is missing, a "marshmallow.ValidationError" exception is
             # raised.
             notebook = notebook_schema.load(data)
+            result = True
 
             # Check permissions
             if not jwt["admin"] and jwt["id"] != notebook.user.id:
@@ -144,8 +151,11 @@ class NotebookResource(Resource):
             message = NOTEBOOK_CREATED
             code = 201
 
+        # Save the notebook
         notebook.save()
-        return get_response_data(message), code
+        result = notebook.id if result else None
+
+        return get_response_data(message, result), code
 
     @jwt_required()
     def delete(self, _id: int) -> Response:

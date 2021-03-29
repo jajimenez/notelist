@@ -14,8 +14,8 @@ from notelist.db import db
 from notelist.ma import ma
 from notelist.resources import get_response_data, Response
 from notelist.resources.users import (
-    UserListResource, UserResource, LoginResource, TokenRefreshResource,
-    LogoutResource, blocklist)
+    LoginResource, TokenRefreshResource, LogoutResource, UserListResource,
+    UserResource, blocklist)
 from notelist.models.users import User
 
 
@@ -53,11 +53,11 @@ mig = Migrate(app, db)
 
 # Resources
 api = Api(app)
-api.add_resource(UserListResource, "/users")
-api.add_resource(UserResource, "/user", "/user/<int:_id>")
 api.add_resource(LoginResource, "/login")
 api.add_resource(TokenRefreshResource, "/refresh")
 api.add_resource(LogoutResource, "/logout")
+api.add_resource(UserListResource, "/users")
+api.add_resource(UserResource, "/user", "/user/<int:_id>")
 
 # User login
 jwt = JWTManager(app)

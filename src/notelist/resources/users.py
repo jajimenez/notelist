@@ -35,6 +35,74 @@ user_schema = UserSchema()
 blocklist = set()
 
 
+class LoginResource(Resource):
+    """User Login resource."""
+
+    def post(self) -> Response:
+        """Handle a Login Post request.
+
+        :return: Dictionary with the message.
+        """
+        data = request.get_json()
+        u = "username"
+        p = "password"
+
+        # Check request data
+        for i in (u, p):
+            if i not in data or type(data[i]) != str or data[i] == "":
+                return get_response_data(INVALID_CREDENTIALS), 401
+
+        # We get the hash of the request password, as passwords are stored
+        # encrypted in the database.
+        req_pw = tools.get_hash(data[p])
+        user = User.get_by_username(data[u])
+
+        # Check password
+        if user and user.enabled and safe_str_cmp(req_pw, user.password):
+            # The user ID is the Identity of the tokens (not to be confused
+            # with the JTI (unique identifier) of the tokens).
+            result = {
+                "access_token": create_access_token(user.id, fresh=True),
+                "refresh_token": create_refresh_token(user.id),
+                "user_id": user.id}
+            return get_response_data(USER_LOGGED_IN, result), 200
+
+        return get_response_data(INVALID_CREDENTIALS), 401
+
+
+class TokenRefreshResource(Resource):
+    """Token Refresh resource."""
+
+    @jwt_required(refresh=True)
+    def post(self) -> Response:
+        """Handle a Token Refresh Post request.
+
+        :return: Dictionary with the message and a new, not fresh access token.
+        """
+        user_id = get_jwt_identity()
+
+        # New, not fresh, access token
+        result = {"access_token": create_access_token(user_id, fresh=False)}
+        return get_response_data(USER_LOGGED_IN, result), 200
+
+
+class LogoutResource(Resource):
+    """Logout resource."""
+
+    @jwt_required()
+    def post(self) -> Response:
+        """Handle a Logout Post request.
+
+        :return: Dictionary with the message.
+        """
+        # Add the JTI (unique identifier) of the JWT of the current request
+        # to the Block List in order to revoke the JWT.
+        jti = get_jwt()["jti"]
+        blocklist.add(jti)
+
+        return get_response_data(USER_LOGGED_OUT), 200
+
+
 class UserListResource(Resource):
     """User List resource."""
 
@@ -95,11 +163,11 @@ class UserResource(Resource):
         Save a new user with the given data. This endpoint requires
         administrator permissions.
 
-        :return: Dictionary with the message.
+        :return: Dictionary with the message and the user ID as the result.
         """
-        # Check that the request is not for updating an existing user
         data = request.get_json()
 
+        # Check that the request is not for updating an existing user
         if "id" in data:
             return get_response_data(OPERATION_NOT_ALLOWED), 403
 
@@ -120,9 +188,11 @@ class UserResource(Resource):
         # We get the hash of the password, to store the password encrypted in
         # the database.
         user.password = tools.get_hash(user.password)
+
+        # Save the user
         user.save()
 
-        return get_response_data(USER_CREATED), 201
+        return get_response_data(USER_CREATED, user.id), 201
 
     @jwt_required()
     def put(self) -> Response:
@@ -130,18 +200,22 @@ class UserResource(Resource):
 
         Save a new or existing user with the given data. The current user, if
         they aren't an administrator, can only call this endpoint to update
-        their own user's fields, except their "username", "admin" or "enable"
+        their own user's fields, except their "username", "admin" or "enabled"
         fields.
 
-        :return: Dictionary with the message.
+        :return: Dictionary with the message and, if the user has been created,
+        the user ID as the result.
         """
         jwt = get_jwt()  # JWT payload data
         data = request.get_json()
 
         # If there isn't any ID in the request data, we create a new user.
-        # Otherwise we update the user with the given ID.
-        if "id" in data:  # We update the user
+        # Otherwise we edit the existing user with the given ID.
+        edit = "id" in data
+
+        if edit:  # We edit the existing user
             user = User.get_by_id(data["id"])
+            result = False
 
             if jwt["admin"] and not user:
                 return get_response_data(USER_NOT_FOUND), 404
@@ -150,7 +224,7 @@ class UserResource(Resource):
             if (
                 not jwt["admin"] and (
                     not user or jwt["id"] != user.id or "username" in data
-                    or "admin" in data or "enable" in data)
+                    or "admin" in data or "enabled" in data)
             ):
                 return get_response_data(USER_UNAUTHORIZED), 403
 
@@ -186,6 +260,7 @@ class UserResource(Resource):
             # We validate the data. If any of the User model required fields is
             # missing, a "marshmallow.ValidationError" exception is raised.
             user = user_schema.load(data)
+            result = True
 
             # Check if there is another existing user with the same username
             if User.get_by_username(user.username):
@@ -194,16 +269,20 @@ class UserResource(Resource):
             message = USER_CREATED
             code = 201
 
-        # Validate password length
-        if len(user.password) < MIN_PASSWORD:
-            return get_response_data(INVALID_PASSWORD), 400
+        if not edit or "password" in data:
+            # Validate password length
+            if len(user.password) < MIN_PASSWORD:
+                return get_response_data(INVALID_PASSWORD), 400
 
-        # We get the hash of the password, to store the password encrypted in
-        # the database.
-        user.password = tools.get_hash(user.password)
+            # We get the hash of the password, to store the password encrypted
+            # in the database.
+            user.password = tools.get_hash(user.password)
 
+        # Save the user
         user.save()
-        return get_response_data(message), code
+        result = user.id if result else None
+
+        return get_response_data(message, result), code
 
     @jwt_required(fresh=True)
     def delete(self, _id: int) -> Response:
@@ -226,64 +305,3 @@ class UserResource(Resource):
 
         user.delete()
         return get_response_data(USER_DELETED), 200
-
-
-class LoginResource(Resource):
-    """User Login resource."""
-
-    def post(self) -> Response:
-        """Handle a Login Post request.
-
-        :return: Dictionary with the message.
-        """
-        req_user = user_schema.load(request.get_json())
-        user = User.get_by_username(req_user.username)
-
-        # We get the hash of the request password, as passwords are stored
-        # encrypted in the database.
-        req_pw = tools.get_hash(req_user.password)
-
-        if user and safe_str_cmp(req_pw, user.password):
-            # The user ID is the Identity of the tokens (not to be confused
-            # with the JTI (unique identifier) of the tokens).
-            result = {
-                "access_token": create_access_token(user.id, fresh=True),
-                "refresh_token": create_refresh_token(user.id),
-                "user_id": user.id}
-
-            return get_response_data(USER_LOGGED_IN, result), 200
-
-        return get_response_data(INVALID_CREDENTIALS), 401
-
-
-class TokenRefreshResource(Resource):
-    """Token Refresh resource."""
-
-    @jwt_required(refresh=True)
-    def post(self) -> Response:
-        """Handle a Token Refresh Post request.
-
-        :return: Dictionary with the message and a new, not fresh access token.
-        """
-        user_id = get_jwt_identity()
-
-        # New, not fresh, access token
-        result = {"access_token": create_access_token(user_id, fresh=False)}
-        return get_response_data(USER_LOGGED_IN, result), 200
-
-
-class LogoutResource(Resource):
-    """Logout resource."""
-
-    @jwt_required()
-    def post(self) -> Response:
-        """Handle a Logout Post request.
-
-        :return: Dictionary with the message.
-        """
-        # Add the JTI (unique identifier) of the JWT of the current request
-        # to the Block List in order to revoke the JWT.
-        jti = get_jwt()["jti"]
-        blocklist.add(jti)
-
-        return get_response_data(USER_LOGGED_OUT), 200
