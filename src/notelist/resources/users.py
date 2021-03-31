@@ -257,6 +257,10 @@ class UserResource(Resource):
             message = USER_UPDATED
             code = 200
         else:  # We create a new user
+            # Check permissions
+            if not jwt["admin"]:
+                return get_response_data(USER_UNAUTHORIZED), 403
+
             # We validate the data. If any of the User model required fields is
             # missing, a "marshmallow.ValidationError" exception is raised.
             user = user_schema.load(data)
