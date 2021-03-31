@@ -145,7 +145,7 @@ class TokenRefreshTestCase(common.BaseTestCase):
 
         # Get a new, not fresh, access token
         headers = {"Authorization": f"Bearer {refresh_token}"}
-        r = self.client.post("refresh", headers=headers)
+        r = self.client.post("/refresh", headers=headers)
 
         # Check status code
         self.assertEqual(r.status_code, 200)
@@ -168,7 +168,7 @@ class TokenRefreshTestCase(common.BaseTestCase):
         a refresh token, which shouldn't work.
         """
         # Get access token
-        r = self.client.post("refresh")
+        r = self.client.post("/refresh")
 
         # Check status code
         self.assertEqual(r.status_code, 401)
@@ -201,10 +201,40 @@ class TokenRefreshTestCase(common.BaseTestCase):
         # Get a new, not fresh, access token providing the access token instead
         # of the refresh token.
         headers = {"Authorization": f"Bearer {access_token}"}
-        r = self.client.post("refresh", headers=headers)
+        r = self.client.post("/refresh", headers=headers)
 
         # Check status code
         self.assertEqual(r.status_code, 422)
+
+    def test_get(self):
+        """Test the Get method of the Token Refresh resource.
+
+        This test tries to call the Get method, which shouldn't work.
+        """
+        r = self.client.get("/refresh")
+
+        # Check status code
+        self.assertEqual(r.status_code, 405)
+
+    def test_put(self):
+        """Test the Put method of the Token Refresh resource.
+
+        This test tries to call the Put method, which shouldn't work.
+        """
+        r = self.client.put("/refresh")
+
+        # Check status code
+        self.assertEqual(r.status_code, 405)
+
+    def test_delete(self):
+        """Test the Delete method of the Token Refresh resource.
+
+        This test tries to call the Delete method, which shouldn't work.
+        """
+        r = self.client.delete("/refresh")
+
+        # Check status code
+        self.assertEqual(r.status_code, 405)
 
 
 if __name__ == "__main__":
