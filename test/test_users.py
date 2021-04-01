@@ -347,5 +347,161 @@ class LogoutTestCase(common.BaseTestCase):
         self.assertEqual(r.status_code, 405)
 
 
+class UserListTestCase(common.BaseTestCase):
+    """User List resource unit tests."""
+
+    def test_get(self):
+        """Test the Get method of the User List resource.
+
+        This test tries to get the list of users being logged in as an
+        administrator user, which should work.
+        """
+        # Log in as the "admin" user
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Get list
+        headers = {"Authorization": f"Bearer {access_token}"}
+        r = self.client.get("/users", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        users = r.json["result"]
+        self.assertEqual(type(users), list)
+
+        # Check list
+        self.assertEqual(len(users), 1)
+
+        # Check user
+        u = users[0]
+        self.assertEqual(type(u), dict)
+
+        for i in ("id", "username", "admin", "enabled", "name", "email"):
+            self.assertIn(i, u)
+
+        self.assertNotIn("password", u)
+        self.assertEqual(u["username"], self.admin_username)
+
+    def test_post_missing_access_token(self):
+        """Test the Post method of the User List resource.
+
+        This test tries to get the list of users without providing an access
+        token, which shouldn't work.
+        """
+        # Get list
+        r = self.client.get("/users")
+
+        # Check status code
+        self.assertEqual(r.status_code, 401)
+
+    def test_post_invalid_access_token(self):
+        """Test the Post method of the User List resource.
+
+        This test tries to get the list of users given an invalid access token,
+        which shouldn't work.
+        """
+        # Log in as the "admin" user
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Get list providing an invalid access token
+        headers = {"Authorization": f"Bearer {access_token + '_'}"}
+        r = self.client.get("/users", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 422)
+
+    def test_post_unauthorized_user(self):
+        """Test the Post method of the User List resource.
+
+        This test tries to get the list of users being logged in as a not
+        administrator user, which shouldn't work.
+        """
+        # Log in as the "admin" user
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Create a not administrator user
+        headers = {"Authorization": f"Bearer {access_token}"}
+        u = {"username": "test", "password": "test_password", "enabled": True}
+        r = self.client.post("/user", headers=headers, json=u)
+
+        # Check status code
+        self.assertEqual(r.status_code, 201)
+
+        # Log in as the new user
+        data = {"username": u["username"], "password": u["password"]}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Get list
+        headers = {"Authorization": f"Bearer {access_token}"}
+        r = self.client.get("/users", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 403)
+
+
 if __name__ == "__main__":
     unittest.main()
