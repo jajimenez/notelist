@@ -316,6 +316,36 @@ class LogoutTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 422)
 
+    def test_get(self):
+        """Test the Get method of the Logout resource.
+
+        This test tries to call the Get method, which shouldn't work.
+        """
+        r = self.client.get("/logout")
+
+        # Check status code
+        self.assertEqual(r.status_code, 405)
+
+    def test_put(self):
+        """Test the Put method of the Logout resource.
+
+        This test tries to call the Put method, which shouldn't work.
+        """
+        r = self.client.put("/logout")
+
+        # Check status code
+        self.assertEqual(r.status_code, 405)
+
+    def test_delete(self):
+        """Test the Delete method of the Logout resource.
+
+        This test tries to call the Delete method, which shouldn't work.
+        """
+        r = self.client.delete("/logout")
+
+        # Check status code
+        self.assertEqual(r.status_code, 405)
+
 
 if __name__ == "__main__":
     unittest.main()
