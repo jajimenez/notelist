@@ -27,6 +27,7 @@ INVALID_CREDENTIALS = "Invalid credentials."
 USER_NOT_FOUND = "User not found."
 USER_EXISTS = "Another user with the same username already exists."
 MIN_PASSWORD = 8
+MAX_PASSWORD = 100
 INVALID_PASSWORD = "Invalid password. It must have 8-100 characters."
 
 
@@ -177,13 +178,15 @@ class UserResource(Resource):
 
         user = user_schema.load(data)
 
+        # Validate password length
+        c = len(user.password)
+
+        if c < MIN_PASSWORD or c > MAX_PASSWORD:
+            return get_response_data(INVALID_PASSWORD), 400
+
         # Check if the user already exists
         if User.get_by_username(user.username):
             return get_response_data(USER_EXISTS), 400
-
-        # Validate password length
-        if len(user.password) < MIN_PASSWORD:
-            return get_response_data(INVALID_PASSWORD), 400
 
         # We get the hash of the password, to store the password encrypted in
         # the database.
@@ -240,7 +243,15 @@ class UserResource(Resource):
                 user.username = data["username"]
 
             if "password" in data:
-                user.password = data["password"]
+                # Validate password length
+                c = len(data["password"])
+
+                if c < MIN_PASSWORD or c > MAX_PASSWORD:
+                    return get_response_data(INVALID_PASSWORD), 400
+
+                # We get the hash of the password, to store the password
+                # encrypted in the database.
+                user.password = tools.get_hash(data["password"])
 
             if "enabled" in data:
                 user.enabled = data["enabled"]
@@ -261,6 +272,16 @@ class UserResource(Resource):
             if not jwt["admin"]:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
+            # Validate password length
+            c = len(data["password"])
+
+            if c < MIN_PASSWORD or c > MAX_PASSWORD:
+                return get_response_data(INVALID_PASSWORD), 400
+
+            # We get the hash of the password, to store the password encrypted
+            # in the database.
+            data["password"] = tools.get_hash(data["password"])
+
             # We validate the data. If any of the User model required fields is
             # missing, a "marshmallow.ValidationError" exception is raised.
             user = user_schema.load(data)
@@ -272,15 +293,6 @@ class UserResource(Resource):
 
             message = USER_CREATED
             code = 201
-
-        if not edit or "password" in data:
-            # Validate password length
-            if len(user.password) < MIN_PASSWORD:
-                return get_response_data(INVALID_PASSWORD), 400
-
-            # We get the hash of the password, to store the password encrypted
-            # in the database.
-            user.password = tools.get_hash(user.password)
 
         # Save the user
         user.save()

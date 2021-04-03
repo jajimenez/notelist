@@ -11,7 +11,7 @@ class User(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), nullable=False, unique=True)
-    password = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String, nullable=False)
     admin = db.Column(db.Boolean, nullable=False, default=False)
     enabled = db.Column(db.Boolean, nullable=False, default=False)
     name = db.Column(db.String(100))
