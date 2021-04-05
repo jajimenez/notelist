@@ -5,15 +5,17 @@ from notelist.db import db
 
 
 class Tag(db.Model):
-    """Database User model."""
+    """Database Tag model."""
 
     __tablename__ = "tags"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    color = db.Column(db.String(7))
     notebook_id = db.Column(
         db.Integer, db.ForeignKey("notebooks.id"), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+
+    # HTML (e.g. "#ffffff" or "ffffff")
+    color = db.Column(db.String(7), nullable=True)
 
     # Constraint: A notebook can't have 2 or more tags with the same name
     __table_args__ = (

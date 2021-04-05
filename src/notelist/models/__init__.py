@@ -5,3 +5,4 @@
 from notelist.models.users import User
 from notelist.models.notebooks import Notebook
 from notelist.models.tags import Tag
+from notelist.models.notes import Note

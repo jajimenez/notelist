@@ -14,8 +14,8 @@ class User(db.Model):
     password = db.Column(db.String, nullable=False)
     admin = db.Column(db.Boolean, nullable=False, default=False)
     enabled = db.Column(db.Boolean, nullable=False, default=False)
-    name = db.Column(db.String(100))
-    email = db.Column(db.String(100))
+    name = db.Column(db.String(100), nullable=True)
+    email = db.Column(db.String(100), nullable=True)
     notebooks = db.relationship(
         "Notebook", backref="user", cascade_backrefs="all, delete", lazy=True)
 
