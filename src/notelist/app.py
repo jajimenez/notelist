@@ -1,7 +1,7 @@
 """Application module."""
 
 import os
-from typing import List, Dict, Union
+from typing import Optional, Union, List, Dict
 
 from flask import Flask, render_template
 from flask_restful import Api
@@ -10,6 +10,7 @@ from flask_migrate import Migrate
 from marshmallow import ValidationError
 
 import notelist.config as conf
+import notelist.tools as tools
 from notelist.db import db
 from notelist.ma import ma
 from notelist.resources import get_response_data, Response
@@ -29,8 +30,8 @@ ACCESS_TOKEN_MISSING = "Access token missing."
 FRESH_ACCESS_TOKEN_REQ = "Fresh access token required."
 INVALID_ACCESS_TOKEN = "Invalid access token."
 CONF_NOT_SET = (
-    'Configuration parameters not defined.\nRun "notelist configure" to set '
-    'the parameters.')
+    'Configuration parameters not defined.\nTo set the parameters, run '
+    '"notelist configure".')
 
 # Application setup
 app = Flask(__name__)
@@ -63,23 +64,34 @@ api.add_resource(UserResource, "/user", "/user/<int:_id>")
 jwt = JWTManager(app)
 
 
-@app.before_first_request
-def before_first_request():
-    """Create all the datatabase tables (callback function).
+def init_db(root_password: Optional[str] = None):
+    """Initialize the database.
 
-    This method is called before accessing the database for the first time. It
-    creates the administrator user ("admin") if it doesn't exist, with an
-    initial password.
+    This method creates all the datatabase tables if they don't exist. If
+    `root_password` is not None, it creates the "root" administrator user if
+    it doesn't exist, or updates it otherwise, with `root_password` as its
+    password.
+
+    :param root_password: Initial password for the "root" user.
     """
-    # Create tables
+    # Create tables if the don't exist
     db.create_all()
 
-    # Create the administrator user
-    if not User.get_by_username("admin"):
-        User(
-            username="admin", password=conf.get_config()[3], enabled=True,
-            admin=True, name="Administrator"
-        ).save()
+    # Create/update the "root" user
+    if root_password is not None:
+        user = User.get_by_username("root")  # Try to get the user
+        password = tools.get_hash(root_password)  # Encrypt password
+
+        if user:
+            # Update user
+            user.password = password
+        else:
+            # Create user
+            user = User(
+                username="root", password=password, enabled=True, admin=True,
+                name="Root")
+
+        user.save()
 
 
 @app.errorhandler(ValidationError)
@@ -150,12 +162,22 @@ def home() -> str:
     return render_template("home.html")
 
 
-def run():
-    """Run the application."""
-    host, port, db_uri, _ = conf.get_config()
+def run(root_password: Optional[str] = None):
+    """Run the application.
 
-    if host and port and db_uri:
+    :param root_password: Initial password for the "root" administrator user.
+    """
+    host, port, db_uri = conf.get_config()
+
+    if host is not None and port is not None and db_uri is not None:
+        # Set database URI
         app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
+
+        # Initialize database
+        with app.app_context():
+            init_db(root_password)
+
+        # Run applicarion
         app.run(host=host, port=port, debug=False)
     else:
         print(CONF_NOT_SET)

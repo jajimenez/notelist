@@ -23,9 +23,8 @@ class LoginTestCase(common.BaseTestCase):
         This test tries to log in as an existing user with valid credentials,
         which should work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -59,15 +58,15 @@ class LoginTestCase(common.BaseTestCase):
         This test tries to log in as an existing user with some mandatory field
         missing, which shouldn't work.
         """
-        # Log in as the "admin" user without providing its username
-        data = {"password": self.admin_password}
+        # Log in as the "root" user without providing its username
+        data = {"password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
         self.assertEqual(r.status_code, 401)
 
-        # Log in as the "admin" user without providing its password
-        data = {"username": self.admin_username}
+        # Log in as the "root" user without providing its password
+        data = {"username": "root"}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -78,9 +77,8 @@ class LoginTestCase(common.BaseTestCase):
 
         This test tries to log in as a disabled user, which shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -118,7 +116,7 @@ class LoginTestCase(common.BaseTestCase):
         This test tries to log in as a user that doesn't exist, which shouldn't
         work.
         """
-        # Log in as the "admin" user
+        # Log in
         data = {"username": "test", "password": "test_password"}
         r = self.client.post("/login", json=data)
 
@@ -131,10 +129,8 @@ class LoginTestCase(common.BaseTestCase):
         This test tries to log in as an existing user providing an invalid
         password, which shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username,
-            "password": self.admin_password + "_"}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password + "_"}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -177,13 +173,11 @@ class TokenRefreshTestCase(common.BaseTestCase):
     def test_post(self):
         """Test the Post method of the Token Refresh resource.
 
-        This test logs in as an existing user and tries to get a new,
-        not fresh, access token given the user refresh token, which should
-        work.
+        This test logs in as an existing user and tries to get a new, not
+        fresh, access token given the user refresh token, which should work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -237,9 +231,8 @@ class TokenRefreshTestCase(common.BaseTestCase):
         fresh, access token given an invalid refresh token, which shouldn't
         work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -304,9 +297,8 @@ class LogoutTestCase(common.BaseTestCase):
         This test logs in as an existing user with valid credentials and then
         tries to log out, which should work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -348,9 +340,8 @@ class LogoutTestCase(common.BaseTestCase):
         This test logs in as an existing user and then tries to log out given
         an invalid access token, which shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -404,9 +395,8 @@ class UserListTestCase(common.BaseTestCase):
         This test logs in as an administrator user and then tries to get the
         list of users, which should work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -444,7 +434,7 @@ class UserListTestCase(common.BaseTestCase):
             self.assertIn(i, u)
 
         self.assertNotIn("password", u)
-        self.assertEqual(u["username"], self.admin_username)
+        self.assertEqual(u["username"], "root")
 
     def test_post_missing_access_token(self):
         """Test the Post method of the User List resource.
@@ -464,9 +454,8 @@ class UserListTestCase(common.BaseTestCase):
         This test tries to get the list of users given an invalid access token,
         which shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -496,9 +485,8 @@ class UserListTestCase(common.BaseTestCase):
         This test logs in as a not administrator user and then tries to get the
         list of users, which shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -579,9 +567,8 @@ class UserTestCase(common.BaseTestCase):
         data and the data of another existing user, which should work in both
         cases.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -603,7 +590,7 @@ class UserTestCase(common.BaseTestCase):
         user_id = result["user_id"]
         self.assertEqual(type(user_id), int)
 
-        # Get the data of the "admin" user
+        # Get the data of the "root" user
         headers = {"Authorization": f"Bearer {access_token}"}
         r = self.client.get(f"/user/{user_id}", headers=headers)
 
@@ -621,7 +608,7 @@ class UserTestCase(common.BaseTestCase):
 
         self.assertNotIn("password", user)
         self.assertEqual(user["id"], user_id)
-        self.assertEqual(user["username"], self.admin_username)
+        self.assertEqual(user["username"], "root")
 
         # Create a not administrator user
         u = {"username": "test", "password": "test_password"}
@@ -663,9 +650,8 @@ class UserTestCase(common.BaseTestCase):
         This test logs in as a not administrator user and then tries to get its
         data, which should work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -748,9 +734,8 @@ class UserTestCase(common.BaseTestCase):
         data of another existing user given an invalid access token, which
         shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -785,9 +770,8 @@ class UserTestCase(common.BaseTestCase):
         This test logs in as a not administrator user and then tries to get the
         data of another existing user, which shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -835,7 +819,7 @@ class UserTestCase(common.BaseTestCase):
         self.assertEqual(type(access_token), str)
         self.assertNotEqual(access_token, "")
 
-        # Get the data of the "admin" user
+        # Get the data of the "root" user
         headers = {"Authorization": f"Bearer {access_token}"}
         r = self.client.get(f"/user/{user_id}", headers=headers)
 
@@ -848,9 +832,8 @@ class UserTestCase(common.BaseTestCase):
         This test logs in as an administrator user and then tries to get the
         data of another user that doesn't exist, which shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -885,9 +868,8 @@ class UserTestCase(common.BaseTestCase):
         This test logs in as an administrator user and then tries to create a
         new user, which should work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -962,9 +944,8 @@ class UserTestCase(common.BaseTestCase):
         This test logs in as an administrator user and then tries to create a
         new user providing an invalid access token, which shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -995,9 +976,8 @@ class UserTestCase(common.BaseTestCase):
         This test logs in as a not administrator user and then tries to create
         a new user, which shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1054,9 +1034,8 @@ class UserTestCase(common.BaseTestCase):
         This test logs in as an administrator user and then tries to create new
         users with some mandatory field missing, which shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1096,9 +1075,8 @@ class UserTestCase(common.BaseTestCase):
         user with a password that has more than 100 characters, which shouldn't
         work in either case.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1132,9 +1110,8 @@ class UserTestCase(common.BaseTestCase):
         new user with a username that an existing user already has, which
         shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1171,9 +1148,8 @@ class UserTestCase(common.BaseTestCase):
         This test logs in as an administrator user and then tries to create a
         new user, which should work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1235,9 +1211,8 @@ class UserTestCase(common.BaseTestCase):
         This test logs in as an administrator user and then tries to edit
         itself and another existing user, which should work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1259,7 +1234,7 @@ class UserTestCase(common.BaseTestCase):
         user_id = result["user_id"]
         self.assertEqual(type(user_id), int)
 
-        # Edit the "admin" user
+        # Edit the "root" user
         headers = {"Authorization": f"Bearer {access_token}"}
         new_user = {
             "id": user_id,
@@ -1352,9 +1327,8 @@ class UserTestCase(common.BaseTestCase):
         This test logs in as a not administrator user and then tries to edit
         itself, which should work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1476,9 +1450,8 @@ class UserTestCase(common.BaseTestCase):
         This test logs in as an administrator user and then tries to create a
         new user providing an invalid access token, which shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1509,9 +1482,8 @@ class UserTestCase(common.BaseTestCase):
         This test logs in as a not administrator user and then tries to create
         a new user, which shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1573,9 +1545,8 @@ class UserTestCase(common.BaseTestCase):
         fields of itself which are not allowed to be modified and then tries to
         modify another existing user, which shouldn't work in either case.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1645,7 +1616,7 @@ class UserTestCase(common.BaseTestCase):
             # Check status code
             self.assertEqual(r.status_code, 403)
 
-        # Edit the "admin" user
+        # Edit the "root" user
         new_user = {"id": admin_user_id, "name": "Admin 2"}
         r = self.client.put("/user", headers=headers, json=new_user)
 
@@ -1658,9 +1629,8 @@ class UserTestCase(common.BaseTestCase):
         This test logs in as an administrator user and then tries to create new
         users with some mandatory field missing, which shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1700,9 +1670,8 @@ class UserTestCase(common.BaseTestCase):
         user with a password that has more than 100 characters, which shouldn't
         work in either case.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1737,9 +1706,8 @@ class UserTestCase(common.BaseTestCase):
         to change it with another one that has more than 100 characters, which
         shouldn't work in either case.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1761,7 +1729,7 @@ class UserTestCase(common.BaseTestCase):
         user_id = result["user_id"]
         self.assertEqual(type(user_id), int)
 
-        # Edit the "admin" user
+        # Edit the "root" user
         headers = {"Authorization": f"Bearer {access_token}"}
 
         for p in ("test", "test" * 100):
@@ -1778,9 +1746,8 @@ class UserTestCase(common.BaseTestCase):
         new user with a username that an existing user already has, which
         shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1817,9 +1784,8 @@ class UserTestCase(common.BaseTestCase):
         This test logs in as an administrator user and then tries to edit
         another user that doesn't exist, which shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1855,9 +1821,8 @@ class UserTestCase(common.BaseTestCase):
         This test logs in as an administrator user, tries to create a new user
         and then tries to delete it, which should work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1946,9 +1911,8 @@ class UserTestCase(common.BaseTestCase):
         another existing user providing an invalid access token, which
         shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1970,7 +1934,7 @@ class UserTestCase(common.BaseTestCase):
         user_id = result["user_id"]
         self.assertEqual(type(user_id), int)
 
-        # Delete the "admin" user providing an invalid access token
+        # Delete the "root" user providing an invalid access token
         headers = {"Authorization": f"Bearer {access_token + '_'}"}
         r = self.client.delete(f"/user/{user_id}", headers=headers)
 
@@ -1983,9 +1947,8 @@ class UserTestCase(common.BaseTestCase):
         This test logs in as an administrator user and then tries to delete
         this user providing a not fresh access token, which shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -2025,7 +1988,7 @@ class UserTestCase(common.BaseTestCase):
         self.assertEqual(type(access_token), str)
         self.assertNotEqual(access_token, "")
 
-        # Delete the "admin" user
+        # Delete the "root" user
         headers = {"Authorization": f"Bearer {access_token}"}
         r = self.client.delete(f"/user/{user_id}", headers=headers)
 
@@ -2038,9 +2001,8 @@ class UserTestCase(common.BaseTestCase):
         This test logs in as a not administrator user and then tries to delete
         itself and another existing user, which shouldn't work in either case.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -2106,7 +2068,7 @@ class UserTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 403)
 
-        # Delete the "admin" user
+        # Delete the "root" user
         r = self.client.delete(f"/user/{admin_user_id}", headers=headers)
 
         # Check status code
@@ -2118,9 +2080,8 @@ class UserTestCase(common.BaseTestCase):
         This test logs in as an administrator user and then tries to delete
         another user that doesn't exist, which shouldn't work.
         """
-        # Log in as the "admin" user
-        data = {
-            "username": self.admin_username, "password": self.admin_password}
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
