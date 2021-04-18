@@ -42,6 +42,18 @@ def get_config() -> Config:
     return host, port, db_uri
 
 
+def set_config(host: str, port: int, db_uri: str):
+    """Set the configuration values.
+
+    :param host: Host. E.g. "localhost", "127.0.0.1", "0.0.0.0".
+    :param port: Port. E.g. 5000.
+    :db_uri: DB URI. E.g. "sqlite:///<path>".
+    """
+    uc.set_setting_value(HOST_SET, host)
+    uc.set_setting_value(PORT_SET, port)
+    uc.set_setting_value(DB_URI_SET, db_uri)
+
+
 def config():
     """Open the configuration user interface.
 
@@ -72,6 +84,4 @@ def config():
     if db_uri == "":
         db_uri = None
 
-    uc.set_setting_value(HOST_SET, host)
-    uc.set_setting_value(PORT_SET, port)
-    uc.set_setting_value(DB_URI_SET, db_uri)
+    set_config(host, port, db_uri)
