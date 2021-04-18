@@ -162,14 +162,16 @@ class UserResource(Resource):
         """Handle a User Post request.
 
         Save a new user with the given data. This endpoint requires
-        administrator permissions.
+        administrator permissions and creating a user whose username is "root"
+        is not allowed.
 
         :return: Dictionary with the message and the user ID as the result.
         """
         data = request.get_json()
 
-        # Check that the request is not for updating an existing user
-        if "id" in data:
+        # Check if the request is either for updating an existing user or for
+        # creating a new user whose username is "root".
+        if "id" in data or ("username" in data and data["username"] == "root"):
             return get_response_data(OPERATION_NOT_ALLOWED), 403
 
         # Check permissions
@@ -204,7 +206,8 @@ class UserResource(Resource):
         Save a new or existing user with the given data. The current user, if
         they aren't an administrator, can only call this endpoint to update
         their own user's fields, except their "username", "admin" or "enabled"
-        fields.
+        fields. Neither creating a user whose username is "root" nor changing
+        the "root" user's username are allowed.
 
         :return: Dictionary with the message and, if the user has been created,
         the user ID as the result.
@@ -232,13 +235,16 @@ class UserResource(Resource):
                 return get_response_data(USER_UNAUTHORIZED), 403
 
             if "username" in data:
-                # Check if the value of the username is new and if there is
-                # another existing user with the same username.
-                if (
-                    data["username"] != user.username and
-                    User.get_by_username(data["username"])
-                ):
-                    return get_response_data(USER_EXISTS), 400
+                # Check if the value of the username is new
+                if data["username"] != user.username:
+                    # Check if the new username is "root"
+                    if user.username == "root":
+                        return get_response_data(OPERATION_NOT_ALLOWED), 403
+
+                    # Check if there is another existing user with the same new
+                    # username.
+                    if User.get_by_username(data["username"]):
+                        return get_response_data(USER_EXISTS), 400
 
                 user.username = data["username"]
 
@@ -271,6 +277,11 @@ class UserResource(Resource):
             # Check permissions
             if not jwt["admin"]:
                 return get_response_data(USER_UNAUTHORIZED), 403
+
+            # Check if the request is for creating a user whose username is
+            # "root".
+            if "username" in data and data["username"] == "root":
+                return get_response_data(OPERATION_NOT_ALLOWED), 403
 
             # Validate password length
             c = len(data["password"])
@@ -305,7 +316,7 @@ class UserResource(Resource):
         """Handle a User Delete request.
 
         Delete an existing user given its ID. This endpoint requires
-        administrator permissions.
+        administrator permissions and deleting the "root" user is not allowed.
 
         :param _id: User ID.
         :return: Dictionary with the message.
@@ -316,7 +327,10 @@ class UserResource(Resource):
 
         user = User.get_by_id(_id)
 
-        if not user:
+        # Check if the user doesn't exist or is "root"
+        if user and user.username == "root":
+            return get_response_data(OPERATION_NOT_ALLOWED), 403
+        elif not user:
             return get_response_data(USER_NOT_FOUND), 404
 
         user.delete()

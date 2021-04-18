@@ -1142,6 +1142,38 @@ class UserTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 400)
 
+    def test_post_root(self):
+        """Test the Post method of the User resource.
+
+        This test logs in as an administrator user and then tries to create a
+        new user whose username is "root", which shouldn't work.
+        """
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Create a user
+        headers = {"Authorization": f"Bearer {access_token}"}
+        u = {"username": "root", "password": "test_password"}
+        r = self.client.post("/user", headers=headers, json=u)
+
+        # Check status code
+        self.assertEqual(r.status_code, 403)
+
     def test_put_new(self):
         """Test the Put method of the User resource.
 
@@ -1234,11 +1266,11 @@ class UserTestCase(common.BaseTestCase):
         user_id = result["user_id"]
         self.assertEqual(type(user_id), int)
 
-        # Edit the "root" user
+        # Edit the "root" user fields except the username (which is not allowed
+        # to be modified).
         headers = {"Authorization": f"Bearer {access_token}"}
         new_user = {
             "id": user_id,
-            "username": "admin_2",
             "password": "test_password",
             "admin": True,
             "enabled": True,
@@ -1264,7 +1296,7 @@ class UserTestCase(common.BaseTestCase):
         for i in ("id", "username", "admin", "enabled", "name", "email"):
             self.assertIn(i, user)
 
-            if i != "id":
+            if i not in ("id", "username"):
                 self.assertEqual(user[i], new_user[i])
 
         self.assertNotIn("password", user)
@@ -1733,7 +1765,7 @@ class UserTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
 
         for p in ("test", "test" * 100):
-            u = {"id": user_id, "username": "test", "password": p}
+            u = {"id": user_id, "password": p}
             r = self.client.put("/user", headers=headers, json=u)
 
             # Check status code
@@ -1778,6 +1810,38 @@ class UserTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 400)
 
+    def test_put_new_root(self):
+        """Test the Put method of the User resource.
+
+        This test logs in as an administrator user and then tries to create a
+        new user whose username is "root", which shouldn't work.
+        """
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Create a user
+        headers = {"Authorization": f"Bearer {access_token}"}
+        u = {"username": "root", "password": "test_password"}
+        r = self.client.put("/user", headers=headers, json=u)
+
+        # Check status code
+        self.assertEqual(r.status_code, 403)
+
     def test_put_edit_user_not_found(self):
         """Test the Put method of the User resource.
 
@@ -1814,6 +1878,43 @@ class UserTestCase(common.BaseTestCase):
 
         # Check status code
         self.assertEqual(r.status_code, 404)
+
+    def test_put_edit_user_root(self):
+        """Test the Put method of the User resource.
+
+        This test logs in as an administrator user and then tries to change the
+        "root" user's username, which shouldn't work.
+        """
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Check user ID
+        self.assertIn("user_id", result)
+        user_id = result["user_id"]
+        self.assertEqual(type(user_id), int)
+
+        # Edit the "root" user's username
+        headers = {"Authorization": f"Bearer {access_token}"}
+        u = {"id": user_id, "username": "root_2"}
+        r = self.client.put("/user", headers=headers, json=u)
+
+        # Check status code
+        self.assertEqual(r.status_code, 403)
 
     def test_delete(self):
         """Test the Delete method of the User resource.
@@ -2109,6 +2210,42 @@ class UserTestCase(common.BaseTestCase):
 
         # Check status code
         self.assertEqual(r.status_code, 404)
+
+    def test_delete_root(self):
+        """Test the Delete method of the User resource.
+
+        This test logs in as an administrator user and then tries to delete
+        the "root" user, which shouldn't work.
+        """
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Check user ID
+        self.assertIn("user_id", result)
+        user_id = result["user_id"]
+        self.assertEqual(type(user_id), int)
+
+        # Delete the "root" user
+        headers = {"Authorization": f"Bearer {access_token}"}
+        r = self.client.delete(f"/user/{user_id}", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 403)
 
 
 if __name__ == "__main__":
