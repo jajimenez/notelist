@@ -11,6 +11,6 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         """User schema metadata."""
 
         model = User
-        load_only = ("password",)
+        load_only = ["password"]
         ordered = True
         load_instance = True
