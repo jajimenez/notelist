@@ -11,5 +11,7 @@ class NotebookSchema(ma.SQLAlchemyAutoSchema):
         """Notebook schema metadata."""
 
         model = Notebook
+        include_fk = True
+        exclude = ["user_id"]
         ordered = True
         load_instance = True
