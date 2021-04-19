@@ -147,7 +147,7 @@ class UserResource(Resource):
         # Check permissions
         jwt = get_jwt()  # JWT payload data
 
-        if not jwt["admin"] and jwt["id"] != _id:
+        if not jwt["admin"] and jwt["user_id"] != _id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
         user = User.get_by_id(_id)
@@ -203,7 +203,7 @@ class UserResource(Resource):
     def put(self) -> Response:
         """Handle a User Put request.
 
-        Save a new or existing user with the given data. The current user, if
+        Save a new or existing user with the given data. The request user, if
         they aren't an administrator, can only call this endpoint to update
         their own user's fields, except their "username", "admin" or "enabled"
         fields. Neither creating a user whose username is "root" nor changing
@@ -229,7 +229,7 @@ class UserResource(Resource):
             # Check permissions
             if (
                 not jwt["admin"] and (
-                    not user or jwt["id"] != user.id or "username" in data
+                    not user or jwt["user_id"] != user.id or "username" in data
                     or "admin" in data or "enabled" in data)
             ):
                 return get_response_data(USER_UNAUTHORIZED), 403
