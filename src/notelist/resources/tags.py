@@ -28,8 +28,8 @@ class TagResource(Resource):
         """Handle a Tag Get request.
 
         Return the tag with the given ID. The current request user can only
-        call this endpoint for the tags of their own notebooks, unless they are
-        an administrator.
+        call this endpoint for a tag of any of their own notebooks, unless they
+        are an administrator.
 
         :param _id: Tag ID.
         :return: Dictionary with the message and result.
@@ -38,7 +38,10 @@ class TagResource(Resource):
         jwt = get_jwt()  # JWT payload data
         tag = Tag.get_by_id(_id)
 
-        if not jwt["admin"] and (not tag or jwt["id"] != tag.notebook.user.id):
+        if (
+            not jwt["admin"] and (
+                not tag or jwt["user_id"] != tag.notebook.user.id)
+        ):
             return get_response_data(USER_UNAUTHORIZED), 403
 
         return get_response_data(TAG_RETRIEVED, tag_schema.dump(tag)), 200
@@ -63,7 +66,7 @@ class TagResource(Resource):
         jwt = get_jwt()  # JWT payload data
         tag = tag_schema.load(data)
 
-        if not jwt["admin"] and jwt["id"] != tag.notebook.user.id:
+        if not jwt["admin"] and jwt["user_id"] != tag.notebook.user.id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
         # Save the tag
@@ -99,7 +102,7 @@ class TagResource(Resource):
             # Check permissions
             if (
                 not jwt["admin"] and
-                (not tag or jwt["id"] != tag.notebook.user.id)
+                (not tag or jwt["user_id"] != tag.notebook.user.id)
             ):
                 return get_response_data(USER_UNAUTHORIZED), 403
 
@@ -126,7 +129,7 @@ class TagResource(Resource):
             result = True
 
             # Check permissions
-            if not jwt["admin"] and jwt["id"] != tag.notebook.user.id:
+            if not jwt["admin"] and jwt["user_id"] != tag.notebook.user.id:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
             # Check if there is another existing tag with the same name in the
@@ -158,7 +161,10 @@ class TagResource(Resource):
         jwt = get_jwt()  # JWT payload data
         tag = Tag.get_by_id(_id)
 
-        if not jwt["admin"] and (not tag or jwt["id"] != tag.notebook.user.id):
+        if (
+            not jwt["admin"] and (
+                not tag or jwt["user_id"] != tag.notebook.user.id)
+        ):
             return get_response_data(USER_UNAUTHORIZED), 403
 
         tag.delete()
