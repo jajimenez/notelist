@@ -26,7 +26,7 @@ class Notebook(db.Model):
         :param user_id: User ID.
         :return: List of `Notebook` instances.
         """
-        return cls.query.filter_by(user_id=user_id).all()
+        return cls.query.filter_by(user_id=user_id).order_by(Notebook.id).all()
 
     @classmethod
     def get_by_id(cls, _id: int) -> "Notebook":

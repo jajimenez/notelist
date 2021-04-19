@@ -25,7 +25,7 @@ class User(db.Model):
 
         :return: List of `User` instances.
         """
-        return cls.query.all()
+        return cls.query.order_by(User.id).all()
 
     @classmethod
     def get_by_id(cls, _id: int) -> "User":

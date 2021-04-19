@@ -28,7 +28,9 @@ class Tag(db.Model):
         :param notebook_id: Notebook ID.
         :return: List of `Tag` instances.
         """
-        return cls.query.filter_by(notebook_id=notebook_id).all()
+        return (
+            cls.query.filter_by(notebook_id=notebook_id).order_by(Tag.id)
+            .all())
 
     @classmethod
     def get_by_id(cls, _id: int) -> "Tag":
