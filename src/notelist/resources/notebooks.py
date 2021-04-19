@@ -80,18 +80,17 @@ class NotebookResource(Resource):
     def post(self) -> Response:
         """Handle a Notebook Post request.
 
-        Save a new notebook with the given data for the request user.
+        Save a new notebook of the request user given the request data.
 
         :return: Dictionary with the message and the notebook ID as the result.
         """
-        # Check that the request is not for updating an existing notebook
-        data = request.get_json()
-
-        if "id" in data:
-            return get_response_data(OPERATION_NOT_ALLOWED), 403
-
         jwt = get_jwt()  # JWT payload data
         user_id = jwt["user_id"]
+        data = request.get_json()
+
+        # Check that the request is not for updating an existing notebook
+        if "id" in data:
+            return get_response_data(OPERATION_NOT_ALLOWED), 403
 
         notebook = notebook_schema.load(data)
         notebook.user_id = user_id
@@ -109,14 +108,14 @@ class NotebookResource(Resource):
     def put(self) -> Response:
         """Handle a Notebook Put request.
 
-        Save a new or existing notebook with the given data. The current
-        request user can only call this endpoint if the notebook is one of
-        theirs, unless they are an administrator.
+        Save a new or existing notebook of the request user with the given
+        request data.
 
         :return: Dictionary with the message and, if the notebook has been
         created, the notebook ID as the result.
         """
         jwt = get_jwt()  # JWT payload data
+        user_id = jwt["user_id"]
         data = request.get_json()
 
         # If there isn't any ID in the request data, we create a new notebook.
@@ -127,15 +126,8 @@ class NotebookResource(Resource):
             notebook = Notebook.get_by_id(data["id"])
             result = False
 
-            if jwt["admin"] and not notebook:
-                return get_response_data(NOTEBOOK_NOT_FOUND), 404
-
             # Check permissions
-            if (
-                not jwt["admin"] and (
-                    not notebook or jwt["user_id"] != notebook.user.id
-                    or "user_id" in data)
-            ):
+            if not notebook or user_id != notebook.user.id:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
             if "name" in data:
@@ -143,21 +135,11 @@ class NotebookResource(Resource):
                 # existing notebook of the same user with the same name.
                 if (
                     data["name"] != notebook.name and
-                    Notebook.get_by_name(notebook.user.id, data["name"])
+                    Notebook.get_by_name(user_id, data["name"])
                 ):
                     return get_response_data(NOTEBOOK_EXISTS), 400
 
                 notebook.name = data["name"]
-
-            if "tags" in data:
-                notebook.tags = tag_list_schema.load(data["tags"])
-
-            # At this point "user_id" can only be in "data" if the current
-            # request user is an administrator. If the user is not an
-            # adminstrator and "user_id" is in "data", we would have returned a
-            # 403 response when we checked the permissions.
-            if "user_id" in data:
-                notebook.user = user_schema.load(data["user_id"])
 
             message = NOTEBOOK_UPDATED
             code = 200
@@ -166,15 +148,12 @@ class NotebookResource(Resource):
             # fields is missing, a "marshmallow.ValidationError" exception is
             # raised.
             notebook = notebook_schema.load(data)
+            notebook.user_id = user_id
             result = True
 
-            # Check permissions
-            if not jwt["admin"] and jwt["user_id"] != notebook.user.id:
-                return get_response_data(USER_UNAUTHORIZED), 403
-
             # Check if there is another existing notebook with the same name
-            # for the current request user.
-            if Notebook.get_by_name(notebook.user.id, tag.name):
+            # for the request user.
+            if Notebook.get_by_name(user_id, notebook.name):
                 return get_response_data(NOTEBOOK_EXISTS), 400
 
             message = NOTEBOOK_CREATED
@@ -190,22 +169,20 @@ class NotebookResource(Resource):
     def delete(self, _id: int) -> Response:
         """Handle a Notebook Delete request.
 
-        Delete an existing notebook given its ID. The current request user can
-        only call this endpoint if the notebook is one of theirs, unless they
-        are an administrator.
+        Delete an existing notebook of the request user given the notebook ID.
 
         :param _id: Notebook ID.
         :return: Dictionary with the message.
         """
         # Check permissions
         jwt = get_jwt()  # JWT payload data
+        user_id = jwt["user_id"]
         notebook = Notebook.get_by_id(_id)
 
-        if (
-            not jwt["admin"] and (
-                not notebook or jwt["user_id"] != notebook.user.id)
-        ):
+        if not notebook or user_id != notebook.user.id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
+        # Delete the notebook
         notebook.delete()
+
         return get_response_data(NOTEBOOK_DELETED), 200
