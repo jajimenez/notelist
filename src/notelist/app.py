@@ -17,6 +17,7 @@ from notelist.resources import get_response_data, Response
 from notelist.resources.users import (
     LoginResource, TokenRefreshResource, LogoutResource, UserListResource,
     UserResource, blocklist)
+from notelist.resources.notebooks import NotebookListResource, NotebookResource
 from notelist.models.users import User
 
 
@@ -28,6 +29,7 @@ JwtData = Dict[str, Union[int, str]]
 VALIDATION_ERROR = "Validation error: {}."
 ACCESS_TOKEN_MISSING = "Access token missing."
 FRESH_ACCESS_TOKEN_REQ = "Fresh access token required."
+EXPIRED_TOKEN = "Expired token."
 INVALID_ACCESS_TOKEN = "Invalid access token."
 CONF_NOT_SET = (
     'Configuration parameters not defined.\nTo set the parameters, run '
@@ -59,6 +61,8 @@ api.add_resource(TokenRefreshResource, "/refresh")
 api.add_resource(LogoutResource, "/logout")
 api.add_resource(UserListResource, "/users")
 api.add_resource(UserResource, "/user", "/user/<int:_id>")
+api.add_resource(NotebookListResource, "/notebooks")
+api.add_resource(NotebookResource, "/notebook", "/notebook/<int:_id>")
 
 # User login
 jwt = JWTManager(app)
@@ -119,9 +123,22 @@ def unauthorized_loader(error: str) -> Response:
 def needs_fresh_token_loader(header: JwtData, payload: JwtData) -> Response:
     """Handle requests with a not fresh JWT.
 
+    :param header: JWT header data.
+    :param payload: JWT payload data.
     :return: Dictionary containing the error message.
     """
     return get_response_data(FRESH_ACCESS_TOKEN_REQ), 401
+
+
+@jwt.expired_token_loader
+def expired_token_loader(header: JwtData, payload: JwtData) -> Response:
+    """Handle requests with an expired JWT.
+
+    :param header: JWT header data.
+    :param payload: JWT payload data.
+    :return: Dictionary containing the error message.
+    """
+    return get_response_data(EXPIRED_TOKEN), 401
 
 
 @jwt.invalid_token_loader
@@ -138,8 +155,8 @@ def invalid_token_loader(error: str) -> Response:
 def blocklist_loader(header: JwtData, payload: JwtData) -> bool:
     """Check if a JWT has been revoked (callback function).
 
-    :param header: Header data of the JWT.
-    :param payload: Payload data of the JWT.
+    :param header: JWT header data.
+    :param payload: JWT payload data.
     :return: Whether the given JWT has been revoked or not.
     """
     return payload["jti"] in blocklist
@@ -153,7 +170,7 @@ def additional_claims_loader(identity) -> Dict[str, bool]:
     :return: Dictionary with additional information about the request user.
     """
     user = User.get_by_id(identity)
-    return {"id": user.id, "admin": user.admin}
+    return {"user_id": user.id, "admin": user.admin}
 
 
 @app.route("/")
