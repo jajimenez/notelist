@@ -2,13 +2,14 @@
 
 from flask import request
 from flask_restful import Resource
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt
 
 from notelist.models.notebooks import Notebook
 from notelist.schemas.notebooks import NotebookSchema
 from notelist.schemas.users import UserSchema
 from notelist.schemas.tags import TagSchema
-from notelist.resources import Response, USER_UNAUTHORIZED, get_response_data
+from notelist.resources import Response, OPERATION_NOT_ALLOWED, \
+    USER_UNAUTHORIZED, get_response_data
 
 
 NOTEBOOK_RETRIEVED_1 = "1 notebook retrieved."
@@ -34,7 +35,7 @@ class NotebookListResource(Resource):
     def get(self) -> Response:
         """Handle a Notebook List Get request.
 
-        Return all the notebooks of the current user.
+        Return all the notebooks of the request user.
 
         :return: Dictionary with the message and result.
         """
@@ -69,7 +70,7 @@ class NotebookResource(Resource):
         jwt = get_jwt()  # JWT payload data
         n = Notebook.get_by_id(_id)
 
-        if not jwt["admin"] and (not n or jwt["id"] != n.user.id):
+        if not jwt["admin"] and (not n or jwt["user_id"] != n.user.id):
             return get_response_data(USER_UNAUTHORIZED), 403
 
         return get_response_data(
@@ -79,9 +80,7 @@ class NotebookResource(Resource):
     def post(self) -> Response:
         """Handle a Notebook Post request.
 
-        Save a new notebook with the given data. The current request user can
-        only call this endpoint if the notebook is one of theirs, unless they
-        are an administrator.
+        Save a new notebook with the given data for the request user.
 
         :return: Dictionary with the message and the notebook ID as the result.
         """
@@ -91,12 +90,15 @@ class NotebookResource(Resource):
         if "id" in data:
             return get_response_data(OPERATION_NOT_ALLOWED), 403
 
-        # Check permissions
         jwt = get_jwt()  # JWT payload data
-        notebook = notebook_schema.load(data)
+        user_id = jwt["user_id"]
 
-        if not jwt["admin"] and jwt["id"] != nnotebook.user.id:
-            return get_response_data(USER_UNAUTHORIZED), 403
+        notebook = notebook_schema.load(data)
+        notebook.user_id = user_id
+
+        # Check that if the notebook already exists
+        if Notebook.get_by_name(user_id, notebook.name):
+            return get_response_data(NOTEBOOK_EXISTS), 400
 
         # Save the notebook
         notebook.save()
@@ -131,7 +133,7 @@ class NotebookResource(Resource):
             # Check permissions
             if (
                 not jwt["admin"] and (
-                    not notebook or jwt["id"] != notebook.user.id
+                    not notebook or jwt["user_id"] != notebook.user.id
                     or "user_id" in data)
             ):
                 return get_response_data(USER_UNAUTHORIZED), 403
@@ -167,7 +169,7 @@ class NotebookResource(Resource):
             result = True
 
             # Check permissions
-            if not jwt["admin"] and jwt["id"] != notebook.user.id:
+            if not jwt["admin"] and jwt["user_id"] != notebook.user.id:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
             # Check if there is another existing notebook with the same name
@@ -201,7 +203,7 @@ class NotebookResource(Resource):
 
         if (
             not jwt["admin"] and (
-                not notebook or jwt["id"] != notebook.user.id)
+                not notebook or jwt["user_id"] != notebook.user.id)
         ):
             return get_response_data(USER_UNAUTHORIZED), 403
 
