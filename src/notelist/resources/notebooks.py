@@ -59,22 +59,21 @@ class NotebookResource(Resource):
     def get(self, _id: int) -> Response:
         """Handle a Notebook Get request.
 
-        Return the notebook with the given ID. The current request user can
-        only call this endpoint for their own notebooks, unless they are an
-        administrator.
+        Return the request user notebook with the given ID.
 
         :param _id: Notebook ID.
         :return: Dictionary with the message and result.
         """
         # Check permissions
         jwt = get_jwt()  # JWT payload data
-        n = Notebook.get_by_id(_id)
+        user_id = jwt["user_id"]
+        notebook = Notebook.get_by_id(_id)
 
-        if not jwt["admin"] and (not n or jwt["user_id"] != n.user.id):
+        if not notebook or user_id != notebook.user.id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
         return get_response_data(
-            NOTEBOOK_RETRIEVED, notebook_schema.dump(n)), 200
+            NOTEBOOK_RETRIEVED, notebook_schema.dump(notebook)), 200
 
     @jwt_required()
     def post(self) -> Response:
