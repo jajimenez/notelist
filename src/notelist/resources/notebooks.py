@@ -11,6 +11,8 @@ from notelist.schemas.tags import TagSchema
 from notelist.resources import Response, USER_UNAUTHORIZED, get_response_data
 
 
+NOTEBOOK_RETRIEVED_1 = "1 notebook retrieved."
+NOTEBOOK_RETRIEVED_N = "{} notebooks retrieved."
 NOTEBOOK_RETRIEVED = "Notebook retrieved."
 NOTEBOOK_CREATED = "Notebook created."
 NOTEBOOK_UPDATED = "Notebook updated."
@@ -19,9 +21,34 @@ NOTEBOOK_NOT_FOUND = "Notebook not found."
 NOTEBOOK_EXISTS = (
     "Another notebook with the same name already exists for the user.")
 
+notebook_list_schema = NotebookSchema(many=True)
 notebook_schema = NotebookSchema()
 user_schema = UserSchema()
 tag_list_schema = TagSchema(many=True)
+
+
+class NotebookListResource(Resource):
+    """Notebook List resource."""
+
+    @jwt_required()
+    def get(self) -> Response:
+        """Handle a Notebook List Get request.
+
+        Return all the notebooks of the current user.
+
+        :return: Dictionary with the message and result.
+        """
+        user_id = get_jwt()["user_id"]
+        notebooks = Notebook.get_all_by_user(user_id)
+        count = len(notebooks)
+
+        if count == 1:
+            message = NOTEBOOK_RETRIEVED_1
+        else:
+            message = NOTEBOOK_RETRIEVED_N.format(count)
+
+        return get_response_data(
+            message, notebook_list_schema.dump(notebooks)), 200
 
 
 class NotebookResource(Resource):
