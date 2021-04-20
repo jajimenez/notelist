@@ -1107,8 +1107,8 @@ class UserTestCase(common.BaseTestCase):
         """Test the Post method of the User resource.
 
         This test logs in as an administrator user and then tries to create a
-        new user with a username that an existing user already has, which
-        shouldn't work.
+        new user with the same username of an existing user, which shouldn't
+        work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
