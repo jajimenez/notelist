@@ -19,8 +19,7 @@ NOTEBOOK_CREATED = "Notebook created."
 NOTEBOOK_UPDATED = "Notebook updated."
 NOTEBOOK_DELETED = "Notebook deleted."
 NOTEBOOK_NOT_FOUND = "Notebook not found."
-NOTEBOOK_EXISTS = (
-    "Another notebook with the same name already exists for the user.")
+NOTEBOOK_EXISTS = "The user already has a notebook with the same name."
 
 notebook_list_schema = NotebookSchema(many=True)
 notebook_schema = NotebookSchema()
