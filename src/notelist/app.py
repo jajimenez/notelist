@@ -18,6 +18,7 @@ from notelist.resources.users import (
     LoginResource, TokenRefreshResource, LogoutResource, UserListResource,
     UserResource, blocklist)
 from notelist.resources.notebooks import NotebookListResource, NotebookResource
+from notelist.resources.tags import TagResource
 from notelist.models.users import User
 
 
@@ -63,6 +64,7 @@ api.add_resource(UserListResource, "/users")
 api.add_resource(UserResource, "/user", "/user/<int:_id>")
 api.add_resource(NotebookListResource, "/notebooks")
 api.add_resource(NotebookResource, "/notebook", "/notebook/<int:_id>")
+api.add_resource(TagResource, "/tag", "/tag/<int:_id>")
 
 # User login
 jwt = JWTManager(app)
