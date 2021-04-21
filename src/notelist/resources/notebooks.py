@@ -36,7 +36,7 @@ class NotebookListResource(Resource):
         :return: Dictionary with the message and result.
         """
         user_id = get_jwt()["user_id"]
-        notebooks = Notebook.get_all_by_user(user_id)
+        notebooks = Notebook.get_all(user_id)
         count = len(notebooks)
 
         if count == 1:

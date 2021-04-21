@@ -20,7 +20,7 @@ class Notebook(db.Model):
         db.UniqueConstraint(user_id, name, name="un_notebooks_uid_name"),)
 
     @classmethod
-    def get_all_by_user(cls, user_id: int) -> List["Notebook"]:
+    def get_all(cls, user_id: int) -> List["Notebook"]:
         """Return all the notebooks from the database of a given user.
 
         :param user_id: User ID.

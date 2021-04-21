@@ -10,19 +10,56 @@ from notelist.schemas.tags import TagSchema
 from notelist.resources import Response, USER_UNAUTHORIZED, get_response_data
 
 
+TAG_RETRIEVED_1 = "1 tag retrieved."
+TAG_RETRIEVED_N = "{} tags retrieved."
 TAG_RETRIEVED = "Tag retrieved."
 TAG_CREATED = "Tag created."
 TAG_UPDATED = "Tag updated."
 TAG_DELETED = "Tag deleted."
-TAG_EXISTS = "Another tag with the same name already exists in the notebook."
+TAG_EXISTS = "A tag with the same name already exists in the notebook."
 
+tag_list_schema = TagSchema(many=True)
 tag_schema = TagSchema()
+
+
+class TagListResource(Resource):
+    """Tag resource.
+
+    This resource manages the operations of all the tags of a notebook.
+    """
+
+    @jwt_required()
+    def get(self, _id: int) -> Response:
+        """Handle a Tag List Get request.
+
+        Return all the tags of a notebook given the notebook ID. The request
+        user can only call this endpoint for one of their notebooks.
+
+        :param _id: Notebook ID.
+        :return: Dictionary with the message and result.
+        """
+        # Check permissions
+        jwt = get_jwt()  # JWT payload data
+        notebook = Notebook.get_by_id(_id)
+
+        if not notebook or jwt["user_id"] != notebook.user.id:
+            return get_response_data(USER_UNAUTHORIZED), 403
+
+        tags = Tag.get_all(notebook.id)
+        count = len(tags)
+
+        if count == 1:
+            message = TAG_RETRIEVED_1
+        else:
+            message = TAG_RETRIEVED_N.format(count)
+
+        return get_response_data(message, tag_list_schema.dump(tags)), 200
 
 
 class TagResource(Resource):
     """Tag resource.
 
-    This resource manages the operations of the notebook tags.
+    This resource manages the operations of a single notebook tag.
     """
 
     @jwt_required()
@@ -62,9 +99,14 @@ class TagResource(Resource):
         # Check permissions
         jwt = get_jwt()  # JWT payload data
         tag = tag_schema.load(data)
+        notebook = Notebook.get_by_id(tag.notebook_id)
 
-        if jwt["user_id"] != tag.notebook.user.id:
+        if not notebook or jwt["user_id"] != notebook.user.id:
             return get_response_data(USER_UNAUTHORIZED), 403
+
+        # Check if a tag with the same name already exists in the notebook
+        if Tag.get_by_name(notebook.id, tag.name):
+            return get_response_data(TAG_EXISTS), 400
 
         # Save the tag
         tag.save()
@@ -82,6 +124,7 @@ class TagResource(Resource):
         the tag ID as the result.
         """
         jwt = get_jwt()  # JWT payload data
+        user_id = jwt["user_id"]
         data = request.get_json()
 
         # If there isn't any ID in the request data, we create a new tag.
@@ -93,15 +136,29 @@ class TagResource(Resource):
             result = False
 
             # Check permissions
-            if not tag or jwt["user_id"] != tag.notebook.user.id:
+            if not tag or user_id != tag.notebook.user.id:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
+            if "notebook_id" in data:
+                # Check if the value of the notebook ID is new and if the user
+                # of the new notebook is the request user.
+                if data["notebook_id"] != tag.notebook.id:
+                    notebook = Notebook.get_by_id(data["notebook_id"])
+
+                    if not notebook or user_id != notebook.user.id:
+                        return get_response_data(USER_UNAUTHORIZED), 403
+
             if "name" in data:
-                # Check if the value of the name is new and if there is another
-                # existing tag with the same name in the same notebook.
+                # Check if the value of the name is new and if there is an
+                # existing tag with the same name in the notebook.
+                if "notebook_id" in data:
+                    notebook_id = data["notebook_id"] 
+                else:
+                    notebook_id = tag.notebook.id
+
                 if (
                     data["name"] != tag.name and
-                    Tag.get_by_name(data["notebook_id"], data["name"])
+                    Tag.get_by_name(notebook_id, data["name"])
                 ):
                     return get_response_data(TAG_EXISTS), 400
 
