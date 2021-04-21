@@ -11,7 +11,7 @@ class NotebookListTestCase(common.BaseTestCase):
         """Test the Get method of the Notebook List resource.
 
         This test logs in as some user, creates some notebooks and then tries
-        to get their notebook list, which should work.
+        to get the user's notebook list, which should work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -90,8 +90,8 @@ class NotebookListTestCase(common.BaseTestCase):
     def test_get_invalid_access_token(self):
         """Test the Get method of the Notebook List resource.
 
-        This test logs in as some user and then tries to get their notebook
-        list providing an invalid access token, which shouldn't work.
+        This test logs in as some user and then tries to get the user's
+        notebook list providing an invalid access token, which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -540,7 +540,7 @@ class NotebookTestCase(common.BaseTestCase):
     def test_put_edit(self):
         """Test the Put method of the Notebook resource.
 
-        This test logs in as some user and then tries to edit one of their
+        This test logs in as some user and then tries to edit one of the user's
         notebooks, which should work.
         """
         # Log in as the "root" user

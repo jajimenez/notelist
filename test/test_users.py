@@ -20,8 +20,8 @@ class LoginTestCase(common.BaseTestCase):
     def test_post(self):
         """Test the Get method of the Login resource.
 
-        This test tries to log in as an existing user with valid credentials,
-        which should work.
+        This test tries to log in as some user with valid credentials, which
+        should work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -55,7 +55,7 @@ class LoginTestCase(common.BaseTestCase):
     def test_post_missing_fields(self):
         """Test the Get method of the Login resource.
 
-        This test tries to log in as an existing user with some mandatory field
+        This test tries to log in as some user with some mandatory field
         missing, which shouldn't work.
         """
         # Log in as the "root" user without providing its username
@@ -75,7 +75,7 @@ class LoginTestCase(common.BaseTestCase):
     def test_post_disabled_user(self):
         """Test the Get method of the Login resource.
 
-        This test tries to log in as a disabled user, which shouldn't work.
+        This test tries to log in as some disabled user, which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -126,8 +126,8 @@ class LoginTestCase(common.BaseTestCase):
     def test_post_invalid_password(self):
         """Test the Get method of the Login resource.
 
-        This test tries to log in as an existing user providing an invalid
-        password, which shouldn't work.
+        This test tries to log in as some user providing an invalid password,
+        which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password + "_"}
@@ -173,8 +173,8 @@ class TokenRefreshTestCase(common.BaseTestCase):
     def test_post(self):
         """Test the Post method of the Token Refresh resource.
 
-        This test logs in as an existing user and tries to get a new, not
-        fresh, access token given the user refresh token, which should work.
+        This test tries to get a new, not fresh, access token providing the
+        user refresh token, which should work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -227,9 +227,8 @@ class TokenRefreshTestCase(common.BaseTestCase):
     def test_post_invalid_refresh_token(self):
         """Test the Post method of the Token Refresh resource.
 
-        This test logs in as an existing user and tries to get a new, not
-        fresh, access token given an invalid refresh token, which shouldn't
-        work.
+        This test tries to get a new, not fresh, access token given an invalid
+        refresh token, which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -294,8 +293,8 @@ class LogoutTestCase(common.BaseTestCase):
     def test_post(self):
         """Test the Post method of the Logout resource.
 
-        This test logs in as an existing user with valid credentials and then
-        tries to log out, which should work.
+        This test logs in as some user with valid credentials and then tries to
+        log out, which should work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -337,8 +336,8 @@ class LogoutTestCase(common.BaseTestCase):
     def test_post_invalid_access_token(self):
         """Test the Post method of the Logout resource.
 
-        This test logs in as an existing user and then tries to log out given
-        an invalid access token, which shouldn't work.
+        This test logs in as some user and then tries to log out providing an
+        invalid access token, which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -451,8 +450,8 @@ class UserListTestCase(common.BaseTestCase):
     def test_post_invalid_access_token(self):
         """Test the Post method of the User List resource.
 
-        This test tries to get the list of users given an invalid access token,
-        which shouldn't work.
+        This test tries to get the list of users providing an invalid access
+        token, which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -610,7 +609,7 @@ class UserTestCase(common.BaseTestCase):
         self.assertEqual(user["id"], user_id)
         self.assertEqual(user["username"], "root")
 
-        # Create a not administrator user
+        # Create a new user
         u = {"username": "test", "password": "test_password"}
         r = self.client.post("/user", headers=headers, json=u)
 
@@ -668,7 +667,7 @@ class UserTestCase(common.BaseTestCase):
         self.assertEqual(type(access_token), str)
         self.assertNotEqual(access_token, "")
 
-        # Create a not administrator user
+        # Create a new, not administrator, user.
         headers = {"Authorization": f"Bearer {access_token}"}
         u = {"username": "test", "password": "test_password", "enabled": True}
         r = self.client.post("/user", headers=headers, json=u)
@@ -721,7 +720,7 @@ class UserTestCase(common.BaseTestCase):
         This test tries to get the data of a user without providing the access
         token, which shouldn't work.
         """
-        # Get data
+        # Get the data of a user with ID 1 (which doesn't exist)
         r = self.client.get(f"/user/1")
 
         # Check status code
@@ -730,9 +729,8 @@ class UserTestCase(common.BaseTestCase):
     def test_get_invalid_access_token(self):
         """Test the Get method of the User resource.
 
-        This test logs in as an administrator user and then tries to get the
-        data of another existing user given an invalid access token, which
-        shouldn't work.
+        This test tries to get the data of some user providing an invalid
+        access token, which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -768,7 +766,7 @@ class UserTestCase(common.BaseTestCase):
         """Test the Get method of the User resource.
 
         This test logs in as a not administrator user and then tries to get the
-        data of another existing user, which shouldn't work.
+        data of another user, which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -793,7 +791,7 @@ class UserTestCase(common.BaseTestCase):
         user_id = result["user_id"]
         self.assertEqual(type(user_id), int)
 
-        # Create a not administrator user
+        # Create a new, not administrator, user.
         headers = {"Authorization": f"Bearer {access_token}"}
         u = {"username": "test", "password": "test_password", "enabled": True}
         r = self.client.post("/user", headers=headers, json=u)
@@ -830,7 +828,7 @@ class UserTestCase(common.BaseTestCase):
         """Test the Get method of the User resource.
 
         This test logs in as an administrator user and then tries to get the
-        data of another user that doesn't exist, which shouldn't work.
+        data of some user that doesn't exist, which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -855,7 +853,7 @@ class UserTestCase(common.BaseTestCase):
         user_id = result["user_id"]
         self.assertEqual(type(user_id), int)
 
-        # Get the data of the user "user_id + 1"
+        # Get the data of the user "user_id + 1" (which doesn't exist)
         headers = {"Authorization": f"Bearer {access_token}"}
         r = self.client.get(f"/user/{user_id + 1}", headers=headers)
 
@@ -994,7 +992,7 @@ class UserTestCase(common.BaseTestCase):
         self.assertEqual(type(access_token), str)
         self.assertNotEqual(access_token, "")
 
-        # Create a not administrator user
+        # Create a new, not administrator, user.
         headers = {"Authorization": f"Bearer {access_token}"}
         u = {"username": "test", "password": "test_password", "enabled": True}
         r = self.client.post("/user", headers=headers, json=u)
@@ -1107,8 +1105,7 @@ class UserTestCase(common.BaseTestCase):
         """Test the Post method of the User resource.
 
         This test logs in as an administrator user and then tries to create a
-        new user with the same username of an existing user, which shouldn't
-        work.
+        new user with the same username of another user, which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -1241,7 +1238,7 @@ class UserTestCase(common.BaseTestCase):
         """Test the Put method of the User resource.
 
         This test logs in as an administrator user and then tries to edit
-        itself and another existing user, which should work.
+        itself and another user, which should work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -1532,7 +1529,7 @@ class UserTestCase(common.BaseTestCase):
         self.assertEqual(type(access_token), str)
         self.assertNotEqual(access_token, "")
 
-        # Create a new, not administrator, user
+        # Create a new, not administrator, user.
         headers = {"Authorization": f"Bearer {access_token}"}
         user = {
             "username": "test",
@@ -1575,7 +1572,7 @@ class UserTestCase(common.BaseTestCase):
 
         This test logs in as a not administrator user, tries to edit some
         fields of itself which are not allowed to be modified and then tries to
-        modify another existing user, which shouldn't work in either case.
+        modify another user, which shouldn't work in either case.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -1775,8 +1772,7 @@ class UserTestCase(common.BaseTestCase):
         """Test the Put method of the User resource.
 
         This test logs in as an administrator user and then tries to create a
-        new user with a username that an existing user already has, which
-        shouldn't work.
+        new user with the same username of another user, which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -1845,8 +1841,8 @@ class UserTestCase(common.BaseTestCase):
     def test_put_edit_user_not_found(self):
         """Test the Put method of the User resource.
 
-        This test logs in as an administrator user and then tries to edit
-        another user that doesn't exist, which shouldn't work.
+        This test logs in as an administrator user and then tries to edit some
+        user that doesn't exist, which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -1919,8 +1915,8 @@ class UserTestCase(common.BaseTestCase):
     def test_delete(self):
         """Test the Delete method of the User resource.
 
-        This test logs in as an administrator user, tries to create a new user
-        and then tries to delete it, which should work.
+        This test logs in as an administrator user, creates a new user and then
+        tries to delete it, which should work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -1996,10 +1992,10 @@ class UserTestCase(common.BaseTestCase):
     def test_delete_missing_access_token(self):
         """Test the Delete method of the User resource.
 
-        This test tries to delete an existing user without providing the access
-        token, which shouldn't work.
+        This test tries to delete some user without providing the access token,
+        which shouldn't work.
         """
-        # Create a user
+        # Delete a user with ID 1
         r = self.client.delete("/user/1")
 
         # Check status code
@@ -2009,8 +2005,7 @@ class UserTestCase(common.BaseTestCase):
         """Test the Delete method of the User resource.
 
         This test logs in as an administrator user and then tries to delete
-        another existing user providing an invalid access token, which
-        shouldn't work.
+        some user providing an invalid access token, which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -2046,7 +2041,7 @@ class UserTestCase(common.BaseTestCase):
         """Test the Delete method of the User resource.
 
         This test logs in as an administrator user and then tries to delete
-        this user providing a not fresh access token, which shouldn't work.
+        some user providing a not fresh access token, which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -2100,7 +2095,7 @@ class UserTestCase(common.BaseTestCase):
         """Test the Delete method of the User resource.
 
         This test logs in as a not administrator user and then tries to delete
-        itself and another existing user, which shouldn't work in either case.
+        itself and another user, which shouldn't work in either case.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -2178,8 +2173,8 @@ class UserTestCase(common.BaseTestCase):
     def test_delete_user_not_found(self):
         """Test the Delete method of the User resource.
 
-        This test logs in as an administrator user and then tries to delete
-        another user that doesn't exist, which shouldn't work.
+        This test logs in as an administrator user and then tries to delete a
+        user that doesn't exist, which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -2204,7 +2199,7 @@ class UserTestCase(common.BaseTestCase):
         user_id = result["user_id"]
         self.assertEqual(type(user_id), int)
 
-        # Delete the user with ID "user_id + 1"
+        # Delete the user with ID "user_id + 1", which doesn't exist.
         headers = {"Authorization": f"Bearer {access_token}"}
         r = self.client.delete(f"/user/{user_id + 1}", headers=headers)
 
@@ -2214,8 +2209,8 @@ class UserTestCase(common.BaseTestCase):
     def test_delete_root(self):
         """Test the Delete method of the User resource.
 
-        This test logs in as an administrator user and then tries to delete
-        the "root" user, which shouldn't work.
+        This test logs in as an administrator user and then tries to delete the
+        "root" user, which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
