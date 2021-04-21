@@ -14,7 +14,6 @@ TAG_RETRIEVED = "Tag retrieved."
 TAG_CREATED = "Tag created."
 TAG_UPDATED = "Tag updated."
 TAG_DELETED = "Tag deleted."
-TAG_NOT_FOUND = "Tag not found."
 TAG_EXISTS = "Another tag with the same name already exists in the notebook."
 
 tag_schema = TagSchema()
@@ -27,9 +26,8 @@ class TagResource(Resource):
     def get(self, _id: int) -> Response:
         """Handle a Tag Get request.
 
-        Return the tag with the given ID. The current request user can only
-        call this endpoint for a tag of any of their own notebooks, unless they
-        are an administrator.
+        Return the tag with the given ID. The request user can only call this
+        endpoint for a tag of any of their own notebooks.
 
         :param _id: Tag ID.
         :return: Dictionary with the message and result.
@@ -38,10 +36,7 @@ class TagResource(Resource):
         jwt = get_jwt()  # JWT payload data
         tag = Tag.get_by_id(_id)
 
-        if (
-            not jwt["admin"] and (
-                not tag or jwt["user_id"] != tag.notebook.user.id)
-        ):
+        if not tag or jwt["user_id"] != tag.notebook.user.id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
         return get_response_data(TAG_RETRIEVED, tag_schema.dump(tag)), 200
@@ -50,9 +45,8 @@ class TagResource(Resource):
     def post(self) -> Response:
         """Handle a Tag Post request.
 
-        Save a new tag with the given data. The current request user can only
-        call this endpoint if the tag notebook is one of theirs, unless they
-        are an administrator.
+        Save a new tag with the given data. The request user can only call this
+        endpoint if the tag notebook is one of theirs.
 
         :return: Dictionary with the message and the tag ID as the result.
         """
@@ -66,7 +60,7 @@ class TagResource(Resource):
         jwt = get_jwt()  # JWT payload data
         tag = tag_schema.load(data)
 
-        if not jwt["admin"] and jwt["user_id"] != tag.notebook.user.id:
+        if jwt["user_id"] != tag.notebook.user.id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
         # Save the tag
@@ -78,9 +72,8 @@ class TagResource(Resource):
     def put(self) -> Response:
         """Handle a Tag Put request.
 
-        Save a new or existing tag with the given data. The current request
-        user can only call this endpoint if the tag notebook is one of theirs,
-        unless they are an administrator.
+        Save a new or existing tag with the given data. The request user can
+        only call this endpoint if the tag notebook is one of theirs.
 
         :return: Dictionary with the message and, if the tag has been created,
         the tag ID as the result.
@@ -96,14 +89,8 @@ class TagResource(Resource):
             tag = Tag.get_by_id(data["id"])
             result = False
 
-            if jwt["admin"] and not tag:
-                return get_response_data(TAG_NOT_FOUND), 404
-
             # Check permissions
-            if (
-                not jwt["admin"] and
-                (not tag or jwt["user_id"] != tag.notebook.user.id)
-            ):
+            if not tag or jwt["user_id"] != tag.notebook.user.id:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
             if "name" in data:
@@ -129,11 +116,11 @@ class TagResource(Resource):
             result = True
 
             # Check permissions
-            if not jwt["admin"] and jwt["user_id"] != tag.notebook.user.id:
+            if jwt["user_id"] != tag.notebook.user.id:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
-            # Check if there is another existing tag with the same name in the
-            # same notebook.
+            # Check if there is any existing tag with the same name in the same
+            # notebook.
             if Tag.get_by_name(tag.notebook_id, tag.name):
                 return get_response_data(TAG_EXISTS), 400
 
@@ -150,9 +137,8 @@ class TagResource(Resource):
     def delete(self, _id: int) -> Response:
         """Handle a Tag Delete request.
 
-        Delete an existing tag given its ID. The current request user can only
-        call this endpoint if the tag notebook is one of theirs, unless they
-        are an administrator.
+        Delete an existing tag given its ID. The request user can only call
+        this endpoint if the tag notebook is one of theirs.
 
         :param _id: Tag ID.
         :return: Dictionary with the message.
@@ -161,11 +147,10 @@ class TagResource(Resource):
         jwt = get_jwt()  # JWT payload data
         tag = Tag.get_by_id(_id)
 
-        if (
-            not jwt["admin"] and (
-                not tag or jwt["user_id"] != tag.notebook.user.id)
-        ):
+        if not tag or jwt["user_id"] != tag.notebook.user.id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
+        # Delete the tag
         tag.delete()
+
         return get_response_data(TAG_DELETED), 200
