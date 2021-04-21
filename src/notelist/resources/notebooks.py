@@ -22,8 +22,6 @@ NOTEBOOK_EXISTS = "The user already has a notebook with the same name."
 
 notebook_list_schema = NotebookSchema(many=True)
 notebook_schema = NotebookSchema()
-user_schema = UserSchema()
-tag_list_schema = TagSchema(many=True)
 
 
 class NotebookListResource(Resource):
