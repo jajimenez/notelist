@@ -163,7 +163,7 @@ class NotebookResource(Resource):
 
         return get_response_data(message, result), code
 
-    @jwt_required()
+    @jwt_required(fresh=True)
     def delete(self, _id: int) -> Response:
         """Handle a Notebook Delete request.
 
