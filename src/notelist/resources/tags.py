@@ -20,7 +20,10 @@ tag_schema = TagSchema()
 
 
 class TagResource(Resource):
-    """Tag resource."""
+    """Tag resource.
+
+    This resource manages the operations of the notebook tags.
+    """
 
     @jwt_required()
     def get(self, _id: int) -> Response:
