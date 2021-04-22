@@ -220,6 +220,14 @@ class UserResource(Resource):
         edit = "id" in data
 
         if edit:  # We edit the existing user
+            # Check if the request data contains any invalid field
+            fields = ", ".join([
+                i for i in data if i not in user_schema.load_fields])
+
+            if fields:
+                return get_response_data(VALIDATION_ERROR.format(fields)), 400
+
+            # Get existing user
             user = User.get_by_id(data["id"])
             result = False
 

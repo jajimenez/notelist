@@ -18,6 +18,7 @@ NOTEBOOK_RETRIEVED = "Notebook retrieved."
 NOTEBOOK_CREATED = "Notebook created."
 NOTEBOOK_UPDATED = "Notebook updated."
 NOTEBOOK_DELETED = "Notebook deleted."
+VALIDATION_ERROR = "Validation error: {}."
 NOTEBOOK_EXISTS = "The user already has a notebook with the same name."
 
 notebook_list_schema = NotebookSchema(many=True)
@@ -90,7 +91,7 @@ class NotebookResource(Resource):
         notebook = notebook_schema.load(data)
         notebook.user_id = user_id
 
-        # Check that if the notebook already exists
+        # Check if the notebook already exists
         if Notebook.get_by_name(user_id, notebook.name):
             return get_response_data(NOTEBOOK_EXISTS), 400
 
@@ -118,6 +119,14 @@ class NotebookResource(Resource):
         edit = "id" in data
 
         if edit:  # We edit the existing notebook
+            # Check if the request data contains any invalid field
+            fields = ", ".join([
+                i for i in data if i not in notebook_schema.load_fields])
+
+            if fields:
+                return get_response_data(VALIDATION_ERROR.format(fields)), 400
+
+            # Get existing notebook
             notebook = Notebook.get_by_id(data["id"])
             result = False
 
@@ -146,8 +155,7 @@ class NotebookResource(Resource):
             notebook.user_id = user_id
             result = True
 
-            # Check if there is another existing notebook with the same name
-            # for the request user.
+            # Check if the notebook already exists
             if Notebook.get_by_name(user_id, notebook.name):
                 return get_response_data(NOTEBOOK_EXISTS), 400
 
