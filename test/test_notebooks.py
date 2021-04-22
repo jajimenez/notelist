@@ -461,6 +461,38 @@ class NotebookTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 400)
 
+    def test_post_new_user(self):
+        """Test the Post method of the Notebook resource.
+
+        This test tries to create a notebook specifying its user, which
+        shouldn't work.
+        """
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Create a notebook
+        headers = {"Authorization": f"Bearer {access_token}"}
+        n = {"user_id": 1, "name": "Test Notebook"}
+        r = self.client.post("/notebook", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
     def test_post_notebook_exists(self):
         """Test the Post method of the Notebook resource.
 
@@ -575,10 +607,7 @@ class NotebookTestCase(common.BaseTestCase):
         self.assertEqual(type(notebook_id), int)
 
         # Edit the notebook
-        headers = {"Authorization": f"Bearer {access_token}"}
-        new_notebook = {
-            "id": notebook_id,
-            "name": "Test Notebook 2"}
+        new_notebook = {"id": notebook_id, "name": "Test Notebook 2"}
         r = self.client.put(f"/notebook", headers=headers, json=new_notebook)
 
         # Check status code
@@ -709,8 +738,7 @@ class NotebookTestCase(common.BaseTestCase):
 
         # Edit the notebook as the "root" user
         new_notebook = {"id": notebook_id, "name": "Test Notebook 2"}
-        r = self.client.put(
-            f"/notebook", headers=headers1, json=new_notebook)
+        r = self.client.put(f"/notebook", headers=headers1, json=new_notebook)
 
         # Check status code
         self.assertEqual(r.status_code, 403)
@@ -743,6 +771,82 @@ class NotebookTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = dict()  # Empty dictionary
         r = self.client.put("/notebook", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+    def test_put_new_user(self):
+        """Test the Put method of the Notebook resource.
+
+        This test tries to create a notebook specifying its user, which
+        shouldn't work.
+        """
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Create a notebook
+        headers = {"Authorization": f"Bearer {access_token}"}
+        n = {"user_id": 1, "name": "Test Notebook"}
+        r = self.client.put("/notebook", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+    def test_put_edit_user(self):
+        """Test the Put method of the Notebook resource.
+
+        This test tries to change the user of some notebook, which shouldn't
+        work.
+        """
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Create a notebook
+        headers = {"Authorization": f"Bearer {access_token}"}
+        n = {"name": "Test Notebook"}
+        r = self.client.put("/notebook", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 201)
+
+        # Check result
+        self.assertIn("result", r.json)
+        notebook_id = r.json["result"]
+        self.assertEqual(type(notebook_id), int)
+
+        # Change notebook user
+        new_notebook = {"id": notebook_id, "user_id": 2}
+        r = self.client.put(f"/notebook", headers=headers, json=new_notebook)
 
         # Check status code
         self.assertEqual(r.status_code, 400)
