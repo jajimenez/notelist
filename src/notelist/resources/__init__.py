@@ -1,6 +1,6 @@
 """Package with the resources."""
 
-from typing import Any, Dict, Optional, Union
+from typing import Optional, Union, Any, List, Dict
 
 
 Result = Optional[Union[Dict, List[Dict]]]
