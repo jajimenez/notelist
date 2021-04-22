@@ -1,15 +1,14 @@
 """Module with the notebook resources."""
 
+from typing import Optional
+
 from flask import request
 from flask_restful import Resource
 from flask_jwt_extended import jwt_required, get_jwt
 
 from notelist.models.notebooks import Notebook
 from notelist.schemas.notebooks import NotebookSchema
-from notelist.schemas.users import UserSchema
-from notelist.schemas.tags import TagSchema
-from notelist.resources import Response, OPERATION_NOT_ALLOWED, \
-    USER_UNAUTHORIZED, get_response_data
+from notelist.resources import Response, USER_UNAUTHORIZED, get_response_data
 
 
 NOTEBOOK_RETRIEVED_1 = "1 notebook retrieved."
@@ -36,17 +35,14 @@ class NotebookListResource(Resource):
 
         :return: Dictionary with the message and result.
         """
-        user_id = get_jwt()["user_id"]
+        # Get all the notebooks of the request user
+        user_id = get_jwt()["user_id"]  # JWT payload data
         notebooks = Notebook.get_all(user_id)
-        count = len(notebooks)
 
-        if count == 1:
-            message = NOTEBOOK_RETRIEVED_1
-        else:
-            message = NOTEBOOK_RETRIEVED_N.format(count)
+        c = len(notebooks)
+        m = NOTEBOOK_RETRIEVED_1 if c == 1 else NOTEBOOK_RETRIEVED_N.format(c)
 
-        return get_response_data(
-            message, notebook_list_schema.dump(notebooks)), 200
+        return get_response_data(m, notebook_list_schema.dump(notebooks)), 200
 
 
 class NotebookResource(Resource):
@@ -61,12 +57,14 @@ class NotebookResource(Resource):
         :param _id: Notebook ID.
         :return: Dictionary with the message and result.
         """
-        # Check permissions
-        jwt = get_jwt()  # JWT payload data
-        user_id = jwt["user_id"]
+        # JWT payload data
+        user_id = get_jwt()["user_id"]
+
+        # Get the notebook
         notebook = Notebook.get_by_id(_id)
 
-        if not notebook or user_id != notebook.user.id:
+        # Check if the notebook doesn't exist and the permissions
+        if not notebook or user_id != notebook.user_id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
         return get_response_data(
@@ -80,63 +78,84 @@ class NotebookResource(Resource):
 
         :return: Dictionary with the message and the notebook ID as the result.
         """
-        jwt = get_jwt()  # JWT payload data
-        user_id = jwt["user_id"]
+        # JWT payload data
+        user_id = get_jwt()["user_id"]
+
+        # Request data
         data = request.get_json()
 
-        # Check that the request is not for updating an existing notebook
-        if "id" in data:
-            return get_response_data(OPERATION_NOT_ALLOWED), 403
-
+        # We validate the request data. If any of the Notebook model required
+        # fields is missing, a "marshmallow.ValidationError" exception is
+        # raised.
         notebook = notebook_schema.load(data)
-        notebook.user_id = user_id
 
-        # Check if the notebook already exists
+        # Check if the request user already has the notebook (based on the
+        # notebook name).
         if Notebook.get_by_name(user_id, notebook.name):
             return get_response_data(NOTEBOOK_EXISTS), 400
 
         # Save the notebook
+        notebook.user_id = user_id
         notebook.save()
 
         return get_response_data(NOTEBOOK_CREATED, notebook.id), 201
 
     @jwt_required()
-    def put(self) -> Response:
+    def put(self, _id: Optional[int] = None) -> Response:
         """Handle a Notebook Put request.
 
         Save a new or existing notebook of the request user with the given
-        request data.
+        request data. The "user_id" field of an existing notebook is not
+        allowed to be modified.
 
+        :param _id: ID of the notebook to update or None to create a new
+        notebook.
         :return: Dictionary with the message and, if the notebook has been
         created, the notebook ID as the result.
         """
-        jwt = get_jwt()  # JWT payload data
-        user_id = jwt["user_id"]
+        # JWT payload data
+        user_id = get_jwt()["user_id"]
+
+        # Request data
         data = request.get_json()
 
-        # If there isn't any ID in the request data, we create a new notebook.
-        # Otherwise we edit the existing notebook with the given ID.
-        edit = "id" in data
+        # If "_id" is None, we create a new notebook. Otherwise we edit the
+        # existing notebook with the given ID.
+        new_notebook = _id is None
 
-        if edit:  # We edit the existing notebook
-            # Check if the request data contains any invalid field
+        if new_notebook:
+            # We validate the request data. If any of the Notebook model
+            # required fields is missing, a "marshmallow.ValidationError"
+            # exception is raised.
+            notebook = notebook_schema.load(data)
+
+            # Check if the notebook already exists (based on the name)
+            if Notebook.get_by_name(user_id, notebook.name):
+                return get_response_data(NOTEBOOK_EXISTS), 400
+
+            notebook.user_id = user_id
+            message = NOTEBOOK_CREATED
+            code = 201
+        else:
+            # Get existing notebook
+            notebook = Notebook.get_by_id(_id)
+
+            # Check if the notebook doesn't exist and the permissions (the
+            # request user must be the same as the notebook user).
+            if not notebook or user_id != notebook.user_id:
+                return get_response_data(USER_UNAUTHORIZED), 403
+
+            # Check if the request data contains any invalid field (i.e. any
+            # field that doesn't exist in the notebook model schema).
             fields = ", ".join([
                 i for i in data if i not in notebook_schema.load_fields])
 
             if fields:
                 return get_response_data(VALIDATION_ERROR.format(fields)), 400
 
-            # Get existing notebook
-            notebook = Notebook.get_by_id(data["id"])
-            result = False
-
-            # Check permissions
-            if not notebook or user_id != notebook.user.id:
-                return get_response_data(USER_UNAUTHORIZED), 403
-
+            # Check if a new name is provided and if the user has already a
+            # notebook with this name.
             if "name" in data:
-                # Check if the value of the name is new and if there is another
-                # existing notebook of the same user with the same name.
                 if (
                     data["name"] != notebook.name and
                     Notebook.get_by_name(user_id, data["name"])
@@ -147,24 +166,10 @@ class NotebookResource(Resource):
 
             message = NOTEBOOK_UPDATED
             code = 200
-        else:  # We create a new notebook
-            # We validate the data. If any of the Notebook model required
-            # fields is missing, a "marshmallow.ValidationError" exception is
-            # raised.
-            notebook = notebook_schema.load(data)
-            notebook.user_id = user_id
-            result = True
-
-            # Check if the notebook already exists
-            if Notebook.get_by_name(user_id, notebook.name):
-                return get_response_data(NOTEBOOK_EXISTS), 400
-
-            message = NOTEBOOK_CREATED
-            code = 201
 
         # Save the notebook
         notebook.save()
-        result = notebook.id if result else None
+        result = notebook.id if new_notebook else None
 
         return get_response_data(message, result), code
 
@@ -177,15 +182,18 @@ class NotebookResource(Resource):
         :param _id: Notebook ID.
         :return: Dictionary with the message.
         """
-        # Check permissions
-        jwt = get_jwt()  # JWT payload data
-        user_id = jwt["user_id"]
+        # JWT payload data
+        user_id = get_jwt()["user_id"]
+
+        # Get notebook
         notebook = Notebook.get_by_id(_id)
 
+        # Check if the notebook doesn't exist and the permissions (the request
+        # user can only delete their own notebooks).
         if not notebook or user_id != notebook.user.id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
-        # Delete the notebook
+        # Delete notebook
         notebook.delete()
 
         return get_response_data(NOTEBOOK_DELETED), 200

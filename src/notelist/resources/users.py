@@ -1,6 +1,7 @@
 """Module with the user resources."""
 
 import hashlib as hl
+from typing import Optional
 
 from flask import request
 from werkzeug.security import safe_str_cmp
@@ -10,8 +11,7 @@ from flask_jwt_extended import jwt_required, create_access_token, \
 
 from notelist.models.users import User
 from notelist.schemas.users import UserSchema
-from notelist.resources import Response, OPERATION_NOT_ALLOWED, \
-    USER_UNAUTHORIZED, get_response_data
+from notelist.resources import Response, USER_UNAUTHORIZED, get_response_data
 from notelist import tools
 
 
@@ -42,13 +42,17 @@ class LoginResource(Resource):
     def post(self) -> Response:
         """Handle a Login Post request.
 
+        Log in a user.
+
         :return: Dictionary with the message.
         """
+        # Request data
         data = request.get_json()
+
+        # Validate request data
         u = "username"
         p = "password"
 
-        # Check request data
         for i in (u, p):
             if i not in data or type(data[i]) != str or data[i] == "":
                 return get_response_data(INVALID_CREDENTIALS), 401
@@ -60,8 +64,9 @@ class LoginResource(Resource):
 
         # Check password
         if user and user.enabled and safe_str_cmp(req_pw, user.password):
-            # The user ID is the Identity of the tokens (not to be confused
-            # with the JTI (unique identifier) of the tokens).
+            # Create access and refresh tokens. The user ID is the Identity of
+            # the tokens (not to be confused with the JTI (unique identifier)
+            # of the tokens).
             result = {
                 "access_token": create_access_token(user.id, fresh=True),
                 "refresh_token": create_refresh_token(user.id),
@@ -78,12 +83,17 @@ class TokenRefreshResource(Resource):
     def post(self) -> Response:
         """Handle a Token Refresh Post request.
 
-        :return: Dictionary with the message and a new, not fresh access token.
+        Get a new, not fresh, access token.
+
+        :return: Dictionary with the message and the new token.
         """
+        # Get the request JWT Identity, which in this application is equal to
+        # the ID of the request user.
         user_id = get_jwt_identity()
 
-        # New, not fresh, access token
+        # Create a new, not fresh, access token
         result = {"access_token": create_access_token(user_id, fresh=False)}
+
         return get_response_data(USER_LOGGED_IN, result), 200
 
 
@@ -94,11 +104,15 @@ class LogoutResource(Resource):
     def post(self) -> Response:
         """Handle a Logout Post request.
 
+        Log out the request user by revoking the request JWT.
+
         :return: Dictionary with the message.
         """
-        # Add the JTI (unique identifier) of the JWT of the current request
-        # to the Block List in order to revoke the JWT.
-        jti = get_jwt()["jti"]
+        # JWT payload data
+        jti = get_jwt()["jti"]  # JTI (unique identifier)
+
+        # Add the JTI of the JWT of the current request to the Block List in
+        # order to revoke the JWT.
         blocklist.add(jti)
 
         return get_response_data(USER_LOGGED_OUT), 200
@@ -116,18 +130,18 @@ class UserListResource(Resource):
         :return: Dictionary with the message and result.
         """
         # Check permissions
-        if not get_jwt()["admin"]:
+        admin = get_jwt()["admin"]  # JWT payload data
+
+        if not admin:
             return get_response_data(USER_UNAUTHORIZED), 403
 
+        # Get all the users
         users = User.get_all()
-        count = len(users)
 
-        if count == 1:
-            message = USERS_RETRIEVED_1
-        else:
-            message = USERS_RETRIEVED_N.format(count)
+        c = len(users)
+        m = USERS_RETRIEVED_1 if c == 1 else USERS_RETRIEVED_N.format(c)
 
-        return get_response_data(message, user_list_schema.dump(users)), 200
+        return get_response_data(m, user_list_schema.dump(users)), 200
 
 
 class UserResource(Resource):
@@ -144,14 +158,19 @@ class UserResource(Resource):
         :param _id: User ID.
         :return: Dictionary with the message and result.
         """
-        # Check permissions
-        jwt = get_jwt()  # JWT payload data
+        # JWT payload data
+        jwt = get_jwt()
+        user_id = jwt["user_id"]
+        admin = jwt["admin"]
 
-        if not jwt["admin"] and jwt["user_id"] != _id:
+        # Check permissions
+        if not admin and user_id != _id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
+        # Get the user
         user = User.get_by_id(_id)
 
+        # Check if the user doesn't exist
         if not user:
             return get_response_data(USER_NOT_FOUND), 404
 
@@ -162,22 +181,23 @@ class UserResource(Resource):
         """Handle a User Post request.
 
         Save a new user with the given data. This endpoint requires
-        administrator permissions and creating a user whose username is "root"
-        is not allowed.
+        administrator permissions.
 
         :return: Dictionary with the message and the user ID as the result.
         """
-        data = request.get_json()
-
-        # Check if the request is either for updating an existing user or for
-        # creating a new user whose username is "root".
-        if "id" in data or ("username" in data and data["username"] == "root"):
-            return get_response_data(OPERATION_NOT_ALLOWED), 403
+        # JWT payload data
+        admin = get_jwt()["admin"]
 
         # Check permissions
-        if not get_jwt()["admin"]:
+        if not admin:
             return get_response_data(USER_UNAUTHORIZED), 403
 
+        # Request data
+        data = request.get_json()
+
+        # We validate the request data. If any of the User model required
+        # fields is missing, a "marshmallow.ValidationError" exception is
+        # raised.
         user = user_schema.load(data)
 
         # Validate password length
@@ -186,7 +206,7 @@ class UserResource(Resource):
         if c < MIN_PASSWORD or c > MAX_PASSWORD:
             return get_response_data(INVALID_PASSWORD), 400
 
-        # Check if the user already exists
+        # Check if the user already exists (based on the username)
         if User.get_by_username(user.username):
             return get_response_data(USER_EXISTS), 400
 
@@ -200,73 +220,102 @@ class UserResource(Resource):
         return get_response_data(USER_CREATED, user.id), 201
 
     @jwt_required()
-    def put(self) -> Response:
+    def put(self, _id: Optional[int] = None) -> Response:
         """Handle a User Put request.
 
         Save a new or existing user with the given data. The request user, if
         they aren't an administrator, can only call this endpoint to update
         their own user's fields, except their "username", "admin" or "enabled"
-        fields. Neither creating a user whose username is "root" nor changing
-        the "root" user's username are allowed.
+        fields.
 
+        :param _id: ID of the user to update or None to create a new user.
         :return: Dictionary with the message and, if the user has been created,
         the user ID as the result.
         """
-        jwt = get_jwt()  # JWT payload data
+        # JWT payload data
+        jwt = get_jwt()
+        user_id = jwt["user_id"]
+        admin = jwt["admin"]
+
+        # Request data
         data = request.get_json()
 
-        # If there isn't any ID in the request data, we create a new user.
-        # Otherwise we edit the existing user with the given ID.
-        edit = "id" in data
+        # If "_id" is None, we create a new user. Otherwise we edit the
+        # existing user with the given ID.
+        new_user = _id is None
 
-        if edit:  # We edit the existing user
-            # Check if the request data contains any invalid field
+        if new_user:
+            # Check permissions
+            if not admin:
+                return get_response_data(USER_UNAUTHORIZED), 403
+
+            # We validate the request data. If any of the User model required
+            # fields is missing, a "marshmallow.ValidationError" exception is
+            # raised.
+            user = user_schema.load(data)
+
+            # Validate password length
+            c = len(data["password"])
+
+            if c < MIN_PASSWORD or c > MAX_PASSWORD:
+                return get_response_data(INVALID_PASSWORD), 400
+
+            # Replace the password by its hash to store the password encrypted
+            user.password = tools.get_hash(user.password)
+
+            # Check if the user already exists (based on the username)
+            if User.get_by_username(user.username):
+                return get_response_data(USER_EXISTS), 400
+
+            message = USER_CREATED
+            code = 201
+        else:
+            # Get existing user
+            user = User.get_by_id(_id)
+
+            # Check if the user doesn't exist and the permissions. "username",
+            # "admin" and "enabled" are the fields that not administrator users
+            # aren't allowed to modify.
+            if (
+                not admin and (
+                    not user or user_id != user.id or "username" in data
+                    or "admin" in data or "enabled" in data)
+            ):
+                return get_response_data(USER_UNAUTHORIZED), 403
+            elif admin and not user:
+                return get_response_data(USER_NOT_FOUND), 404
+
+            # Check if the request data contains any invalid field (i.e. any
+            # field that doesn't exist in the user model schema).
             fields = ", ".join([
                 i for i in data if i not in user_schema.load_fields])
 
             if fields:
                 return get_response_data(VALIDATION_ERROR.format(fields)), 400
 
-            # Get existing user
-            user = User.get_by_id(data["id"])
-            result = False
-
-            if jwt["admin"] and not user:
-                return get_response_data(USER_NOT_FOUND), 404
-
-            # Check permissions
-            if (
-                not jwt["admin"] and (
-                    not user or jwt["user_id"] != user.id or "username" in data
-                    or "admin" in data or "enabled" in data)
-            ):
-                return get_response_data(USER_UNAUTHORIZED), 403
-
+            # Check if a new username is provided and if there is already a
+            # user with this username.
             if "username" in data:
-                # Check if the value of the username is new
-                if data["username"] != user.username:
-                    # Check if the new username is "root"
-                    if user.username == "root":
-                        return get_response_data(OPERATION_NOT_ALLOWED), 403
-
-                    # Check if there is another existing user with the same new
-                    # username.
-                    if User.get_by_username(data["username"]):
-                        return get_response_data(USER_EXISTS), 400
+                if (
+                    data["username"] != user.username and
+                    User.get_by_username(data["username"])
+                ):
+                    return get_response_data(USER_EXISTS), 400
 
                 user.username = data["username"]
 
+            # Check if a new password is provided and validate it
             if "password" in data:
-                # Validate password length
                 c = len(data["password"])
 
                 if c < MIN_PASSWORD or c > MAX_PASSWORD:
                     return get_response_data(INVALID_PASSWORD), 400
 
-                # We get the hash of the password, to store the password
-                # encrypted in the database.
+                # Encrypt password
                 user.password = tools.get_hash(data["password"])
 
+            # Check if new values are provided for "enabled", "admin", "name"
+            # and "email".
             if "enabled" in data:
                 user.enabled = data["enabled"]
 
@@ -281,41 +330,10 @@ class UserResource(Resource):
 
             message = USER_UPDATED
             code = 200
-        else:  # We create a new user
-            # Check permissions
-            if not jwt["admin"]:
-                return get_response_data(USER_UNAUTHORIZED), 403
-
-            # Check if the request is for creating a user whose username is
-            # "root".
-            if "username" in data and data["username"] == "root":
-                return get_response_data(OPERATION_NOT_ALLOWED), 403
-
-            # Validate password length
-            c = len(data["password"])
-
-            if c < MIN_PASSWORD or c > MAX_PASSWORD:
-                return get_response_data(INVALID_PASSWORD), 400
-
-            # We get the hash of the password, to store the password encrypted
-            # in the database.
-            data["password"] = tools.get_hash(data["password"])
-
-            # We validate the data. If any of the User model required fields is
-            # missing, a "marshmallow.ValidationError" exception is raised.
-            user = user_schema.load(data)
-            result = True
-
-            # Check if there is another existing user with the same username
-            if User.get_by_username(user.username):
-                return get_response_data(USER_EXISTS), 400
-
-            message = USER_CREATED
-            code = 201
 
         # Save the user
         user.save()
-        result = user.id if result else None
+        result = user.id if new_user else None
 
         return get_response_data(message, result), code
 
@@ -324,22 +342,26 @@ class UserResource(Resource):
         """Handle a User Delete request.
 
         Delete an existing user given its ID. This endpoint requires
-        administrator permissions and deleting the "root" user is not allowed.
+        administrator permissions.
 
         :param _id: User ID.
         :return: Dictionary with the message.
         """
-        # Check permissions
-        if not get_jwt()["admin"]:
+        # JWT payload data
+        admin = get_jwt()["admin"]
+
+        # Check permissions (only administrator users can delete users)
+        if not admin:
             return get_response_data(USER_UNAUTHORIZED), 403
 
+        # Get user
         user = User.get_by_id(_id)
 
-        # Check if the user doesn't exist or is "root"
-        if user and user.username == "root":
-            return get_response_data(OPERATION_NOT_ALLOWED), 403
-        elif not user:
+        # Check if the user doesn't exist
+        if not user:
             return get_response_data(USER_NOT_FOUND), 404
 
+        # Delete user
         user.delete()
+
         return get_response_data(USER_DELETED), 200

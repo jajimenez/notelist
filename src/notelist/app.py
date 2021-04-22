@@ -64,7 +64,7 @@ api.add_resource(UserListResource, "/users")
 api.add_resource(UserResource, "/user", "/user/<int:_id>")
 api.add_resource(NotebookListResource, "/notebooks")
 api.add_resource(NotebookResource, "/notebook", "/notebook/<int:_id>")
-api.add_resource(TagListResource, "/tags", "/tags/<int:_id>")
+api.add_resource(TagListResource, "/tags/<int:_id>")
 api.add_resource(TagResource, "/tag", "/tag/<int:_id>")
 
 # User login

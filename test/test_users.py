@@ -939,29 +939,11 @@ class UserTestCase(common.BaseTestCase):
     def test_post_invalid_access_token(self):
         """Test the Post method of the User resource.
 
-        This test logs in as an administrator user and then tries to create a
-        new user providing an invalid access token, which shouldn't work.
+        This test tries to create a new user providing an invalid access token,
+        which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
-        r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Create a user providing an invalid access token
-        headers = {"Authorization": f"Bearer {access_token + '_'}"}
+        # Create a user providing an invalid access token ("1234")
+        headers = {"Authorization": f"Bearer 1234"}
         u = {"username": "test", "password": "test_password"}
         r = self.client.post("/user", headers=headers, json=u)
 
@@ -1029,8 +1011,8 @@ class UserTestCase(common.BaseTestCase):
     def test_post_missing_fields(self):
         """Test the Post method of the User resource.
 
-        This test logs in as an administrator user and then tries to create new
-        users with some mandatory field missing, which shouldn't work.
+        This test tries to create new users with some mandatory field missing,
+        which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -1068,10 +1050,9 @@ class UserTestCase(common.BaseTestCase):
     def test_post_password_length(self):
         """Test the Post method of the User resource.
 
-        This test logs in as an administrator user and then tries to create a
-        new user with a password that has less than 8 characters and another
-        user with a password that has more than 100 characters, which shouldn't
-        work in either case.
+        This test tries to create a new user with a password that has less than
+        8 characters and another user with a password that has more than 100
+        characters, which shouldn't work in either case.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -1104,8 +1085,8 @@ class UserTestCase(common.BaseTestCase):
     def test_post_user_exists(self):
         """Test the Post method of the User resource.
 
-        This test logs in as an administrator user and then tries to create a
-        new user with the same username of another user, which shouldn't work.
+        This test tries to create a new user with the same username of another
+        user, which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -1138,38 +1119,6 @@ class UserTestCase(common.BaseTestCase):
 
         # Check status code
         self.assertEqual(r.status_code, 400)
-
-    def test_post_root(self):
-        """Test the Post method of the User resource.
-
-        This test logs in as an administrator user and then tries to create a
-        new user whose username is "root", which shouldn't work.
-        """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
-        r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Create a user
-        headers = {"Authorization": f"Bearer {access_token}"}
-        u = {"username": "root", "password": "test_password"}
-        r = self.client.post("/user", headers=headers, json=u)
-
-        # Check status code
-        self.assertEqual(r.status_code, 403)
 
     def test_put_new(self):
         """Test the Put method of the User resource.
@@ -1267,13 +1216,12 @@ class UserTestCase(common.BaseTestCase):
         # to be modified).
         headers = {"Authorization": f"Bearer {access_token}"}
         new_user = {
-            "id": user_id,
             "password": "test_password",
             "admin": True,
             "enabled": True,
             "name": "Admin 2",
             "email": None}
-        r = self.client.put(f"/user", headers=headers, json=new_user)
+        r = self.client.put(f"/user/{user_id}", headers=headers, json=new_user)
 
         # Check status code
         self.assertEqual(r.status_code, 200)
@@ -1318,14 +1266,13 @@ class UserTestCase(common.BaseTestCase):
 
         # Edit the new user
         new_user = {
-            "id": user_id,
             "username": "test_2",
             "password": "test_password_2",
             "admin": True,
             "enabled": True,
             "name": "Test 2",
             "email": None}
-        r = self.client.put("/user", headers=headers, json=new_user)
+        r = self.client.put(f"/user/{user_id}", headers=headers, json=new_user)
 
         # Check status code
         self.assertEqual(r.status_code, 200)
@@ -1414,11 +1361,10 @@ class UserTestCase(common.BaseTestCase):
         # Edit the new user
         headers = {"Authorization": f"Bearer {access_token}"}
         new_user = {
-            "id": user_id,
             "password": "test_password_2",
             "name": "Test 2",
             "email": None}
-        r = self.client.put("/user", headers=headers, json=new_user)
+        r = self.client.put(f"/user/{user_id}", headers=headers, json=new_user)
 
         # Check status code
         self.assertEqual(r.status_code, 200)
@@ -1460,47 +1406,57 @@ class UserTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 200)
 
-    def test_put_missing_access_token(self):
+    def test_put_new_missing_access_token(self):
         """Test the Put method of the User resource.
 
         This test tries to create a new user without providing the access
         token, which shouldn't work.
         """
-        # Create user
+        # Create a user without providing the access token
         u = {"username": "test", "password": "test_password"}
         r = self.client.put("/user", json=u)
 
         # Check status code
         self.assertEqual(r.status_code, 401)
 
-    def test_put_invalid_access_token(self):
+    def test_put_edit_missing_access_token(self):
         """Test the Put method of the User resource.
 
-        This test logs in as an administrator user and then tries to create a
-        new user providing an invalid access token, which shouldn't work.
+        This test tries to edit a user without providing the access token,
+        which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
-        r = self.client.post("/login", json=data)
+        # Edit the user with ID 1 ("root") without providing the access token
+        u = {"username": "test", "password": "test_password"}
+        r = self.client.put("/user/1", json=u)
 
         # Check status code
-        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.status_code, 401)
 
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
+    def test_put_new_invalid_access_token(self):
+        """Test the Put method of the User resource.
 
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Create a user providing an invalid access token
-        headers = {"Authorization": f"Bearer {access_token + '_'}"}
+        This test tries to create a new user providing an invalid access token,
+        which shouldn't work.
+        """
+        # Create a user providing an invalid access token ("1234")
+        headers = {"Authorization": f"Bearer 1234"}
         u = {"username": "test", "password": "test_password"}
         r = self.client.put("/user", headers=headers, json=u)
+
+        # Check status code
+        self.assertEqual(r.status_code, 422)
+
+    def test_put_edit_invalid_access_token(self):
+        """Test the Put method of the User resource.
+
+        This test tries to edit a user providing an invalid access token, which
+        shouldn't work.
+        """
+        # Edit the user with ID 1 ("root") providing an invalid access token
+        # ("1234").
+        headers = {"Authorization": f"Bearer 1234"}
+        u = {"username": "test", "password": "test_password"}
+        r = self.client.put("/user/1", headers=headers, json=u)
 
         # Check status code
         self.assertEqual(r.status_code, 422)
@@ -1639,24 +1595,28 @@ class UserTestCase(common.BaseTestCase):
 
         for i in ("username", "admin", "enabled"):
             # Edit the field with the same current value
-            new_user = {"id": user_id, i: user[i]}
-            r = self.client.put("/user", headers=headers, json=new_user)
+            new_user = {i: user[i]}
+
+            r = self.client.put(
+                f"/user/{user_id}", headers=headers, json=new_user)
 
             # Check status code
             self.assertEqual(r.status_code, 403)
 
         # Edit the "root" user
-        new_user = {"id": admin_user_id, "name": "Admin 2"}
-        r = self.client.put("/user", headers=headers, json=new_user)
+        new_user = {"name": "Admin 2"}
+
+        r = self.client.put(
+            f"/user/{admin_user_id}", headers=headers, json=new_user)
 
         # Check status code
         self.assertEqual(r.status_code, 403)
 
-    def test_put_missing_fields(self):
+    def test_put_new_missing_fields(self):
         """Test the Put method of the User resource.
 
-        This test logs in as an administrator user and then tries to create new
-        users with some mandatory field missing, which shouldn't work.
+        This test tries to create new users with some mandatory field missing,
+        which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -1679,14 +1639,14 @@ class UserTestCase(common.BaseTestCase):
         # Create a user without its username
         headers = {"Authorization": f"Bearer {access_token}"}
         u = {"password": "test_password"}
-        r = self.client.post("/user", headers=headers, json=u)
+        r = self.client.put("/user", headers=headers, json=u)
 
         # Check status code
         self.assertEqual(r.status_code, 400)
 
         # Create a user without its password
         u = {"username": "test"}
-        r = self.client.post("/user", headers=headers, json=u)
+        r = self.client.put("/user", headers=headers, json=u)
 
         # Check status code
         self.assertEqual(r.status_code, 400)
@@ -1694,10 +1654,9 @@ class UserTestCase(common.BaseTestCase):
     def test_put_new_password_length(self):
         """Test the Put method of the User resource.
 
-        This test logs in as an administrator user and then tries to create a
-        new user with a password that has less than 8 characters and another
-        user with a password that has more than 100 characters, which shouldn't
-        work in either case.
+        This test tries to create a new user with a password that has less than
+        8 characters and another user with a password that has more than 100
+        characters, which shouldn't work in either case.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -1730,10 +1689,10 @@ class UserTestCase(common.BaseTestCase):
     def test_put_edit_password_length(self):
         """Test the Put method of the User resource.
 
-        This test logs in as an administrator user, tries to change its
-        password with a new one that has less than 8 characters and then tries
-        to change it with another one that has more than 100 characters, which
-        shouldn't work in either case.
+        This test logs in as some user, tries to change its password with a new
+        one that has less than 8 characters and then tries to change it with
+        another one that has more than 100 characters, which shouldn't work in
+        either case.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -1762,8 +1721,8 @@ class UserTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
 
         for p in ("test", "test" * 100):
-            u = {"id": user_id, "password": p}
-            r = self.client.put("/user", headers=headers, json=u)
+            u = {"password": p}
+            r = self.client.put(f"/user/{user_id}", headers=headers, json=u)
 
             # Check status code
             self.assertEqual(r.status_code, 400)
@@ -1806,38 +1765,6 @@ class UserTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 400)
 
-    def test_put_new_root(self):
-        """Test the Put method of the User resource.
-
-        This test logs in as an administrator user and then tries to create a
-        new user whose username is "root", which shouldn't work.
-        """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
-        r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Create a user
-        headers = {"Authorization": f"Bearer {access_token}"}
-        u = {"username": "root", "password": "test_password"}
-        r = self.client.put("/user", headers=headers, json=u)
-
-        # Check status code
-        self.assertEqual(r.status_code, 403)
-
     def test_put_edit_user_not_found(self):
         """Test the Put method of the User resource.
 
@@ -1869,48 +1796,11 @@ class UserTestCase(common.BaseTestCase):
 
         # Edit the user with ID "user_id + 1"
         headers = {"Authorization": f"Bearer {access_token}"}
-        u = {"id": user_id + 1, "name": "Test"}
-        r = self.client.put("/user", headers=headers, json=u)
+        u = {"name": "Test"}
+        r = self.client.put(f"/user/{user_id + 1}", headers=headers, json=u)
 
         # Check status code
         self.assertEqual(r.status_code, 404)
-
-    def test_put_edit_user_root(self):
-        """Test the Put method of the User resource.
-
-        This test logs in as an administrator user and then tries to change the
-        "root" user's username, which shouldn't work.
-        """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
-        r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Check user ID
-        self.assertIn("user_id", result)
-        user_id = result["user_id"]
-        self.assertEqual(type(user_id), int)
-
-        # Edit the "root" user's username
-        headers = {"Authorization": f"Bearer {access_token}"}
-        u = {"id": user_id, "username": "root_2"}
-        r = self.client.put("/user", headers=headers, json=u)
-
-        # Check status code
-        self.assertEqual(r.status_code, 403)
 
     def test_delete(self):
         """Test the Delete method of the User resource.
@@ -2004,35 +1894,13 @@ class UserTestCase(common.BaseTestCase):
     def test_delete_invalid_access_token(self):
         """Test the Delete method of the User resource.
 
-        This test logs in as an administrator user and then tries to delete
-        some user providing an invalid access token, which shouldn't work.
+        This test tries to delete some user providing an invalid access token,
+        which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
-        r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Check user ID
-        self.assertIn("user_id", result)
-        user_id = result["user_id"]
-        self.assertEqual(type(user_id), int)
-
-        # Delete the "root" user providing an invalid access token
-        headers = {"Authorization": f"Bearer {access_token + '_'}"}
-        r = self.client.delete(f"/user/{user_id}", headers=headers)
+        # Delete the user with ID 1 ("root") providing an invalid access token
+        # ("1234").
+        headers = {"Authorization": f"Bearer 1234"}
+        r = self.client.delete("/user/1", headers=headers)
 
         # Check status code
         self.assertEqual(r.status_code, 422)
@@ -2040,8 +1908,8 @@ class UserTestCase(common.BaseTestCase):
     def test_delete_access_token_not_fresh(self):
         """Test the Delete method of the User resource.
 
-        This test logs in as an administrator user and then tries to delete
-        some user providing a not fresh access token, which shouldn't work.
+        This test tries to delete some user providing a not fresh access token,
+        which shouldn't work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -2173,8 +2041,8 @@ class UserTestCase(common.BaseTestCase):
     def test_delete_user_not_found(self):
         """Test the Delete method of the User resource.
 
-        This test logs in as an administrator user and then tries to delete a
-        user that doesn't exist, which shouldn't work.
+        This test tries to delete a user that doesn't exist, which shouldn't
+        work.
         """
         # Log in as the "root" user
         data = {"username": "root", "password": self.root_password}
@@ -2205,42 +2073,6 @@ class UserTestCase(common.BaseTestCase):
 
         # Check status code
         self.assertEqual(r.status_code, 404)
-
-    def test_delete_root(self):
-        """Test the Delete method of the User resource.
-
-        This test logs in as an administrator user and then tries to delete the
-        "root" user, which shouldn't work.
-        """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
-        r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Check user ID
-        self.assertIn("user_id", result)
-        user_id = result["user_id"]
-        self.assertEqual(type(user_id), int)
-
-        # Delete the "root" user
-        headers = {"Authorization": f"Bearer {access_token}"}
-        r = self.client.delete(f"/user/{user_id}", headers=headers)
-
-        # Check status code
-        self.assertEqual(r.status_code, 403)
 
 
 if __name__ == "__main__":

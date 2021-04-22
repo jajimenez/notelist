@@ -12,6 +12,5 @@ class TagSchema(ma.SQLAlchemyAutoSchema):
 
         model = Tag
         include_fk = True
-        load_only = ["notebook_id"]
         ordered = True
         load_instance = True

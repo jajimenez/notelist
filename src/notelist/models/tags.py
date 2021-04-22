@@ -22,17 +22,6 @@ class Tag(db.Model):
         db.UniqueConstraint(notebook_id, name, name="un_tags_nid_name"),)
 
     @classmethod
-    def get_all(cls, notebook_id: int) -> List["Tag"]:
-        """Return all the tags from the database of a given notebook.
-
-        :param notebook_id: Notebook ID.
-        :return: List of `Tag` instances.
-        """
-        return (
-            cls.query.filter_by(notebook_id=notebook_id).order_by(Tag.id)
-            .all())
-
-    @classmethod
     def get_by_id(cls, _id: int) -> "Tag":
         """Return a tag from the database given the tag ID.
 
