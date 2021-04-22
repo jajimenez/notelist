@@ -464,7 +464,7 @@ class NotebookTestCase(common.BaseTestCase):
     def test_post_new_user(self):
         """Test the Post method of the Notebook resource.
 
-        This test tries to create a notebook specifying its user, which
+        This test tries to create a new notebook specifying its user, which
         shouldn't work.
         """
         # Log in as the "root" user
@@ -488,6 +488,38 @@ class NotebookTestCase(common.BaseTestCase):
         # Create a notebook
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"user_id": 1, "name": "Test Notebook"}
+        r = self.client.post("/notebook", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+    def test_post_invalid_fields(self):
+        """Test the Post method of the Notebook resource.
+
+        This test tries to create a new notebook providing some
+        invalid/unexpected field, which shouldn't work.
+        """
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Create a notebook providing an invalid field ("invalid_field")
+        headers = {"Authorization": f"Bearer {access_token}"}
+        n = {"name": "Test Notebook", "invalid_field": "1234"}
         r = self.client.post("/notebook", headers=headers, json=n)
 
         # Check status code
@@ -821,6 +853,38 @@ class NotebookTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 400)
 
+    def test_put_new_invalid_fields(self):
+        """Test the Put method of the Notebook resource.
+
+        This test tries to create a new notebook providing some
+        invalid/unexpected field, which shouldn't work.
+        """
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Create a notebook providing an invalid field ("invalid_field")
+        headers = {"Authorization": f"Bearer {access_token}"}
+        n = {"name": "Test Notebook", "invalid_field": "1234"}
+        r = self.client.put("/notebook", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
     def test_put_edit_user(self):
         """Test the Put method of the Notebook resource.
 
@@ -861,6 +925,53 @@ class NotebookTestCase(common.BaseTestCase):
         # Change notebook user
         new_notebook = {"id": notebook_id, "user_id": 2}
         r = self.client.put(f"/notebook", headers=headers, json=new_notebook)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+    def test_put_edit_invalid_fields(self):
+        """Test the Put method of the Notebook resource.
+
+        This test tries to edit a notebook providing some invalid/unexpected
+        field, which shouldn't work.
+        """
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Create a notebook
+        headers = {"Authorization": f"Bearer {access_token}"}
+        n = {"name": "Test Notebook"}
+        r = self.client.put("/notebook", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 201)
+
+        # Check result
+        self.assertIn("result", r.json)
+        notebook_id = r.json["result"]
+        self.assertEqual(type(notebook_id), int)
+
+        # Edit the notebook providing an invalid field ("invalid_field")
+        headers = {"Authorization": f"Bearer {access_token}"}
+        n = {"name": "Test Notebook", "invalid_field": "1234"}
+
+        r = self.client.put(
+            f"/notebook/{notebook_id}", headers=headers, json=n)
 
         # Check status code
         self.assertEqual(r.status_code, 400)

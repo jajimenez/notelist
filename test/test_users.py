@@ -1082,6 +1082,38 @@ class UserTestCase(common.BaseTestCase):
             # Check status code
             self.assertEqual(r.status_code, 400)
 
+    def test_post_invalid_fields(self):
+        """Test the Post method of the User resource.
+
+        This test tries to create a new user providing some invalid/unexpected
+        field, which shouldn't work.
+        """
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Create a user providing an invalid field ("invalid_field")
+        headers = {"Authorization": f"Bearer {access_token}"}
+        u = {"password": "test_password", "invalid_field": "1234"}
+        r = self.client.post("/user", headers=headers, json=u)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
     def test_post_user_exists(self):
         """Test the Post method of the User resource.
 
@@ -1647,6 +1679,75 @@ class UserTestCase(common.BaseTestCase):
         # Create a user without its password
         u = {"username": "test"}
         r = self.client.put("/user", headers=headers, json=u)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+    def test_put_new_invalid_fields(self):
+        """Test the Put method of the User resource.
+
+        This test tries to create a new user providing some invalid/unexpected
+        field, which shouldn't work.
+        """
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Create a user providing an invalid field ("invalid_field")
+        headers = {"Authorization": f"Bearer {access_token}"}
+        u = {"password": "test_password", "invalid_field": "1234"}
+        r = self.client.put("/user", headers=headers, json=u)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+    def test_put_edit_invalid_fields(self):
+        """Test the Put method of the User resource.
+
+        This test tries to edit a user providing some invalid/unexpected field,
+        which shouldn't work.
+        """
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Check user ID
+        self.assertIn("user_id", result)
+        user_id = result["user_id"]
+        self.assertEqual(type(user_id), int)
+
+        # Edit "root" user providing an invalid field ("invalid_field")
+        headers = {"Authorization": f"Bearer {access_token}"}
+        u = {"password": "test_password", "invalid_field": "1234"}
+        r = self.client.put(f"/user/{user_id}", headers=headers, json=u)
 
         # Check status code
         self.assertEqual(r.status_code, 400)
