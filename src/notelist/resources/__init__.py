@@ -3,13 +3,14 @@
 from typing import Any, Dict, Optional, Union
 
 
+Result = Optional[Union[Dict, List[Dict]]]
 Response = Dict[str, Union[str, Dict]]
 
 OPERATION_NOT_ALLOWED = "Operation not allowed."
 USER_UNAUTHORIZED = "User unauthorized."
 
 
-def get_response_data(message: str, result: Optional[Dict] = None) -> Response:
+def get_response_data(message: str, result: Result = None) -> Response:
     """Return the response data of a request.
 
     The data returned is a dictionary intended to be serialized as a JSON
