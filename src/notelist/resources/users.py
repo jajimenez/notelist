@@ -11,7 +11,8 @@ from flask_jwt_extended import jwt_required, create_access_token, \
 
 from notelist.models.users import User
 from notelist.schemas.users import UserSchema
-from notelist.resources import Response, USER_UNAUTHORIZED, get_response_data
+from notelist.resources import \
+    Response, VALIDATION_ERROR, USER_UNAUTHORIZED, get_response_data
 from notelist import tools
 
 

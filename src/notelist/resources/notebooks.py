@@ -8,7 +8,8 @@ from flask_jwt_extended import jwt_required, get_jwt
 
 from notelist.models.notebooks import Notebook
 from notelist.schemas.notebooks import NotebookSchema
-from notelist.resources import Response, USER_UNAUTHORIZED, get_response_data
+from notelist.resources import \
+    Response, VALIDATION_ERROR, USER_UNAUTHORIZED, get_response_data
 
 
 NOTEBOOK_RETRIEVED_1 = "1 notebook retrieved."
@@ -17,7 +18,6 @@ NOTEBOOK_RETRIEVED = "Notebook retrieved."
 NOTEBOOK_CREATED = "Notebook created."
 NOTEBOOK_UPDATED = "Notebook updated."
 NOTEBOOK_DELETED = "Notebook deleted."
-VALIDATION_ERROR = "Validation error: {}."
 NOTEBOOK_EXISTS = "The user already has a notebook with the same name."
 
 notebook_list_schema = NotebookSchema(many=True)
