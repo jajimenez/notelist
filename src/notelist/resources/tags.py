@@ -42,13 +42,13 @@ class TagListResource(Resource):
         :return: Dictionary with the message and result.
         """
         # JWT payload data
-        user_id = get_jwt()["user_id"]
+        uid = get_jwt()["user_id"]
 
         # Get notebook
-        notebook = Notebook.get_by_id(_id)
+        notebook = Notebook.get_by_id(notebook_id)
 
         # Check if the notebook doesn't exist and the permissions
-        if not notebook or user_id != notebook.user_id:
+        if not notebook or uid != notebook.user_id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
         # Get notebook tags
@@ -65,23 +65,23 @@ class TagResource(Resource):
     """
 
     @jwt_required()
-    def get(self, _id: int) -> Response:
+    def get(self, tag_id: int) -> Response:
         """Handle a Tag Get request.
 
         Return the tag with the given ID. The request user can only call this
         endpoint for a tag of any of their own notebooks.
 
-        :param _id: Tag ID.
+        :param tag_id: Tag ID.
         :return: Dictionary with the message and result.
         """
         # JWT payload data
-        user_id = get_jwt()["user_id"]
+        uid = get_jwt()["user_id"]
 
         # Get tag
-        tag = Tag.get_by_id(_id)
+        tag = Tag.get_by_id(tag_id)
 
         # Check if the tag doesn't exist and the permissions
-        if not tag or user_id != tag.notebook.user_id:
+        if not tag or uid != tag.notebook.user_id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
         return get_response_data(TAG_RETRIEVED, tag_schema.dump(tag)), 200
@@ -96,7 +96,7 @@ class TagResource(Resource):
         :return: Dictionary with the message and the tag ID as the result.
         """
         # JWT payload data
-        user_id = get_jwt()["user_id"]
+        uid = get_jwt()["user_id"]
 
         # Request data
         data = request.get_json()
@@ -109,7 +109,7 @@ class TagResource(Resource):
         # the same as the request user.
         notebook = Notebook.get_by_id(tag.notebook_id)
 
-        if not notebook or user_id != notebook.user.id:
+        if not notebook or uid != notebook.user.id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
         # Check if the notebook already has the tag (based on the tag name)
@@ -117,13 +117,13 @@ class TagResource(Resource):
             return get_response_data(TAG_EXISTS), 400
 
         # Save the tag
-        tag.notebook_id = notebook.id
+        # tag.notebook_id = notebook.id  # TODO Check if this is needed
         tag.save()
 
         return get_response_data(TAG_CREATED, tag.id), 201
 
     @jwt_required()
-    def put(self, _id: Optional[int] = None) -> Response:
+    def put(self, tag_id: Optional[int] = None) -> Response:
         """Handle a Tag Put request.
 
         Save a new or existing tag with the given data. The request user can
@@ -131,19 +131,19 @@ class TagResource(Resource):
         "notebook_id" field must be specified when creating a new tag but is
         not allowed to be updated in an existing tag.
 
-        :param _id: ID of the tag to update or None to create a new tag.
+        :param tag_id: ID of the tag to update or None to create a new tag.
         :return: Dictionary with the message and, if the tag has been created,
         the tag ID as the result.
         """
         # JWT payload data
-        user_id = get_jwt()["user_id"]
+        uid = get_jwt()["user_id"]
 
         # Request data
         data = request.get_json()
 
-        # If "_id" is None, we create a new tag. Otherwise we edit the existing
-        # tag with the given ID.
-        new_tag = _id is None
+        # If "tag_id" is None, we create a new tag. Otherwise we edit the
+        # existing tag with the given ID.
+        new_tag = tag_id is None
 
         if new_tag:
             # We validate the request data. If any of the Tag model required
@@ -156,7 +156,7 @@ class TagResource(Resource):
 
             # Check if the notebook doesn't exist and the permissions (the
             # request user must be the same as the notebook user).
-            if not notebook or user_id != notebook.user_id:
+            if not notebook or uid != notebook.user_id:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
             # Check if there is any existing tag with the same name in the
@@ -168,11 +168,11 @@ class TagResource(Resource):
             code = 201
         else:
             # Get existing tag
-            tag = Tag.get_by_id(data["id"])
+            tag = Tag.get_by_id(tag_id)
 
             # Check if the tag doesn't exist and the permissions (the request
             # user must be the same as the user of the tag notebook).
-            if not tag or user_id != tag.notebook.user_id:
+            if not tag or uid != tag.notebook.user_id:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
             # Check if the request data contains any invalid field (i.e. any
@@ -213,24 +213,24 @@ class TagResource(Resource):
         return get_response_data(message, result), code
 
     @jwt_required()
-    def delete(self, _id: int) -> Response:
+    def delete(self, tag_id: int) -> Response:
         """Handle a Tag Delete request.
 
         Delete an existing tag of an existing notebook of the request user
         given the tag ID.
 
-        :param _id: Tag ID.
+        :param tag_id: Tag ID.
         :return: Dictionary with the message.
         """
         # JWT payload data
-        user_id = get_jwt()["user_id"]
+        uid = get_jwt()["user_id"]
 
         # Get tag
-        tag = Tag.get_by_id(_id)
+        tag = Tag.get_by_id(tag_id)
 
         # Check if the tag doesn't exist and the permissions (the request user
         # must be the same as the user of the tag notebook).
-        if not tag or user_id != tag.notebook.user_id:
+        if not tag or uid != tag.notebook.user_id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
         # Delete tag

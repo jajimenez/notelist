@@ -81,8 +81,8 @@ class NotebookListTestCase(common.BaseTestCase):
         This test tries to get the notebook list of the request user without
         providing the access token, which shouldn't work.
         """
-        # Get list
-        r = self.client.get(f"/notebooks")
+        # Get list without providing the access token
+        r = self.client.get("/notebooks")
 
         # Check status code
         self.assertEqual(r.status_code, 401)
@@ -90,29 +90,11 @@ class NotebookListTestCase(common.BaseTestCase):
     def test_get_invalid_access_token(self):
         """Test the Get method of the Notebook List resource.
 
-        This test logs in as some user and then tries to get the user's
-        notebook list providing an invalid access token, which shouldn't work.
+        This test tries to get the user's notebook list providing an invalid
+        access token, which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
-        r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Get list providing an invalid access token
-        headers = {"Authorization": f"Bearer {access_token + '_'}"}
+        # Get list providing an invalid access token ("1234")
+        headers = {"Authorization": f"Bearer 1234"}
         r = self.client.get(f"/notebooks", headers=headers)
 
         # Check status code
@@ -123,7 +105,7 @@ class NotebookListTestCase(common.BaseTestCase):
 
         This test tries to call the Post method, which shouldn't work.
         """
-        r = self.client.put("/notebooks")
+        r = self.client.post("/notebooks")
 
         # Check status code
         self.assertEqual(r.status_code, 405)
@@ -143,7 +125,7 @@ class NotebookListTestCase(common.BaseTestCase):
 
         This test tries to call the Delete method, which shouldn't work.
         """
-        r = self.client.put("/notebooks")
+        r = self.client.delete("/notebooks")
 
         # Check status code
         self.assertEqual(r.status_code, 405)
@@ -211,7 +193,7 @@ class NotebookTestCase(common.BaseTestCase):
         which shouldn't work.
         """
         # Get notebook
-        r = self.client.get(f"/notebook/1")
+        r = self.client.get("/notebook/1")
 
         # Check status code
         self.assertEqual(r.status_code, 401)

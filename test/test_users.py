@@ -435,7 +435,7 @@ class UserListTestCase(common.BaseTestCase):
         self.assertNotIn("password", u)
         self.assertEqual(u["username"], "root")
 
-    def test_post_missing_access_token(self):
+    def test_get_missing_access_token(self):
         """Test the Post method of the User List resource.
 
         This test tries to get the list of users without providing an access
@@ -447,7 +447,7 @@ class UserListTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 401)
 
-    def test_post_invalid_access_token(self):
+    def test_get_invalid_access_token(self):
         """Test the Post method of the User List resource.
 
         This test tries to get the list of users providing an invalid access
@@ -478,7 +478,7 @@ class UserListTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 422)
 
-    def test_post_unauthorized_user(self):
+    def test_get_unauthorized_user(self):
         """Test the Post method of the User List resource.
 
         This test logs in as a not administrator user and then tries to get the
@@ -721,7 +721,7 @@ class UserTestCase(common.BaseTestCase):
         token, which shouldn't work.
         """
         # Get the data of a user with ID 1 (which doesn't exist)
-        r = self.client.get(f"/user/1")
+        r = self.client.get("/user/1")
 
         # Check status code
         self.assertEqual(r.status_code, 401)

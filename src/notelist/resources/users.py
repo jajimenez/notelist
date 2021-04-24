@@ -90,10 +90,10 @@ class TokenRefreshResource(Resource):
         """
         # Get the request JWT Identity, which in this application is equal to
         # the ID of the request user.
-        user_id = get_jwt_identity()
+        uid = get_jwt_identity()
 
         # Create a new, not fresh, access token
-        result = {"access_token": create_access_token(user_id, fresh=False)}
+        result = {"access_token": create_access_token(uid, fresh=False)}
 
         return get_response_data(USER_LOGGED_IN, result), 200
 
@@ -130,9 +130,10 @@ class UserListResource(Resource):
 
         :return: Dictionary with the message and result.
         """
-        # Check permissions
-        admin = get_jwt()["admin"]  # JWT payload data
+        # JWT payload data
+        admin = get_jwt()["admin"]
 
+        # Check permissions
         if not admin:
             return get_response_data(USER_UNAUTHORIZED), 403
 
@@ -149,27 +150,27 @@ class UserResource(Resource):
     """User resource."""
 
     @jwt_required()
-    def get(self, _id: int) -> Response:
+    def get(self, user_id: int) -> Response:
         """Handle a User Get request.
 
         Return the user with the given ID. The current request user can only
         call this endpoint for their own user, unless they are an
         administrator.
 
-        :param _id: User ID.
+        :param user_id: User ID.
         :return: Dictionary with the message and result.
         """
         # JWT payload data
         jwt = get_jwt()
-        user_id = jwt["user_id"]
+        uid = jwt["user_id"]
         admin = jwt["admin"]
 
         # Check permissions
-        if not admin and user_id != _id:
+        if not admin and uid != user_id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
         # Get the user
-        user = User.get_by_id(_id)
+        user = User.get_by_id(user_id)
 
         # Check if the user doesn't exist
         if not user:
@@ -221,7 +222,7 @@ class UserResource(Resource):
         return get_response_data(USER_CREATED, user.id), 201
 
     @jwt_required()
-    def put(self, _id: Optional[int] = None) -> Response:
+    def put(self, user_id: Optional[int] = None) -> Response:
         """Handle a User Put request.
 
         Save a new or existing user with the given data. The request user, if
@@ -229,21 +230,21 @@ class UserResource(Resource):
         their own user's fields, except their "username", "admin" or "enabled"
         fields.
 
-        :param _id: ID of the user to update or None to create a new user.
+        :param user_id: ID of the user to update or None to create a new user.
         :return: Dictionary with the message and, if the user has been created,
         the user ID as the result.
         """
         # JWT payload data
         jwt = get_jwt()
-        user_id = jwt["user_id"]
+        uid = jwt["user_id"]
         admin = jwt["admin"]
 
         # Request data
         data = request.get_json()
 
-        # If "_id" is None, we create a new user. Otherwise we edit the
+        # If "user_id" is None, we create a new user. Otherwise we edit the
         # existing user with the given ID.
-        new_user = _id is None
+        new_user = user_id is None
 
         if new_user:
             # Check permissions
@@ -272,14 +273,14 @@ class UserResource(Resource):
             code = 201
         else:
             # Get existing user
-            user = User.get_by_id(_id)
+            user = User.get_by_id(user_id)
 
             # Check if the user doesn't exist and the permissions. "username",
             # "admin" and "enabled" are the fields that not administrator users
             # aren't allowed to modify.
             if (
                 not admin and (
-                    not user or user_id != user.id or "username" in data
+                    not user or uid != user.id or "username" in data
                     or "admin" in data or "enabled" in data)
             ):
                 return get_response_data(USER_UNAUTHORIZED), 403
@@ -339,13 +340,13 @@ class UserResource(Resource):
         return get_response_data(message, result), code
 
     @jwt_required(fresh=True)
-    def delete(self, _id: int) -> Response:
+    def delete(self, user_id: int) -> Response:
         """Handle a User Delete request.
 
         Delete an existing user given its ID. This endpoint requires
         administrator permissions.
 
-        :param _id: User ID.
+        :param user_id: User ID.
         :return: Dictionary with the message.
         """
         # JWT payload data
@@ -356,7 +357,7 @@ class UserResource(Resource):
             return get_response_data(USER_UNAUTHORIZED), 403
 
         # Get user
-        user = User.get_by_id(_id)
+        user = User.get_by_id(user_id)
 
         # Check if the user doesn't exist
         if not user:
