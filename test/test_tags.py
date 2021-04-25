@@ -100,7 +100,7 @@ class TagListTestCase(common.BaseTestCase):
         """
         # Get the tags of the notebook with ID 1 (which doesn't exist)
         # providing an invalid access token ("1234").
-        headers = {"Authorization": f"Bearer 1234"}
+        headers = {"Authorization": "Bearer 1234"}
         r = self.client.get("/tags/1", headers=headers)
 
         # Check status code
@@ -136,6 +136,38 @@ class TagListTestCase(common.BaseTestCase):
 
         # Check status code
         self.assertEqual(r.status_code, 403)
+
+    def test_get_missing_notebook_id(self):
+        """Test the Get method of the Tag List resource.
+
+        This test tries to get the tag list of a notebook without providing the
+        notebook ID, which shouldn't work.
+        """
+        # Log in as the "root" user
+        data = {"username": "root", "password": self.root_password}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Get the tag list without providing the notebook ID
+        headers = {"Authorization": f"Bearer {access_token}"}
+        r = self.client.get("/tags", headers=headers)
+
+        # Check status code
+        print(r.json)
+        self.assertEqual(r.status_code, 404)
 
     def test_post(self):
         """Test the Post method of the Tag List resource.

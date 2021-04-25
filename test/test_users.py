@@ -218,7 +218,7 @@ class TokenRefreshTestCase(common.BaseTestCase):
         This test tries to get a new, not fresh, access token without providing
         a refresh token, which shouldn't work.
         """
-        # Get access token
+        # Get access token without providing the refresh token
         r = self.client.post("/refresh")
 
         # Check status code
@@ -230,27 +230,9 @@ class TokenRefreshTestCase(common.BaseTestCase):
         This test tries to get a new, not fresh, access token given an invalid
         refresh token, which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
-        r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Get a new, not fresh, access token providing the access token instead
-        # of the refresh token.
-        headers = {"Authorization": f"Bearer {access_token}"}
+        # Get a new, not fresh, access token providing an invalid access token
+        # ("1234").
+        headers = {"Authorization": "Bearer 1234"}
         r = self.client.post("/refresh", headers=headers)
 
         # Check status code
@@ -327,7 +309,7 @@ class LogoutTestCase(common.BaseTestCase):
         This test tries to log out without providing an access token, which
         shouldn't work.
         """
-        # Logout
+        # Log out without providing the access token
         r = self.client.post("/logout")
 
         # Check status code
@@ -336,29 +318,11 @@ class LogoutTestCase(common.BaseTestCase):
     def test_post_invalid_access_token(self):
         """Test the Post method of the Logout resource.
 
-        This test logs in as some user and then tries to log out providing an
-        invalid access token, which shouldn't work.
+        This test tries to log out providing an invalid access token, which
+        shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
-        r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Log out providing an invalid access token
-        headers = {"Authorization": f"Bearer {access_token + '_'}"}
+        # Log out providing an invalid access token ("1234")
+        headers = {"Authorization": "Bearer 1234"}
         r = self.client.post("/refresh", headers=headers)
 
         # Check status code
@@ -441,7 +405,7 @@ class UserListTestCase(common.BaseTestCase):
         This test tries to get the list of users without providing an access
         token, which shouldn't work.
         """
-        # Get list
+        # Get list without providing the access token
         r = self.client.get("/users")
 
         # Check status code
@@ -453,26 +417,8 @@ class UserListTestCase(common.BaseTestCase):
         This test tries to get the list of users providing an invalid access
         token, which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
-        r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Get list providing an invalid access token
-        headers = {"Authorization": f"Bearer {access_token + '_'}"}
+        # Get list providing an invalid access token ("1234")
+        headers = {"Authorization": "Bearer 1234"}
         r = self.client.get("/users", headers=headers)
 
         # Check status code
@@ -732,31 +678,8 @@ class UserTestCase(common.BaseTestCase):
         This test tries to get the data of some user providing an invalid
         access token, which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
-        r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Check user ID
-        self.assertIn("user_id", result)
-        user_id = result["user_id"]
-        self.assertEqual(type(user_id), int)
-
-        # Get data providing an invalid access token
-        headers = {"Authorization": f"Bearer {access_token + '_'}"}
+        # Get data providing an invalid access token ("1234")
+        headers = {"Authorization": "Bearer 1234"}
         r = self.client.get(f"/user/{user_id}", headers=headers)
 
         # Check status code
@@ -929,7 +852,7 @@ class UserTestCase(common.BaseTestCase):
         This test tries to create a new user without providing the access
         token, which shouldn't work.
         """
-        # Create a user
+        # Create a user without providing the access token
         u = {"username": "test", "password": "test_password"}
         r = self.client.post("/user", json=u)
 
@@ -943,7 +866,7 @@ class UserTestCase(common.BaseTestCase):
         which shouldn't work.
         """
         # Create a user providing an invalid access token ("1234")
-        headers = {"Authorization": f"Bearer 1234"}
+        headers = {"Authorization": "Bearer 1234"}
         u = {"username": "test", "password": "test_password"}
         r = self.client.post("/user", headers=headers, json=u)
 
@@ -1471,7 +1394,7 @@ class UserTestCase(common.BaseTestCase):
         which shouldn't work.
         """
         # Create a user providing an invalid access token ("1234")
-        headers = {"Authorization": f"Bearer 1234"}
+        headers = {"Authorization": "Bearer 1234"}
         u = {"username": "test", "password": "test_password"}
         r = self.client.put("/user", headers=headers, json=u)
 
@@ -1486,7 +1409,7 @@ class UserTestCase(common.BaseTestCase):
         """
         # Edit the user with ID 1 ("root") providing an invalid access token
         # ("1234").
-        headers = {"Authorization": f"Bearer 1234"}
+        headers = {"Authorization": "Bearer 1234"}
         u = {"username": "test", "password": "test_password"}
         r = self.client.put("/user/1", headers=headers, json=u)
 
@@ -1986,7 +1909,7 @@ class UserTestCase(common.BaseTestCase):
         This test tries to delete some user without providing the access token,
         which shouldn't work.
         """
-        # Delete a user with ID 1
+        # Delete the user with ID 1 ("root")
         r = self.client.delete("/user/1")
 
         # Check status code
@@ -2000,7 +1923,7 @@ class UserTestCase(common.BaseTestCase):
         """
         # Delete the user with ID 1 ("root") providing an invalid access token
         # ("1234").
-        headers = {"Authorization": f"Bearer 1234"}
+        headers = {"Authorization": "Bearer 1234"}
         r = self.client.delete("/user/1", headers=headers)
 
         # Check status code
