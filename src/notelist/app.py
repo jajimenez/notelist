@@ -9,8 +9,8 @@ from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from marshmallow import ValidationError
 
-import notelist.config as conf
-import notelist.tools as tools
+from notelist import conf
+from notelist import tools
 from notelist.db import db
 from notelist.ma import ma
 from notelist.resources import get_response_data, Response
@@ -39,8 +39,8 @@ DB_URI_NOT_SET = (
 # Configuration:
 # - Database URI
 # - "root" user initial password (optional)
-db_uri = conf.get_val(conf.DB_URI_KEY)
-root_ip = conf.get_val(conf.ROOT_IP_KEY)
+db_uri = conf.get_val(conf.DB_URI)
+root_ip = conf.get_val(conf.ROOT_IP)
 
 if type(db_uri) != str or not db_uri:
     raise Exception(DB_URI_NOT_SET)
@@ -84,7 +84,7 @@ with app.app_context():
                 name="Root")
 
         # Reset the "root" user initial password
-        conf.set_val(conf.ROOT_IP_KEY, "")
+        conf.set_val(conf.ROOT_IP, "")
         root_ip = None
 
         user.save()
