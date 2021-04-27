@@ -32,14 +32,23 @@ ACCESS_TOKEN_MISSING = "Access token missing."
 FRESH_ACCESS_TOKEN_REQ = "Fresh access token required."
 EXPIRED_TOKEN = "Expired token."
 INVALID_ACCESS_TOKEN = "Invalid access token."
-CONF_NOT_SET = (
-    'Configuration parameters not defined.\nTo set the parameters, run '
-    '"notelist configure".')
+DB_URI_NOT_SET = (
+    'Database URI is not set. To set it, edit the file '
+    f'"{conf.get_conf_path()}".')
+
+# Configuration:
+# - Database URI
+# - "root" user initial password (optional)
+db_uri = conf.get_val(conf.DB_URI_KEY)
+root_ip = conf.get_val(conf.ROOT_IP_KEY)
+
+if type(db_uri) != str or not db_uri:
+    raise Exception(DB_URI_NOT_SET)
 
 # Application setup
 app = Flask(__name__)
 app.config["DEBUG"] = False
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"  # Temporary URI
+app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["PROPAGATE_EXCEPTIONS"] = True
 
@@ -55,6 +64,31 @@ db.init_app(app)
 ma.init_app(app)
 mig = Migrate(app, db)
 
+# Initialize database
+with app.app_context():
+    # Create tables if the don't exist
+    db.create_all()
+
+    # Create/update the "root" user
+    if type(root_ip) == str and root_ip:
+        user = User.get_by_username("root")  # Get the user (if it exists)
+        password = tools.get_hash(root_ip)  # Encrypt password
+
+        if user:
+            # Update user
+            user.password = password
+        else:
+            # Create user
+            user = User(
+                username="root", password=password, enabled=True, admin=True,
+                name="Root")
+
+        # Reset the "root" user initial password
+        conf.set_val(conf.ROOT_IP_KEY, "")
+        root_ip = None
+
+        user.save()
+
 # Resources
 api = Api(app)
 api.add_resource(LoginResource, "/login")
@@ -69,36 +103,6 @@ api.add_resource(TagResource, "/tag", "/tag/<int:tag_id>")
 
 # User login
 jwt = JWTManager(app)
-
-
-def init_db(root_password: Optional[str] = None):
-    """Initialize the database.
-
-    This method creates all the datatabase tables if they don't exist. If
-    `root_password` is not None, it creates the "root" administrator user if
-    it doesn't exist, or updates it otherwise, with `root_password` as its
-    password.
-
-    :param root_password: Initial password for the "root" user.
-    """
-    # Create tables if the don't exist
-    db.create_all()
-
-    # Create/update the "root" user
-    if root_password is not None:
-        user = User.get_by_username("root")  # Try to get the user
-        password = tools.get_hash(root_password)  # Encrypt password
-
-        if user:
-            # Update user
-            user.password = password
-        else:
-            # Create user
-            user = User(
-                username="root", password=password, enabled=True, admin=True,
-                name="Root")
-
-        user.save()
 
 
 @app.errorhandler(ValidationError)
@@ -180,24 +184,3 @@ def additional_claims_loader(identity) -> Dict[str, bool]:
 def home() -> str:
     """Root route request handler."""
     return render_template("home.html")
-
-
-def run(root_password: Optional[str] = None):
-    """Run the application.
-
-    :param root_password: Initial password for the "root" administrator user.
-    """
-    host, port, db_uri = conf.get_config()
-
-    if host is not None and port is not None and db_uri is not None:
-        # Set database URI
-        app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
-
-        # Initialize database
-        with app.app_context():
-            init_db(root_password)
-
-        # Run applicarion
-        app.run(host=host, port=port, debug=False)
-    else:
-        print(CONF_NOT_SET)

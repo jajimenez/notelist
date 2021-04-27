@@ -1,29 +1,40 @@
 """Main module."""
 
 import sys
-
-from notelist.app import run
-from notelist.config import config
+from notelist.app import app
 
 
-RUN_ARG = "--rp"
-CONF_ARG = "configure"
-INVALID_ARGS = "Invalid arguments."
+HOST_KEY = "--host"
+PORT_KEY = "--port"
 
 
-def main():
+def get_arg_val(key: str):
+    """Return the value of an argument.
+
+    :param key: Argument key.
+    :return: Argument value.
+    """
+    val = None
+
+    if key in sys.argv:
+        i = sys.argv.index(key)
+
+        if i < len(sys.argv) - 1:
+            val = sys.argv[i + 1]
+
+    return val
+
+
+def run():
     """Run the application."""
-    count = len(sys.argv)
+    host = get_arg_val(HOST_KEY)
+    port = get_arg_val(PORT_KEY)
 
-    if count == 1:
-        # Run application
-        run()
-    elif count == 3 and sys.argv[1] == RUN_ARG:
-        # Run application with an initial password for the "root" administrator
-        # user.
-        run(sys.argv[2])
-    elif count == 2 and sys.argv[1] == CONF_ARG:
-        # Run the configuration user interface
-        config()
+    if host and port:
+        app.run(host=host, port=port)
+    elif host:
+        app.run(host=host)
+    elif port:
+        app.run(port=port)
     else:
-        print(INVALID_ARGS)
+        app.run()

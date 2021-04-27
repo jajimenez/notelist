@@ -38,5 +38,5 @@ if __name__ == "__main__":
             "notelist.schemas": "src/notelist/schemas",
             "notelist.resources": "src/notelist/resources"},
         package_data={"notelist": ["templates/*.html"]},
-        entry_points={"console_scripts": ["notelist=notelist.main:main"]}
+        entry_points={"console_scripts": ["notelist=notelist.main:run"]}
     )
