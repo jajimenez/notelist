@@ -31,12 +31,17 @@ if __name__ == "__main__":
         install_requires=install_req,
         packages=[
             "notelist", "notelist.models", "notelist.schemas",
-            "notelist.resources"],
+            "notelist.resources", "notelist.migrations",
+            "notelist.migrations.versions"],
         package_dir={
             "notelist": "src/notelist",
             "notelist.models": "src/notelist/models",
             "notelist.schemas": "src/notelist/schemas",
-            "notelist.resources": "src/notelist/resources"},
-        package_data={"notelist": ["templates/*.html"]},
-        entry_points={"console_scripts": ["notelist=notelist.main:run"]}
+            "notelist.resources": "src/notelist/resources",
+            "notelist.migrations": "src/notelist/migrations",
+            "notelist.migrations.versions":
+                "src/notelist/migrations/versions"},
+        package_data={
+            "notelist": ["templates/*.html"],
+            "notelist.migrations": ["README", "*.ini", "*.mako"]}
     )
