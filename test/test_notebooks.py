@@ -13,8 +13,9 @@ class NotebookListTestCase(common.BaseTestCase):
         This test logs in as some user, creates some notebooks and then tries
         to get the user's notebook list, which should work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -95,7 +96,7 @@ class NotebookListTestCase(common.BaseTestCase):
         """
         # Get list providing an invalid access token ("1234")
         headers = {"Authorization": "Bearer 1234"}
-        r = self.client.get(f"/notebooks", headers=headers)
+        r = self.client.get("/notebooks", headers=headers)
 
         # Check status code
         self.assertEqual(r.status_code, 422)
@@ -140,8 +141,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test logs in as some user, creates a notebook and then tries to
         get this notebook, which should work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -183,6 +185,9 @@ class NotebookTestCase(common.BaseTestCase):
         self.assertEqual(type(notebook), dict)
 
         # Check notebook
+        self.assertEqual(len(notebook), 2)
+        self.assertIn("id", notebook)
+        self.assertIn("name", notebook)
         self.assertEqual(notebook["id"], notebook_id)
         self.assertEqual(notebook["name"], n["name"])
 
@@ -205,7 +210,8 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to get a notebook providing an invalid access token,
         which shouldn't work.
         """
-        # Get notebook providing an invalid access token ("1234")
+        # Get the notebook with ID 1 (which doesn't exist) providing an invalid
+        # access token ("1234")
         headers = {"Authorization": "Bearer 1234"}
         r = self.client.get("/notebook/1", headers=headers)
 
@@ -218,8 +224,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to get a notebook of a user from another user, which
         shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -275,7 +282,7 @@ class NotebookTestCase(common.BaseTestCase):
         notebook_id = r.json["result"]
         self.assertEqual(type(notebook_id), int)
 
-        # Get the notebook as the "root" user
+        # Get the notebook as the administrator user
         r = self.client.get(f"/notebook/{notebook_id}", headers=headers1)
 
         # Check status code
@@ -287,8 +294,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test logs in as some user and then tries to get a notebook that
         doesn't exist for the user, which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -318,8 +326,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test logs in as some user and then tries to create a new notebook,
         which should work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -382,8 +391,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test logs in as some user and then tries to create a new notebook
         with some mandatory field missing, which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -414,8 +424,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to create a new notebook specifying its user, which
         shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -446,8 +457,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to create a new notebook providing some
         invalid/unexpected field, which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -479,8 +491,9 @@ class NotebookTestCase(common.BaseTestCase):
         with the same name of an existing notebook of the user, which shouldn't
         work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -517,8 +530,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test logs in as some user and then tries to create a new notebook,
         which should work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -554,8 +568,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test logs in as some user and then tries to edit one of the user's
         notebooks, which should work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -606,6 +621,9 @@ class NotebookTestCase(common.BaseTestCase):
         self.assertEqual(type(notebook), dict)
 
         # Check data
+        self.assertEqual(len(notebook), 2)
+        self.assertIn("id", notebook)
+        self.assertIn("name", notebook)
         self.assertEqual(notebook["id"], notebook_id)
         self.assertEqual(notebook["name"], new_notebook["name"])
 
@@ -628,7 +646,8 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to edit a notebook without providing the access token,
         which shouldn't work.
         """
-        # Edit the user with ID 1 ("root") without providing the access token
+        # Edit the user with ID 1 (whose username is "self.admin_username")
+        # without providing the access token.
         n = {"name": "Test Notebook"}
         r = self.client.put("/notebook/1", json=n)
 
@@ -655,8 +674,8 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to edit a notebook providing an invalid access token,
         which shouldn't work.
         """
-        # Edit the user with ID 1 ("root") providing an invalid access token
-        # ("1234").
+        # Edit the user with ID 1 (whose username is "self.admin_username")
+        # providing an invalid access token ("1234").
         headers = {"Authorization": "Bearer 1234"}
         n = {"name": "Test Notebook"}
         r = self.client.put("/notebook/1", headers=headers, json=n)
@@ -670,8 +689,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test creates a notebook of some user, and then tries to edit the
         notebook as another user, which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -688,7 +708,7 @@ class NotebookTestCase(common.BaseTestCase):
         self.assertEqual(type(access_token), str)
         self.assertNotEqual(access_token, "")
 
-        # Create a new user
+        # Create new user
         headers1 = {"Authorization": f"Bearer {access_token}"}
         u = {"username": "test", "password": "test_password", "enabled": True}
         r = self.client.post("/user", headers=headers1, json=u)
@@ -727,7 +747,7 @@ class NotebookTestCase(common.BaseTestCase):
         notebook_id = r.json["result"]
         self.assertEqual(type(notebook_id), int)
 
-        # Edit the notebook as the "root" user
+        # Edit the notebook as the administrator user
         new_notebook = {"name": "Test Notebook 2"}
 
         r = self.client.put(
@@ -742,8 +762,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to create a new notebook with some mandatory field
         missing, which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -774,8 +795,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to create a notebook specifying its user, which
         shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -806,8 +828,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to create a new notebook providing some
         invalid/unexpected field, which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -838,8 +861,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to change the user of some notebook, which shouldn't
         work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -871,7 +895,7 @@ class NotebookTestCase(common.BaseTestCase):
 
         # Change notebook user
         new_notebook = {"id": notebook_id, "user_id": 2}
-        r = self.client.put(f"/notebook", headers=headers, json=new_notebook)
+        r = self.client.put("/notebook", headers=headers, json=new_notebook)
 
         # Check status code
         self.assertEqual(r.status_code, 400)
@@ -882,8 +906,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to edit a notebook providing some invalid/unexpected
         field, which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -929,8 +954,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to create a new notebook with the same name of an
         existing notebook of the request user, which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -967,8 +993,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to edit a notebook that doesn't exist for the request
         user, which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -999,8 +1026,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test creates a new notebook and then tries to delete it, which
         should work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1084,8 +1112,8 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to delete a notebook providing an invalid access token,
         which shouldn't work.
         """
-        # Delete the notebook with ID 1 (that doesn't exist for the user)
-        # providing an invalid access token ("1234").
+        # Delete the notebook with ID 1 (that doesn't exist) providing an
+        # invalid access token ("1234").
         headers = {"Authorization": "Bearer 1234"}
         r = self.client.delete("/notebook/1", headers=headers)
 
@@ -1098,8 +1126,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to delete a notebook providing a not fresh access
         token, which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1118,7 +1147,7 @@ class NotebookTestCase(common.BaseTestCase):
 
         # Get a new, not fresh, access token
         headers = {"Authorization": f"Bearer {refresh_token}"}
-        r = self.client.post(f"/refresh", headers=headers)
+        r = self.client.post("/refresh", headers=headers)
 
         # Check status code
         self.assertEqual(r.status_code, 200)
@@ -1148,8 +1177,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to delete a notebook of a user different than the
         request user, which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -1166,7 +1196,7 @@ class NotebookTestCase(common.BaseTestCase):
         self.assertEqual(type(access_token), str)
         self.assertNotEqual(access_token, "")
 
-        # Create a notebook of the "root" user
+        # Create a notebook of the administrator user
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
@@ -1207,7 +1237,7 @@ class NotebookTestCase(common.BaseTestCase):
         self.assertEqual(type(access_token), str)
         self.assertNotEqual(access_token, "")
 
-        # Delete the notebook of the "root" user as the new user
+        # Delete the notebook of the administrator user as the new user
         headers = {"Authorization": f"Bearer {access_token}"}
         r = self.client.delete(f"/notebook/{notebook_id}", headers=headers)
 
@@ -1220,8 +1250,9 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to delete a notebook that doesn't exist, which
         shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code

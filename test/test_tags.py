@@ -5,16 +5,17 @@ import common
 
 
 class TagListTestCase(common.BaseTestCase):
-    """Notebook List resource unit tests."""
+    """Tag List resource unit tests."""
 
     def test_get(self):
         """Test the Get method of the Tag List resource.
 
-        This test logs in as some user, creates a notebook with some tags and
-        then tries to get the notebook's tag list, which should work.
+        This test creates a notebook with some tags and then tries to get the
+        notebook's tag list, which should work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -112,8 +113,9 @@ class TagListTestCase(common.BaseTestCase):
         This test tries to get the tag list of a notebook that the request user
         doesn't have, which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -143,8 +145,9 @@ class TagListTestCase(common.BaseTestCase):
         This test tries to get the tag list of a notebook without providing the
         notebook ID, which shouldn't work.
         """
-        # Log in as the "root" user
-        data = {"username": "root", "password": self.root_password}
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
         r = self.client.post("/login", json=data)
 
         # Check status code
@@ -166,7 +169,6 @@ class TagListTestCase(common.BaseTestCase):
         r = self.client.get("/tags", headers=headers)
 
         # Check status code
-        print(r.json)
         self.assertEqual(r.status_code, 404)
 
     def test_post(self):
@@ -204,6 +206,106 @@ class TagListTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r1.status_code, 404)
         self.assertEqual(r2.status_code, 405)
+
+
+class TagTestCase(common.BaseTestCase):
+    """Tag resource unit tests."""
+
+    def test_get(self):
+        """Test the Get method of the Tag resource.
+
+        This test creates a notebook, adds a tag to the notebook and then tries
+        to get the tag, which should work.
+        """
+        # Log in
+        data = {
+            "username": self.admin_username, "password": self.admin_password}
+        r = self.client.post("/login", json=data)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        result = r.json["result"]
+        self.assertEqual(type(result), dict)
+
+        # Check access token
+        self.assertIn("access_token", result)
+        access_token = result["access_token"]
+        self.assertEqual(type(access_token), str)
+        self.assertNotEqual(access_token, "")
+
+        # Create notebook
+        headers = {"Authorization": f"Bearer {access_token}"}
+        n = {"name": "Test Notebook"}
+        r = self.client.post("/notebook", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 201)
+
+        # Check result
+        self.assertIn("result", r.json)
+        notebook_id = r.json["result"]
+        self.assertEqual(type(notebook_id), int)
+
+        # Create tag
+        t = {
+            "notebook_id": notebook_id, "name": "Test Tag", "color": "#ffffff"}
+        r = self.client.post("/tag", headers=headers, json=t)
+
+        # Check status code
+        self.assertEqual(r.status_code, 201)
+
+        # Check result
+        self.assertIn("result", r.json)
+        tag_id = r.json["result"]
+        self.assertEqual(type(tag_id), int)
+
+        # Get tag
+        r = self.client.get(f"/tag/{tag_id}", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        tag = r.json["result"]
+        self.assertEqual(type(tag), dict)
+
+        # Check notebook
+        self.assertEqual(len(tag), 3)
+        self.assertIn("id", tag)
+        self.assertIn("name", tag)
+
+        self.assertEqual(tag["id"], notebook_id)
+        self.assertEqual(tag["name"], t["name"])
+        self.assertEqual(tag["color"], t["color"])
+
+    def test_get_missing_access_token(self):
+        """Test the Get method of the Tag resource.
+
+        This test tries to get the data of a tag without providing the access
+        token, which shouldn't work.
+        """
+        # Get the data of the tag with ID 1 (which doesn't exist)
+        r = self.client.get("/tag/1")
+
+        # Check status code
+        self.assertEqual(r.status_code, 401)
+
+    def test_get_invalid_access_token(self):
+        """Test the Get method of the Tag resource.
+
+        This test tries to get the data of some tag providing an invalid access
+        token, which shouldn't work.
+        """
+        # Get data providing an invalid access token ("1234")
+        headers = {"Authorization": "Bearer 1234"}
+        r = self.client.get("/tag/1", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 422)
 
 
 if __name__ == "__main__":

@@ -6,8 +6,7 @@ import tempfile
 import random
 
 import paths
-from notelist import tools
-from notelist.app import app, init_db
+from notelist import app, db, tools
 from notelist.models.users import User
 
 
@@ -23,15 +22,22 @@ class BaseTestCase(unittest.TestCase):
         app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{self.path}"
         app.config["TESTING"] = True
 
-        # Initial password of the "root" user
-        self.root_password = str(random.randint(0, 99999999))  # Random number
-
         # Test API client
         self.client = app.test_client()
 
-        # Initialize the database
+        # Initialize database
         with app.app_context():
-            init_db(self.root_password)
+            # Create database tables
+            db.create_all()
+
+            # Create administrator user
+            self.admin_username = "root"
+            self.admin_password = str(random.randint(0, 99999999))
+
+            User(
+                username=self.admin_username,
+                password=tools.get_hash(self.admin_password), admin=True,
+                enabled=True, name=None, email=None).save()
 
     def tearDown(self):
         """Close each unit test."""
@@ -41,4 +47,5 @@ class BaseTestCase(unittest.TestCase):
 
         self.fd = None
         self.path = None
-        self.root_password = None
+        self.admin_username = None
+        self.admin_password = None
