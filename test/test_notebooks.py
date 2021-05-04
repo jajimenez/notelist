@@ -236,8 +236,7 @@ class NotebookTestCase(common.BaseTestCase):
     def test_post(self):
         """Test the Post method of the Notebook resource.
 
-        This test logs in as some user and then tries to create a new notebook,
-        which should work.
+        This test tries to create a notebook, which should work.
         """
         # Log in
         data = {
@@ -262,10 +261,10 @@ class NotebookTestCase(common.BaseTestCase):
     def test_post_missing_access_token(self):
         """Test the Post method of the Notebook resource.
 
-        This test tries to create a new notebook without providing the access
+        This test tries to create a notebook without providing the access
         token, which shouldn't work.
         """
-        # Create a notebook without providing the access token
+        # Create notebook
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", json=n)
 
@@ -275,8 +274,8 @@ class NotebookTestCase(common.BaseTestCase):
     def test_post_invalid_access_token(self):
         """Test the Post method of the Notebook resource.
 
-        This test logs in as some user and then tries to create a new notebook
-        providing an invalid access token, which shouldn't work.
+        This test tries to create a notebook providing an invalid access token,
+        which shouldn't work.
         """
         # Create a notebook providing an invalid access token ("1234")
         headers = {"Authorization": "Bearer 1234"}
@@ -289,8 +288,8 @@ class NotebookTestCase(common.BaseTestCase):
     def test_post_missing_fields(self):
         """Test the Post method of the Notebook resource.
 
-        This test logs in as some user and then tries to create a new notebook
-        with some mandatory field missing, which shouldn't work.
+        This test tries to create a notebook with some mandatory field missing,
+        which shouldn't work.
         """
         # Log in
         data = {
