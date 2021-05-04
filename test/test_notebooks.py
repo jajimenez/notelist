@@ -15,22 +15,10 @@ class NotebookListTestCase(common.BaseTestCase):
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.admin["username"],
+            "password": self.admin["password"]}
         r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
+        access_token = r.json["result"]["access_token"]
 
         # Get list
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -50,14 +38,7 @@ class NotebookListTestCase(common.BaseTestCase):
         # Create notebook
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-
-        # Check status code
-        self.assertEqual(r.status_code, 201)
-
-        # Check result
-        self.assertIn("result", r.json)
         notebook_id = r.json["result"]
-        self.assertEqual(type(notebook_id), int)
 
         # Get list
         r = self.client.get("/notebooks", headers=headers)
@@ -143,35 +124,16 @@ class NotebookTestCase(common.BaseTestCase):
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
+        access_token = r.json["result"]["access_token"]
 
         # Create notebook
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-
-        # Check status code
-        self.assertEqual(r.status_code, 201)
-
-        # Check result
-        self.assertIn("result", r.json)
         notebook_id = r.json["result"]
-        self.assertEqual(type(notebook_id), int)
 
         # Get the data of the notebook
         r = self.client.get(f"/notebook/{notebook_id}", headers=headers)
@@ -221,69 +183,32 @@ class NotebookTestCase(common.BaseTestCase):
     def test_get_unauthorized_user(self):
         """Test the Get method of the Notebook resource.
 
-        This test tries to get a notebook of a user from another user, which
+        This test tries to get a notebook of some user as another user, which
         shouldn't work.
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.admin["username"],
+            "password": self.admin["password"]}
         r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
 
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Create a new user
-        headers1 = {"Authorization": f"Bearer {access_token}"}
-        u = {"username": "test", "password": "test_password", "enabled": True}
-        r = self.client.post("/user", headers=headers1, json=u)
-
-        # Check status code
-        self.assertEqual(r.status_code, 201)
-
-        # Log in as the new user
-        data = {"username": u["username"], "password": u["password"]}
-        r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Create a notebook of the new user
-        headers2 = {"Authorization": f"Bearer {access_token}"}
+        # Create notebook
+        headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
-        r = self.client.post("/notebook", headers=headers2, json=n)
-
-        # Check status code
-        self.assertEqual(r.status_code, 201)
-
-        # Check result
-        self.assertIn("result", r.json)
+        r = self.client.post("/notebook", headers=headers, json=n)
         notebook_id = r.json["result"]
-        self.assertEqual(type(notebook_id), int)
 
-        # Get the notebook as the administrator user
-        r = self.client.get(f"/notebook/{notebook_id}", headers=headers1)
+        # Log in as another user
+        data = {
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
+        r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
+
+        # Get notebook
+        headers = {"Authorization": f"Bearer {access_token}"}
+        r = self.client.get(f"/notebook/{notebook_id}", headers=headers)
 
         # Check status code
         self.assertEqual(r.status_code, 403)
@@ -291,29 +216,17 @@ class NotebookTestCase(common.BaseTestCase):
     def test_get_notebook_not_found(self):
         """Test the Get method of the Notebook resource.
 
-        This test logs in as some user and then tries to get a notebook that
-        doesn't exist for the user, which shouldn't work.
+        This test tries to get a notebook that doesn't exist, which shouldn't
+        work.
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
 
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Get a notebook that doesn't exist for the user
+        # Get notebook
         headers = {"Authorization": f"Bearer {access_token}"}
         r = self.client.get("/notebook/1", headers=headers)
 
@@ -328,22 +241,10 @@ class NotebookTestCase(common.BaseTestCase):
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
+        access_token = r.json["result"]["access_token"]
 
         # Create a notebook
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -393,22 +294,10 @@ class NotebookTestCase(common.BaseTestCase):
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
+        access_token = r.json["result"]["access_token"]
 
         # Create a notebook without its name
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -426,22 +315,10 @@ class NotebookTestCase(common.BaseTestCase):
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
+        access_token = r.json["result"]["access_token"]
 
         # Create a notebook
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -454,29 +331,17 @@ class NotebookTestCase(common.BaseTestCase):
     def test_post_invalid_fields(self):
         """Test the Post method of the Notebook resource.
 
-        This test tries to create a new notebook providing some
-        invalid/unexpected field, which shouldn't work.
+        This test tries to create a notebook providing some invalid/unexpected
+        field, which shouldn't work.
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
 
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Create a notebook providing an invalid field ("invalid_field")
+        # Create notebook
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook", "invalid_field": "1234"}
         r = self.client.post("/notebook", headers=headers, json=n)
@@ -493,24 +358,12 @@ class NotebookTestCase(common.BaseTestCase):
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
 
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Create a notebook
+        # Create notebook
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
@@ -527,27 +380,14 @@ class NotebookTestCase(common.BaseTestCase):
     def test_put_new(self):
         """Test the Put method of the Notebook resource.
 
-        This test logs in as some user and then tries to create a new notebook,
-        which should work.
+        This test tries to create a new notebook, which should work.
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
+        access_token = r.json["result"]["access_token"]
 
         # Create a notebook
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -565,44 +405,24 @@ class NotebookTestCase(common.BaseTestCase):
     def test_put_edit(self):
         """Test the Put method of the Notebook resource.
 
-        This test logs in as some user and then tries to edit one of the user's
-        notebooks, which should work.
+        This test tries to edit one of the request user's notebooks, which
+        should work.
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
+        access_token = r.json["result"]["access_token"]
 
         # Create a notebook
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.put("/notebook", headers=headers, json=n)
-
-        # Check status code
-        self.assertEqual(r.status_code, 201)
-
-        # Check result
-        self.assertIn("result", r.json)
         notebook_id = r.json["result"]
-        self.assertEqual(type(notebook_id), int)
 
         # Edit the notebook
         new_notebook = {"name": "Test Notebook 2"}
-
         r = self.client.put(
             f"/notebook/{notebook_id}", headers=headers, json=new_notebook)
 
@@ -611,14 +431,7 @@ class NotebookTestCase(common.BaseTestCase):
 
         # Get notebook data
         r = self.client.get(f"/notebook/{notebook_id}", headers=headers)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
         notebook = r.json["result"]
-        self.assertEqual(type(notebook), dict)
 
         # Check data
         self.assertEqual(len(notebook), 2)
@@ -646,7 +459,7 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to edit a notebook without providing the access token,
         which shouldn't work.
         """
-        # Edit the user with ID 1 (whose username is "self.admin_username")
+        # Edit the user with ID 1 (whose username is "self.admin["username"]")
         # without providing the access token.
         n = {"name": "Test Notebook"}
         r = self.client.put("/notebook/1", json=n)
@@ -674,7 +487,7 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to edit a notebook providing an invalid access token,
         which shouldn't work.
         """
-        # Edit the user with ID 1 (whose username is "self.admin_username")
+        # Edit the user with ID 1 (whose username is "self.admin["username"]")
         # providing an invalid access token ("1234").
         headers = {"Authorization": "Bearer 1234"}
         n = {"name": "Test Notebook"}
@@ -691,67 +504,30 @@ class NotebookTestCase(common.BaseTestCase):
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.admin["username"],
+            "password": self.admin["password"]}
         r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
 
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Create new user
-        headers1 = {"Authorization": f"Bearer {access_token}"}
-        u = {"username": "test", "password": "test_password", "enabled": True}
-        r = self.client.post("/user", headers=headers1, json=u)
-
-        # Check status code
-        self.assertEqual(r.status_code, 201)
-
-        # Log in as the new user
-        data = {"username": u["username"], "password": u["password"]}
-        r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Create a notebook of the new user
-        headers2 = {"Authorization": f"Bearer {access_token}"}
+        # Create notebook
+        headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
-        r = self.client.post("/notebook", headers=headers2, json=n)
-
-        # Check status code
-        self.assertEqual(r.status_code, 201)
-
-        # Check result
-        self.assertIn("result", r.json)
+        r = self.client.post("/notebook", headers=headers, json=n)
         notebook_id = r.json["result"]
-        self.assertEqual(type(notebook_id), int)
+
+        # Log in as another user
+        data = {
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
+        r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
 
         # Edit the notebook as the administrator user
+        headers = {"Authorization": f"Bearer {access_token}"}
         new_notebook = {"name": "Test Notebook 2"}
 
         r = self.client.put(
-            f"/notebook/{notebook_id}", headers=headers1, json=new_notebook)
+            f"/notebook/{notebook_id}", headers=headers, json=new_notebook)
 
         # Check status code
         self.assertEqual(r.status_code, 403)
@@ -759,29 +535,17 @@ class NotebookTestCase(common.BaseTestCase):
     def test_put_missing_fields(self):
         """Test the Put method of the Notebook resource.
 
-        This test tries to create a new notebook with some mandatory field
-        missing, which shouldn't work.
+        This test tries to create a notebook with some mandatory field missing,
+        which shouldn't work.
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
 
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Create a notebook without providing its name
+        # Create notebook
         headers = {"Authorization": f"Bearer {access_token}"}
         n = dict()  # Empty dictionary
         r = self.client.put("/notebook", headers=headers, json=n)
@@ -797,26 +561,14 @@ class NotebookTestCase(common.BaseTestCase):
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
 
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Create a notebook
+        # Create notebook
         headers = {"Authorization": f"Bearer {access_token}"}
-        n = {"user_id": 1, "name": "Test Notebook"}
+        n = {"user_id": self.reg1["id"], "name": "Test Notebook"}
         r = self.client.put("/notebook", headers=headers, json=n)
 
         # Check status code
@@ -825,27 +577,15 @@ class NotebookTestCase(common.BaseTestCase):
     def test_put_new_invalid_fields(self):
         """Test the Put method of the Notebook resource.
 
-        This test tries to create a new notebook providing some
-        invalid/unexpected field, which shouldn't work.
+        This test tries to create a notebook providing some invalid/unexpected
+        field, which shouldn't work.
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
+        access_token = r.json["result"]["access_token"]
 
         # Create a notebook providing an invalid field ("invalid_field")
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -863,38 +603,19 @@ class NotebookTestCase(common.BaseTestCase):
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
 
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Create a notebook
+        # Create notebook
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.put("/notebook", headers=headers, json=n)
-
-        # Check status code
-        self.assertEqual(r.status_code, 201)
-
-        # Check result
-        self.assertIn("result", r.json)
         notebook_id = r.json["result"]
-        self.assertEqual(type(notebook_id), int)
 
         # Change notebook user
-        new_notebook = {"id": notebook_id, "user_id": 2}
+        new_notebook = {"id": notebook_id, "user_id": self.reg2["id"]}
         r = self.client.put("/notebook", headers=headers, json=new_notebook)
 
         # Check status code
@@ -908,40 +629,19 @@ class NotebookTestCase(common.BaseTestCase):
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
 
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Create a notebook
+        # Create notebook
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.put("/notebook", headers=headers, json=n)
-
-        # Check status code
-        self.assertEqual(r.status_code, 201)
-
-        # Check result
-        self.assertIn("result", r.json)
         notebook_id = r.json["result"]
-        self.assertEqual(type(notebook_id), int)
 
         # Edit the notebook providing an invalid field ("invalid_field")
-        headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook", "invalid_field": "1234"}
-
         r = self.client.put(
             f"/notebook/{notebook_id}", headers=headers, json=n)
 
@@ -951,29 +651,17 @@ class NotebookTestCase(common.BaseTestCase):
     def test_put_new_notebook_exists(self):
         """Test the Put method of the Notebook resource.
 
-        This test tries to create a new notebook with the same name of an
-        existing notebook of the request user, which shouldn't work.
+        This test tries to create a notebook with the same name of an existing
+        notebook of the request user, which shouldn't work.
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
 
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Create a notebook
+        # Create notebook
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.put("/notebook", headers=headers, json=n)
@@ -990,29 +678,17 @@ class NotebookTestCase(common.BaseTestCase):
     def test_put_edit_notebook_not_found(self):
         """Test the Put method of the Notebook resource.
 
-        This test tries to edit a notebook that doesn't exist for the request
-        user, which shouldn't work.
+        This test tries to edit a notebook that doesn't exist, which shouldn't
+        work.
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
 
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Edit a notebook with ID 1 that doesn't exist for the user
+        # Edit a notebook with ID 1 (which doesn't exist)
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.put("/notebook/1", headers=headers, json=n)
@@ -1023,51 +699,25 @@ class NotebookTestCase(common.BaseTestCase):
     def test_delete(self):
         """Test the Delete method of the Notebook resource.
 
-        This test creates a new notebook and then tries to delete it, which
-        should work.
+        This test creates a notebook and then tries to delete it, which should
+        work.
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
 
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Create a notebook
+        # Create notebook
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.put("/notebook", headers=headers, json=n)
-
-        # Check status code
-        self.assertEqual(r.status_code, 201)
-
-        # Check result
-        self.assertIn("result", r.json)
         notebook_id = r.json["result"]
-        self.assertEqual(type(notebook_id), int)
 
-        # Get the user notebook list
+        # Get user notebook list
         r = self.client.get("/notebooks", headers=headers)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
         notebooks = r.json["result"]
-        self.assertEqual(type(notebooks), list)
 
         # Check list
         self.assertEqual(len(notebooks), 1)
@@ -1079,16 +729,9 @@ class NotebookTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 200)
 
-        # Get the user notebook list
+        # Get user notebook list
         r = self.client.get("/notebooks", headers=headers)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
         notebooks = r.json["result"]
-        self.assertEqual(type(notebooks), list)
 
         # Check list
         self.assertEqual(len(notebooks), 0)
@@ -1112,7 +755,7 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to delete a notebook providing an invalid access token,
         which shouldn't work.
         """
-        # Delete the notebook with ID 1 (that doesn't exist) providing an
+        # Delete the notebook with ID 1 (which doesn't exist) providing an
         # invalid access token ("1234").
         headers = {"Authorization": "Bearer 1234"}
         r = self.client.delete("/notebook/1", headers=headers)
@@ -1128,40 +771,15 @@ class NotebookTestCase(common.BaseTestCase):
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check refresh token
-        self.assertIn("refresh_token", result)
-        refresh_token = result["refresh_token"]
-        self.assertEqual(type(refresh_token), str)
-        self.assertNotEqual(refresh_token, "")
+        refresh_token = r.json["result"]["refresh_token"]
 
         # Get a new, not fresh, access token
         headers = {"Authorization": f"Bearer {refresh_token}"}
         r = self.client.post("/refresh", headers=headers)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access_token token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
+        access_token = r.json["result"]["access_token"]
 
         # Delete a notebook with ID 1 (that doesn't exist) providing a not
         # fresh access token.
@@ -1179,65 +797,25 @@ class NotebookTestCase(common.BaseTestCase):
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.admin["username"],
+            "password": self.admin["password"]}
         r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
 
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Create a notebook of the administrator user
+        # Create notebook
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-
-        # Check status code
-        self.assertEqual(r.status_code, 201)
-
-        # Check result
-        self.assertIn("result", r.json)
         notebook_id = r.json["result"]
-        self.assertEqual(type(notebook_id), int)
 
-        # Create a user
-        u = {
-            "username": "test",
-            "password": "test_password",
-            "enabled": True}
-        r = self.client.post("/user", headers=headers, json=u)
-
-        # Check status code
-        self.assertEqual(r.status_code, 201)
-
-        # Log in as the new user
-        data = {"username": u["username"], "password": u["password"]}
+        # Log in as another user
+        data = {
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
 
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Delete the notebook of the administrator user as the new user
+        # Delete notebook
         headers = {"Authorization": f"Bearer {access_token}"}
         r = self.client.delete(f"/notebook/{notebook_id}", headers=headers)
 
@@ -1252,24 +830,12 @@ class NotebookTestCase(common.BaseTestCase):
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
 
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Delete the notebook with ID 1, which doesn't exist.
+        # Delete the notebook with ID 1 (which doesn't exist)
         headers = {"Authorization": f"Bearer {access_token}"}
         r = self.client.delete("/notebook/1", headers=headers)
 

@@ -37,26 +37,17 @@ JwtData = Dict[str, Union[int, str]]
 SECRET_KEY = "NOTELIST_SECRET_KEY"
 DB_URI = "NOTELIST_DB_URI"
 
-# Constants
+# Texts
 VALIDATION_ERROR = "Validation error: {}."
 ACCESS_TOKEN_MISSING = "Access token missing."
 FRESH_ACCESS_TOKEN_REQ = "Fresh access token required."
 EXPIRED_TOKEN = "Expired token."
 INVALID_ACCESS_TOKEN = "Invalid access token."
-SECRET_KEY_NOT_SET = f'"{SECRET_KEY}" environment variable not set.'
-DB_URI_NOT_SET = f'"{DB_URI}" environment variable not set.'
-
-# Configuration
-if SECRET_KEY not in os.environ:
-    raise Exception(SECRET_KEY_NOT_SET)
-
-if DB_URI not in os.environ:
-    raise Exception(DB_URI_NOT_SET)
 
 # Application setup
 app = Flask(__name__)
 app.config["DEBUG"] = False
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ[DB_URI]
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(DB_URI)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["PROPAGATE_EXCEPTIONS"] = True
 
@@ -65,7 +56,7 @@ app.config["PROPAGATE_EXCEPTIONS"] = True
 # signed cryptographically with the secret key. This means that the user could
 # look at the contents of the cookies but not modify it unless they knew the
 # secret key. A secret key should be as random as possible.
-app.secret_key = os.environ[SECRET_KEY]
+app.secret_key = os.environ.get(SECRET_KEY)
 
 # Database
 db.init_app(app)

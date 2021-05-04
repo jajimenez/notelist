@@ -15,51 +15,24 @@ class TagListTestCase(common.BaseTestCase):
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
+        access_token = r.json["result"]["access_token"]
 
         # Create notebook
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-
-        # Check status code
-        self.assertEqual(r.status_code, 201)
-
-        # Check result
-        self.assertIn("result", r.json)
         notebook_id = r.json["result"]
-        self.assertEqual(type(notebook_id), int)
 
+        # Create tags
         tags = [
             {"notebook_id": notebook_id, "name": "Test Tag 1"},
             {"notebook_id": notebook_id, "name": "Test Tag 2"}]
 
         for t in tags:
-            # Create tag in the notebook
             r = self.client.post("/tag", headers=headers, json=t)
-
-            # Check status code
-            self.assertEqual(r.status_code, 201)
-
-            # Check result
-            self.assertIn("result", r.json)
-            tag_id = r.json["result"]
-            self.assertEqual(type(tag_id), int)
 
         # Get notebook tag list
         r = self.client.get(f"/tags/{notebook_id}", headers=headers)
@@ -110,31 +83,32 @@ class TagListTestCase(common.BaseTestCase):
     def test_get_unauthorized_user(self):
         """Test the Get method of the Tag List resource.
 
-        This test tries to get the tag list of a notebook that the request user
-        doesn't have, which shouldn't work.
+        This test tries to get the tag list of a notebook that doesn't belong
+        to the request user, which shouldn't work.
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.admin["username"],
+            "password": self.admin["password"]}
         r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
 
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Get the tag list of the notebook with ID 1 (which doesn't exist)
+        # Create a notebook
         headers = {"Authorization": f"Bearer {access_token}"}
-        r = self.client.get("/tags/1", headers=headers)
+        n = {"name": "Test Notebook"}
+        r = self.client.post("/notebook", headers=headers, json=n)
+        notebook_id = r.json["result"]
+
+        # Log in as another user
+        data = {
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
+        r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
+
+        # Get tag list
+        headers = {"Authorization": f"Bearer {access_token}"}
+        r = self.client.get(f"/tags/{notebook_id}", headers=headers)
 
         # Check status code
         self.assertEqual(r.status_code, 403)
@@ -147,24 +121,12 @@ class TagListTestCase(common.BaseTestCase):
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
 
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
-
-        # Get the tag list without providing the notebook ID
+        # Get tag list
         headers = {"Authorization": f"Bearer {access_token}"}
         r = self.client.get("/tags", headers=headers)
 
@@ -219,48 +181,22 @@ class TagTestCase(common.BaseTestCase):
         """
         # Log in
         data = {
-            "username": self.admin_username, "password": self.admin_password}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
-
-        # Check status code
-        self.assertEqual(r.status_code, 200)
-
-        # Check result
-        self.assertIn("result", r.json)
-        result = r.json["result"]
-        self.assertEqual(type(result), dict)
-
-        # Check access token
-        self.assertIn("access_token", result)
-        access_token = result["access_token"]
-        self.assertEqual(type(access_token), str)
-        self.assertNotEqual(access_token, "")
+        access_token = r.json["result"]["access_token"]
 
         # Create notebook
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-
-        # Check status code
-        self.assertEqual(r.status_code, 201)
-
-        # Check result
-        self.assertIn("result", r.json)
         notebook_id = r.json["result"]
-        self.assertEqual(type(notebook_id), int)
 
         # Create tag
         t = {
             "notebook_id": notebook_id, "name": "Test Tag", "color": "#ffffff"}
         r = self.client.post("/tag", headers=headers, json=t)
-
-        # Check status code
-        self.assertEqual(r.status_code, 201)
-
-        # Check result
-        self.assertIn("result", r.json)
         tag_id = r.json["result"]
-        self.assertEqual(type(tag_id), int)
 
         # Get tag
         r = self.client.get(f"/tag/{tag_id}", headers=headers)
@@ -273,12 +209,13 @@ class TagTestCase(common.BaseTestCase):
         tag = r.json["result"]
         self.assertEqual(type(tag), dict)
 
-        # Check notebook
+        # Check data
         self.assertEqual(len(tag), 3)
         self.assertIn("id", tag)
         self.assertIn("name", tag)
+        self.assertIn("color", tag)
 
-        self.assertEqual(tag["id"], notebook_id)
+        self.assertEqual(tag["id"], tag_id)
         self.assertEqual(tag["name"], t["name"])
         self.assertEqual(tag["color"], t["color"])
 
@@ -306,6 +243,44 @@ class TagTestCase(common.BaseTestCase):
 
         # Check status code
         self.assertEqual(r.status_code, 422)
+
+    def test_get_unauthorized_user(self):
+        """Test the Get method of the Tag resource.
+
+        This test tries to get a tag of a user from another user, which
+        shouldn't work.
+        """
+        # Log in
+        data = {
+            "username": self.admin["username"],
+            "password": self.admin["password"]}
+        r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
+
+        # Create a notebook
+        headers = {"Authorization": f"Bearer {access_token}"}
+        n = {"name": "Test Notebook"}
+        r = self.client.post("/notebook", headers=headers, json=n)
+        notebook_id = r.json["result"]
+
+        # Create tag
+        t = {"notebook_id": notebook_id, "name": "Test Tag"}
+        r = self.client.post("/tag", headers=headers, json=t)
+        tag_id = r.json["result"]
+
+        # Log in as another user
+        data = {
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
+        r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
+
+        # Get tag
+        headers = {"Authorization": f"Bearer {access_token}"}
+        r = self.client.get(f"/tag/{tag_id}", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 403)
 
 
 if __name__ == "__main__":
