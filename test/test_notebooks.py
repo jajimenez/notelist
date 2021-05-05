@@ -306,7 +306,7 @@ class NotebookTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 400)
 
-    def test_post_new_user(self):
+    def test_post_user(self):
         """Test the Post method of the Notebook resource.
 
         This test tries to create a new notebook specifying its user, which
@@ -351,9 +351,8 @@ class NotebookTestCase(common.BaseTestCase):
     def test_post_notebook_exists(self):
         """Test the Post method of the Notebook resource.
 
-        This test logs in as some user and then tries to create a new notebook
-        with the same name of an existing notebook of the user, which shouldn't
-        work.
+        This test tries to create a notebook with the same name of an existing
+        notebook of the request user, which shouldn't work.
         """
         # Log in
         data = {
@@ -379,7 +378,7 @@ class NotebookTestCase(common.BaseTestCase):
     def test_put_new(self):
         """Test the Put method of the Notebook resource.
 
-        This test tries to create a new notebook, which should work.
+        This test tries to create a notebook, which should work.
         """
         # Log in
         data = {
@@ -469,8 +468,8 @@ class NotebookTestCase(common.BaseTestCase):
     def test_put_new_invalid_access_token(self):
         """Test the Put method of the Notebook resource.
 
-        This test tries to create a new notebook providing an invalid access
-        token, which shouldn't work.
+        This test tries to create a notebook providing an invalid access token,
+        which shouldn't work.
         """
         # Create a notebook providing an invalid access token ("1234")
         headers = {"Authorization": "Bearer 1234"}
@@ -668,7 +667,7 @@ class NotebookTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 201)
 
-        # Create the same notebook again
+        # Create same notebook again
         r = self.client.put("/notebook", headers=headers, json=n)
 
         # Check status code
@@ -722,7 +721,7 @@ class NotebookTestCase(common.BaseTestCase):
         self.assertEqual(len(notebooks), 1)
         self.assertEqual(notebooks[0]["name"], n["name"])
 
-        # Delete the notebook
+        # Delete notebook
         r = self.client.delete(f"/notebook/{notebook_id}", headers=headers)
 
         # Check status code
@@ -741,9 +740,21 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to delete an existing notebook without providing the
         access token, which shouldn't work.
         """
-        # Delete the notebook with ID 1 (which doesn't exist) without providing
-        # the access token.
-        r = self.client.delete("/notebook/1")
+        # Log in
+        data = {
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
+        r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
+
+        # Create notebook
+        headers = {"Authorization": f"Bearer {access_token}"}
+        n = {"name": "Test Notebook"}
+        r = self.client.post("/notebook", headers=headers, json=n)
+        notebook_id = r.json["result"]
+
+        # Delete notebook without providing the access token
+        r = self.client.delete(f"/notebook/{notebook_id}")
 
         # Check status code
         self.assertEqual(r.status_code, 401)
@@ -754,10 +765,22 @@ class NotebookTestCase(common.BaseTestCase):
         This test tries to delete a notebook providing an invalid access token,
         which shouldn't work.
         """
-        # Delete the notebook with ID 1 (which doesn't exist) providing an
-        # invalid access token ("1234").
+        # Log in
+        data = {
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
+        r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
+
+        # Create notebook
+        headers = {"Authorization": f"Bearer {access_token}"}
+        n = {"name": "Test Notebook"}
+        r = self.client.post("/notebook", headers=headers, json=n)
+        notebook_id = r.json["result"]
+
+        # Delete notebook providing an invalid access token ("1234")
         headers = {"Authorization": "Bearer 1234"}
-        r = self.client.delete("/notebook/1", headers=headers)
+        r = self.client.delete(f"/notebook/{notebook_id}", headers=headers)
 
         # Check status code
         self.assertEqual(r.status_code, 422)
@@ -773,17 +796,23 @@ class NotebookTestCase(common.BaseTestCase):
             "username": self.reg1["username"],
             "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
         refresh_token = r.json["result"]["refresh_token"]
+
+        # Create notebook
+        headers = {"Authorization": f"Bearer {access_token}"}
+        n = {"name": "Test Notebook"}
+        r = self.client.post("/notebook", headers=headers, json=n)
+        notebook_id = r.json["result"]
 
         # Get a new, not fresh, access token
         headers = {"Authorization": f"Bearer {refresh_token}"}
         r = self.client.post("/refresh", headers=headers)
         access_token = r.json["result"]["access_token"]
 
-        # Delete a notebook with ID 1 (that doesn't exist) providing a not
-        # fresh access token.
+        # Delete notebook providing a not fresh access token
         headers = {"Authorization": f"Bearer {access_token}"}
-        r = self.client.delete("/user/1", headers=headers)
+        r = self.client.delete(f"/user/{notebook_id}", headers=headers)
 
         # Check status code
         self.assertEqual(r.status_code, 401)
