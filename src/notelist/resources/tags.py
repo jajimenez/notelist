@@ -9,8 +9,8 @@ from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 from notelist.models.notebooks import Notebook
 from notelist.models.tags import Tag
 from notelist.schemas.tags import TagSchema
-from notelist.resources import Response, OPERATION_NOT_ALLOWED, \
-    USER_UNAUTHORIZED, get_response_data
+from notelist.resources import Response, VALIDATION_ERROR, \
+    OPERATION_NOT_ALLOWED, USER_UNAUTHORIZED, get_response_data
 
 
 TAG_RETRIEVED_1 = "1 tag retrieved."
@@ -186,7 +186,8 @@ class TagResource(Resource):
             # Check if a new value for the "notebook_id" field is provided,
             # which is not allowed.
             if "notebook_id" in data:
-                return get_response_data(OPERATION_NOT_ALLOWED), 403
+                return get_response_data(
+                    VALIDATION_ERROR.format("notebook_id")), 400
 
             # Check if a new value for the name is provided and if the notebook
             # has already a tag with this name.
