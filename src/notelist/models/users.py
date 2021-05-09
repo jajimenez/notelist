@@ -21,7 +21,7 @@ class User(db.Model):
 
     @classmethod
     def get_all(cls) -> List["User"]:
-        """Return all the users from the database.
+        """Return all the users.
 
         :return: List of `User` instances.
         """
@@ -29,7 +29,7 @@ class User(db.Model):
 
     @classmethod
     def get_by_id(cls, _id: int) -> "User":
-        """Return a user from the database given the user ID.
+        """Return a user given its ID.
 
         :param _id: User ID.
         :return: `User` instance.
@@ -38,7 +38,7 @@ class User(db.Model):
 
     @classmethod
     def get_by_username(cls, username: str) -> "User":
-        """Return a user from the database given the username.
+        """Return a user given its username.
 
         :param id: Username.
         :return: `User` instance.
@@ -46,11 +46,11 @@ class User(db.Model):
         return cls.query.filter_by(username=username).first()
 
     def save(self):
-        """Save the user to the database."""
+        """Save the user."""
         db.session.add(self)
         db.session.commit()
 
     def delete(self):
-        """Delete the user from the database."""
+        """Delete the user."""
         db.session.delete(self)
         db.session.commit()

@@ -21,7 +21,7 @@ class Notebook(db.Model):
 
     @classmethod
     def get_all(cls, user_id: int) -> List["Notebook"]:
-        """Return all the notebooks from the database of a given user.
+        """Return all the notebooks of a user.
 
         :param user_id: User ID.
         :return: List of `Notebook` instances.
@@ -30,7 +30,7 @@ class Notebook(db.Model):
 
     @classmethod
     def get_by_id(cls, _id: int) -> "Notebook":
-        """Return a notebook from the database given the notebook ID.
+        """Return a notebook given its ID.
 
         :param _id: Notebook ID.
         :return: `Notebook` instance.
@@ -39,8 +39,7 @@ class Notebook(db.Model):
 
     @classmethod
     def get_by_name(cls, user_id: int, name: str) -> "Notebook":
-        """Return a notebook from the database given the user ID and the
-        notebook name.
+        """Return a notebook given the user ID and the notebook name.
 
         :param user_id: User ID.
         :param name: Notebook name.
@@ -49,11 +48,11 @@ class Notebook(db.Model):
         return cls.query.filter_by(user_id=user_id, name=name).first()
 
     def save(self):
-        """Save the notebook to the database."""
+        """Save the notebook."""
         db.session.add(self)
         db.session.commit()
 
     def delete(self):
-        """Delete the notebook from the database."""
+        """Delete the notebook."""
         db.session.delete(self)
         db.session.commit()

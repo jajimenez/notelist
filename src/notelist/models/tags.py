@@ -23,7 +23,7 @@ class Tag(db.Model):
 
     @classmethod
     def get_by_id(cls, _id: int) -> "Tag":
-        """Return a tag from the database given the tag ID.
+        """Return a tag given its ID.
 
         :param _id: Tag ID.
         :return: `Tag` instance.
@@ -32,8 +32,7 @@ class Tag(db.Model):
 
     @classmethod
     def get_by_name(cls, notebook_id: int, name: str) -> "Tag":
-        """Return a tag from the database given the notebook ID and the tag
-        name.
+        """Return a tag given the notebook ID and the tag name.
 
         :param notebook_id: Notebook ID.
         :param name: Tag name.
@@ -42,11 +41,11 @@ class Tag(db.Model):
         return cls.query.filter_by(notebook_id=notebook_id, name=name).first()
 
     def save(self):
-        """Save the tag to the database."""
+        """Save the tag."""
         db.session.add(self)
         db.session.commit()
 
     def delete(self):
-        """Delete the tag from the database."""
+        """Delete the tag."""
         db.session.delete(self)
         db.session.commit()

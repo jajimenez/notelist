@@ -35,8 +35,10 @@ class NotebookListResource(Resource):
 
         :return: Dictionary with the message and result.
         """
+        # JWT payload data
+        uid = get_jwt()["user_id"]
+
         # Get all the notebooks of the request user
-        uid = get_jwt()["user_id"]  # JWT payload data
         notebooks = Notebook.get_all(uid)
 
         c = len(notebooks)
