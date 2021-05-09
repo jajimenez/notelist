@@ -90,8 +90,8 @@ class TagResource(Resource):
     def post(self) -> Response:
         """Handle a Tag Post request.
 
-        Save a new tag with the given data. The request user can only call this
-        endpoint if the tag notebook is one of theirs.
+        Save a new tag with the given request data. The request user can only
+        call this endpoint if the tag's notebook is one of theirs.
 
         :return: Dictionary with the message and the tag ID as the result.
         """
@@ -105,19 +105,17 @@ class TagResource(Resource):
         # is missing, a "marshmallow.ValidationError" exception is raised.
         tag = tag_schema.load(data)
 
-        # Check if the notebook of the the user of the notebook of the tag is
-        # the same as the request user.
+        # Check if the tag's notebook user is the same as the request user
         notebook = Notebook.get_by_id(tag.notebook_id)
 
-        if not notebook or uid != notebook.user.id:
+        if not notebook or uid != notebook.user_id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
         # Check if the notebook already has the tag (based on the tag name)
         if Tag.get_by_name(notebook.id, tag.name):
             return get_response_data(TAG_EXISTS), 400
 
-        # Save the tag
-        # tag.notebook_id = notebook.id  # TODO Check if this is needed
+        # Save tag
         tag.save()
 
         return get_response_data(TAG_CREATED, tag.id), 201
@@ -126,10 +124,10 @@ class TagResource(Resource):
     def put(self, tag_id: Optional[int] = None) -> Response:
         """Handle a Tag Put request.
 
-        Save a new or existing tag with the given data. The request user can
-        only call this endpoint if the tag notebook is one of theirs. The
-        "notebook_id" field must be specified when creating a new tag but is
-        not allowed to be updated in an existing tag.
+        Save a new or existing tag with the given request data. The request
+        user can only call this endpoint if the tag's notebook is one of
+        theirs. The "notebook_id" field must be specified when creating a new
+        tag but is not allowed to be updated for an existing tag.
 
         :param tag_id: ID of the tag to update or None to create a new tag.
         :return: Dictionary with the message and, if the tag has been created,
@@ -151,11 +149,11 @@ class TagResource(Resource):
             # raised.
             tag = tag_schema.load(data)
 
-            # Get tag notebook
+            # Get tag's notebook
             notebook = Notebook.get_by_id(tag.notebook_id)
 
             # Check if the notebook doesn't exist and the permissions (the
-            # request user must be the same as the notebook user).
+            # request user must be the same as the notebook's user).
             if not notebook or uid != notebook.user_id:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
@@ -170,13 +168,12 @@ class TagResource(Resource):
             # Get existing tag
             tag = Tag.get_by_id(tag_id)
 
-            # Check if the tag doesn't exist and the permissions (the request
-            # user must be the same as the user of the tag notebook).
+            # Check if the tag doesn't exist and the permissions
             if not tag or uid != tag.notebook.user_id:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
             # Check if the request data contains any invalid field (i.e. any
-            # field that doesn't exist in the tag model schema).
+            # field that doesn't exist in the Tag model schema).
             fields = ", ".join([
                 i for i in data if i not in tag_schema.load_fields])
 
@@ -207,7 +204,7 @@ class TagResource(Resource):
             message = TAG_UPDATED
             code = 200
 
-        # Save the tag
+        # Save tag
         tag.save()
         result = tag.id if new_tag else None
 
@@ -217,8 +214,8 @@ class TagResource(Resource):
     def delete(self, tag_id: int) -> Response:
         """Handle a Tag Delete request.
 
-        Delete an existing tag of an existing notebook of the request user
-        given the tag ID.
+        Delete an existing tag of one of the request user's notebooks given the
+        tag's ID.
 
         :param tag_id: Tag ID.
         :return: Dictionary with the message.
@@ -230,7 +227,7 @@ class TagResource(Resource):
         tag = Tag.get_by_id(tag_id)
 
         # Check if the tag doesn't exist and the permissions (the request user
-        # must be the same as the user of the tag notebook).
+        # must be the same as the tag's notebook user).
         if not tag or uid != tag.notebook.user_id:
             return get_response_data(USER_UNAUTHORIZED), 403
 

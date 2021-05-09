@@ -54,7 +54,7 @@ class NotebookResource(Resource):
     def get(self, notebook_id: int) -> Response:
         """Handle a Notebook Get request.
 
-        Return the request user notebook with the given ID.
+        Return the request user's notebook with the given ID.
 
         :param notebook_id: Notebook ID.
         :return: Dictionary with the message and result.
