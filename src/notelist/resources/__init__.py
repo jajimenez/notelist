@@ -6,6 +6,7 @@ from typing import Optional, Union, Any, List, Dict
 Result = Optional[Union[Dict, List[Dict]]]
 Response = Dict[str, Union[str, Dict]]
 
+MISSING_DATA = "Missing data"
 VALIDATION_ERROR = "Validation error: {}."
 OPERATION_NOT_ALLOWED = "Operation not allowed."
 USER_UNAUTHORIZED = "User unauthorized."

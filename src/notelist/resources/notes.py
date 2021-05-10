@@ -7,10 +7,11 @@ from flask import request
 from flask_restful import Resource
 from flask_jwt_extended import jwt_required, get_jwt
 
+from notelist.models.notebooks import Notebook
 from notelist.models.notes import Note
 from notelist.schemas.notes import NoteSchema
-from notelist.resources import Response, VALIDATION_ERROR, USER_UNAUTHORIZED, \
-    get_response_data
+from notelist.resources import Response, MISSING_DATA, VALIDATION_ERROR, \
+    USER_UNAUTHORIZED, get_response_data
 
 
 NOTE_RETRIEVED_1 = "1 note retrieved."
@@ -56,6 +57,9 @@ class NoteListResource(Resource):
         # Request data
         data = request.get_json()
 
+        if not data:
+            return get_response_data(MISSING_DATA), 400
+
         # State filter (include active notes or not active notes)
         if act in data:
             active = data[act]
@@ -98,7 +102,7 @@ class NoteListResource(Resource):
 class NoteResource(Resource):
     """Note resource."""
 
-    def _get_current_ts() -> int:
+    def _get_current_ts(self) -> int:
         """Return current timestamp rounded.
 
         :return: 10-digit integer timestamp.
@@ -141,6 +145,9 @@ class NoteResource(Resource):
         # Request data
         data = request.get_json()
 
+        if not data:
+            return get_response_data(MISSING_DATA), 400
+
         # Current timestamp
         now = self._get_current_ts()
 
@@ -182,6 +189,9 @@ class NoteResource(Resource):
 
         # Request data
         data = request.get_json()
+
+        if not data:
+            return get_response_data(MISSING_DATA), 400
 
         # Current timestamp
         now = self._get_current_ts()
