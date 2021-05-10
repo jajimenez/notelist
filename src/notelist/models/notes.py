@@ -58,7 +58,6 @@ class Note(db.Model):
         creation timestamp (default).
         :return: List of `Note` instances.
         """
-        result = []
         notes = cls.query.filter_by(notebook_id=notebook_id)
 
         # State filter
@@ -87,10 +86,7 @@ class Note(db.Model):
             note_tags = map(lambda x: x.id, n.tags)
             return any(map(lambda x: x in note_tags, tags))
 
-        if tags is not None:
-            result = filter(notes, select_note)
-
-        return result
+        return notes if tags is None else filter(notes, select_note)
 
     @classmethod
     def get(cls, _id: int) -> "Note":
