@@ -12,5 +12,6 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
 
         model = User
         load_only = ["password"]
+        dump_only = ["id"]
         ordered = True
         load_instance = True

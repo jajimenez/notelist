@@ -13,6 +13,6 @@ class NoteSchema(ma.SQLAlchemyAutoSchema):
         model = Note
         include_fk = True
         load_only = ["notebook_id"]
-        dump_only = ["creation_ts", "last_modification_ts"]
+        dump_only = ["id", "creation_ts", "last_modification_ts"]
         ordered = True
         load_instance = True

@@ -11,5 +11,6 @@ class NotebookSchema(ma.SQLAlchemyAutoSchema):
         """Notebook schema metadata."""
 
         model = Notebook
+        dump_only = ["id"]
         ordered = True
         load_instance = True
