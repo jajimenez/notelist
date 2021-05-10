@@ -31,7 +31,6 @@ MIN_PASSWORD = 8
 MAX_PASSWORD = 100
 INVALID_PASSWORD = "Invalid password. It must have 8-100 characters."
 
-
 user_list_schema = UserSchema(many=True)
 user_schema = UserSchema()
 blocklist = set()
@@ -57,9 +56,12 @@ class LoginResource(Resource):
         u = "username"
         p = "password"
 
-        for i in (u, p):
-            if i not in data or type(data[i]) != str or data[i] == "":
-                return get_response_data(INVALID_CREDENTIALS), 401
+        fields = [
+            i for i in [u, p]
+            if i not in data or type(data[i]) != str or not data[i]]
+
+        if fields:
+            return get_response_data(VALIDATION_ERROR.format(fields)), 400
 
         # We get the hash of the request password, as passwords are stored
         # encrypted in the database.
