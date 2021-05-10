@@ -144,16 +144,6 @@ class TokenRefreshTestCase(common.BaseTestCase):
     def test_get(self):
         """Test the Get method of the Token Refresh resource.
 
-        This test tries to call the Get method, which shouldn't work.
-        """
-        r = self.client.get("/refresh")
-
-        # Check status code
-        self.assertEqual(r.status_code, 405)
-
-    def test_post(self):
-        """Test the Post method of the Token Refresh resource.
-
         This test tries to get a new, not fresh, access token providing the
         user refresh token, which should work.
         """
@@ -166,7 +156,7 @@ class TokenRefreshTestCase(common.BaseTestCase):
 
         # Get a new, not fresh, access token
         headers = {"Authorization": f"Bearer {refresh_token}"}
-        r = self.client.post("/refresh", headers=headers)
+        r = self.client.get("/refresh", headers=headers)
 
         # Check status code
         self.assertEqual(r.status_code, 200)
@@ -182,20 +172,20 @@ class TokenRefreshTestCase(common.BaseTestCase):
         self.assertEqual(type(access_token), str)
         self.assertNotEqual(access_token, "")
 
-    def test_post_missing_refresh_token(self):
-        """Test the Post method of the Token Refresh resource.
+    def test_get_missing_refresh_token(self):
+        """Test the Get method of the Token Refresh resource.
 
         This test tries to get a new, not fresh, access token without providing
         a refresh token, which shouldn't work.
         """
         # Get access token
-        r = self.client.post("/refresh")
+        r = self.client.get("/refresh")
 
         # Check status code
         self.assertEqual(r.status_code, 401)
 
-    def test_post_invalid_refresh_token(self):
-        """Test the Post method of the Token Refresh resource.
+    def test_get_invalid_refresh_token(self):
+        """Test the Get method of the Token Refresh resource.
 
         This test tries to get a new, not fresh, access token given an invalid
         refresh token, which shouldn't work.
@@ -203,10 +193,20 @@ class TokenRefreshTestCase(common.BaseTestCase):
         # Get a new, not fresh, access token providing an invalid access token
         # ("1234").
         headers = {"Authorization": "Bearer 1234"}
-        r = self.client.post("/refresh", headers=headers)
+        r = self.client.get("/refresh", headers=headers)
 
         # Check status code
         self.assertEqual(r.status_code, 422)
+
+    def test_post(self):
+        """Test the Post method of the Token Refresh resource.
+
+        This test tries to call the Post method, which shouldn't work.
+        """
+        r = self.client.post("/refresh")
+
+        # Check status code
+        self.assertEqual(r.status_code, 405)
 
     def test_put(self):
         """Test the Put method of the Token Refresh resource.
@@ -235,16 +235,6 @@ class LogoutTestCase(common.BaseTestCase):
     def test_get(self):
         """Test the Get method of the Logout resource.
 
-        This test tries to call the Get method, which shouldn't work.
-        """
-        r = self.client.get("/logout")
-
-        # Check status code
-        self.assertEqual(r.status_code, 405)
-
-    def test_post(self):
-        """Test the Post method of the Logout resource.
-
         This test logs in as some user with valid credentials and then tries to
         log out, which should work.
         """
@@ -257,35 +247,45 @@ class LogoutTestCase(common.BaseTestCase):
 
         # Log out
         headers = {"Authorization": f"Bearer {access_token}"}
-        r = self.client.post("/logout", headers=headers)
+        r = self.client.get("/logout", headers=headers)
 
         # Check status code
         self.assertEqual(r.status_code, 200)
 
-    def test_post_missing_access_token(self):
-        """Test the Post method of the Logout resource.
+    def test_get_missing_access_token(self):
+        """Test the Get method of the Logout resource.
 
         This test tries to log out without providing an access token, which
         shouldn't work.
         """
         # Log out without providing the access token
-        r = self.client.post("/logout")
+        r = self.client.get("/logout")
 
         # Check status code
         self.assertEqual(r.status_code, 401)
 
-    def test_post_invalid_access_token(self):
-        """Test the Post method of the Logout resource.
+    def test_get_invalid_access_token(self):
+        """Test the Get method of the Logout resource.
 
         This test tries to log out providing an invalid access token, which
         shouldn't work.
         """
         # Log out providing an invalid access token ("1234")
         headers = {"Authorization": "Bearer 1234"}
-        r = self.client.post("/refresh", headers=headers)
+        r = self.client.get("/refresh", headers=headers)
 
         # Check status code
         self.assertEqual(r.status_code, 422)
+
+    def test_post(self):
+        """Test the Post method of the Logout resource.
+
+        This test tries to call the Post method, which shouldn't work.
+        """
+        r = self.client.post("/logout")
+
+        # Check status code
+        self.assertEqual(r.status_code, 405)
 
     def test_put(self):
         """Test the Put method of the Logout resource.
@@ -1313,7 +1313,7 @@ class UserTestCase(common.BaseTestCase):
 
         # Get a new, not fresh, access token
         headers = {"Authorization": f"Bearer {refresh_token}"}
-        r = self.client.post("/refresh", headers=headers)
+        r = self.client.get("/refresh", headers=headers)
         access_token = r.json["result"]["access_token"]
 
         # Delete user

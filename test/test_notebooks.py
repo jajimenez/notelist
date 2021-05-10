@@ -807,7 +807,7 @@ class NotebookTestCase(common.BaseTestCase):
 
         # Get a new, not fresh, access token
         headers = {"Authorization": f"Bearer {refresh_token}"}
-        r = self.client.post("/refresh", headers=headers)
+        r = self.client.get("/refresh", headers=headers)
         access_token = r.json["result"]["access_token"]
 
         # Delete notebook providing a not fresh access token
