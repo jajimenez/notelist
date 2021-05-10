@@ -14,6 +14,8 @@ class Notebook(db.Model):
     name = db.Column(db.String(100), nullable=False)
     tags = db.relationship(
         "Tag", backref="notebook", cascade_backrefs="all, delete", lazy=True)
+    notes = db.relationship(
+        "Note", backref="notebook", cascade_backrefs="all, delete", lazy=True)
 
     # Constraint: 2 or more notebooks of the same user can't have the same name
     __table_args__ = (
