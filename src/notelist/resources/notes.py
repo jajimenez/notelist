@@ -151,7 +151,7 @@ class NoteResource(Resource):
         # We validate the request data. If any of the Note model required
         # fields is missing, a "marshmallow.ValidationError" exception is
         # raised.
-        note = tag_schema.load(data)
+        note = note_schema.load(data)
 
         # Check if the note's notebook user is the same as the request user
         notebook = Notebook.get_by_id(note.notebook_id)
