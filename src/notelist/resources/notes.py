@@ -55,10 +55,7 @@ class NoteListResource(Resource):
             return get_response_data(USER_UNAUTHORIZED), 403
 
         # Request data
-        data = request.get_json()
-
-        if not data:
-            return get_response_data(MISSING_DATA), 400
+        data = request.get_json() or dict()
 
         # State filter (include active notes or not active notes)
         if act in data:
