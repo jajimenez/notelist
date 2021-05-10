@@ -298,10 +298,15 @@ class NotebookTestCase(common.BaseTestCase):
         r = self.client.post("/login", json=data)
         access_token = r.json["result"]["access_token"]
 
-        # Create a notebook without its name
+        # Create notebook (without data)
         headers = {"Authorization": f"Bearer {access_token}"}
-        n = dict()  # Empty dictionary
-        r = self.client.post("/notebook", headers=headers, json=n)
+        r = self.client.post("/notebook", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+        # Create notebook (with empty data)
+        r = self.client.post("/notebook", headers=headers, json=dict())
 
         # Check status code
         self.assertEqual(r.status_code, 400)
@@ -543,10 +548,15 @@ class NotebookTestCase(common.BaseTestCase):
         r = self.client.post("/login", json=data)
         access_token = r.json["result"]["access_token"]
 
-        # Create notebook
+        # Create notebook (without data)
         headers = {"Authorization": f"Bearer {access_token}"}
-        n = dict()  # Empty dictionary
-        r = self.client.put("/notebook", headers=headers, json=n)
+        r = self.client.put("/notebook", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+        # Create notebook (with empty data)
+        r = self.client.put("/notebook", headers=headers, json=dict())
 
         # Check status code
         self.assertEqual(r.status_code, 400)

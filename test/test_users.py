@@ -61,19 +61,25 @@ class LoginTestCase(common.BaseTestCase):
         This test tries to log in as some user with some mandatory field
         missing, which shouldn't work.
         """
-        # Log in without providing the username
+        # Log in (without data)
+        r = self.client.post("/login")
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+        # Log in (without username)
         data = {"password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
 
         # Check status code
-        self.assertEqual(r.status_code, 401)
+        self.assertEqual(r.status_code, 400)
 
-        # Log in without providing the password
+        # Log in (without password)
         data = {"username": self.reg1["username"]}
         r = self.client.post("/login", json=data)
 
         # Check status code
-        self.assertEqual(r.status_code, 401)
+        self.assertEqual(r.status_code, 400)
 
     def test_post_disabled_user(self):
         """Test the Get method of the Login resource.

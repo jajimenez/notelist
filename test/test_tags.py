@@ -404,7 +404,13 @@ class TagTestCase(common.BaseTestCase):
         r = self.client.post("/notebook", headers=headers, json=n)
         notebook_id = r.json["result"]
 
-        # Create a tag without its name
+        # Create tag (without data)
+        r = self.client.put("/tag", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+        # Create tag (without name)
         t = {"notebook_id": notebook_id}
         r = self.client.post("/tag", headers=headers, json=t)
 
@@ -745,7 +751,13 @@ class TagTestCase(common.BaseTestCase):
         r = self.client.post("/notebook", headers=headers, json=n)
         notebook_id = r.json["result"]
 
-        # Create a tag without its name
+        # Create tag (without data)
+        r = self.client.put("/tag", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+        # Create tag (without name)
         t = {"notebook_id": notebook_id}
         r = self.client.put("/tag", headers=headers, json=t)
 
