@@ -67,13 +67,13 @@ class NoteListResource(Resource):
         else:
             active = None
 
-        # Tags filter (include notes that has any of these tags)
+        # Tag filter (include notes that has any of these tags)
         if tag in data:
             tags = data[tag]
 
             if (
                 type(tags) != list or
-                any(map(lambda x: type(x) != int or not x, tags))
+                any(map(lambda x: type(x) != str or not x, tags))
             ):
                 return get_response_data(VALIDATION_ERROR.format(tag)), 400
         else:

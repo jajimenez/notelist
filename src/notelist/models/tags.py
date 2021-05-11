@@ -49,3 +49,14 @@ class Tag(db.Model):
         """Delete the tag."""
         db.session.delete(self)
         db.session.commit()
+
+    def __eq__(self, other: "Tag") -> bool:
+        """Return whether this instance is equal to another.
+
+        :param other: Other instance.
+        :return: Whether this instance is equal to `other` or not.
+        """
+        if type(other) != Tag:
+            return False
+
+        return self.name == other.name

@@ -41,7 +41,7 @@ class Note(db.Model):
     @classmethod
     def get_by_filter(
         cls, notebook_id: int, active: Optional[bool] = None,
-        tags: Optional[List[int]] = None, no_tags: bool = False,
+        tags: Optional[List[str]] = None, no_tags: bool = False,
         order_by_last_mod: bool = False
     ) -> List["Note"]:
         """Return all the notes of a notebook by a filter.
@@ -49,7 +49,7 @@ class Note(db.Model):
         :param notebook_id: Notebook ID.
         :param active: State filter (include active notes or not active notes).
         :param tags: Tags filter (include notes that has any of these tags).
-        This list contains tag IDs.
+        This list contains tag names.
         :param no_tags: Notes with No Tags filter (include notes with no tags).
         This filter is only applicable if a tag filter has been provided, i.e.
         `tags` is not None).
@@ -80,13 +80,11 @@ class Note(db.Model):
             :param n: Note.
             :return: `True` if `n` should be included. `False` otherwise.
             """
-            if no_tags and len(n.tags) == 0:
-                return True
+            return (
+                (no_tags and len(n.tags) == 0) or
+                any(map(lambda t: t in n.tags, tags)))
 
-            note_tags = map(lambda x: x.id, n.tags)
-            return any(map(lambda x: x in note_tags, tags))
-
-        return notes if tags is None else filter(notes, select_note)
+        return notes if tags is None else list(filter(select_note, notes))
 
     @classmethod
     def get(cls, _id: int) -> "Note":
