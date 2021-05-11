@@ -1,0 +1,714 @@
+"""Note resources unit tests."""
+
+import unittest
+from typing import Tuple, List, Dict, Union
+
+import common
+
+
+TagSet = List[Dict[str, str]]
+NoteSet = List[Dict[str, Union[str, bool, List[str]]]]
+
+
+class NoteListTestCase(common.BaseTestCase):
+    """Note List resource unit tests."""
+
+    def _get_tags(self, notebook_id: str) -> TagSet:
+        """Return test tags.
+
+        :param notebook_id: Notebook ID.
+        :return: Tuple containing tag names and tag dictionaries.
+        """
+        return [
+            {"notebook_id": notebook_id, "name": "Test Tag 1"},
+            {"notebook_id": notebook_id, "name": "Test Tag 2"}]
+
+    def _get_notes(self, notebook_id: str, tags: TagSet) -> NoteSet:
+        """Return test notes.
+
+        :param notebook_id: Notebook ID.
+        :param tags: Tags.
+        :return: List containing note dictionaries.
+        """
+        return [{
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note 1",
+            "body": "This is a test note",
+            "tags": [t["name"] for t in tags]
+        }, {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note 2",
+            "body": "This is another test note",
+            "tags": [tags[0]["name"]]
+        }, {
+            "notebook_id": notebook_id,
+            "active": False,
+            "title": "Test Note 3",
+            "body": "Another note",
+            "tags": [tags[1]["name"]]
+        }, {
+            "notebook_id": notebook_id,
+            "active": False,
+            "title": "Test Note 3",
+            "body": "Another note",
+            "tags": []
+        }]
+
+    def _login(self, username: str, password: str) -> Dict[str, str]:
+        """Log in.
+
+        :username: Username.
+        :password: Password.
+        :return: Headers with the access token.
+        """
+        data = {"username": username, "password": password}
+        r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
+
+        return {"Authorization": f"Bearer {access_token}"}
+
+    def _create_notebook(self, headers: Dict[str, str]) -> int:
+        """Create a notebook.
+
+        :headers: Headers with the access token.
+        :return: Notebook ID.
+        """
+        n = {"name": "Test Notebook"}
+        r = self.client.post("/notebook", headers=headers, json=n)
+
+        return r.json["result"]
+
+    def _create_tags(self, headers: Dict[str, str], tags: TagSet):
+        """Create tags.
+
+        :headers: Headers with the access token.
+        :tags: Tags.
+        """
+        for t in tags:
+            self.client.post("/tag", headers=headers, json=t)
+
+    def _create_notes(
+        self, headers: Dict[str, str], notes: NoteSet
+    ) -> List[int]:
+        """Create notes.
+
+        :headers: Headers with the access token.
+        :notes: Notes.
+        :return: Note IDs.
+        """
+        note_ids = []
+
+        for n in notes:
+            r = self.client.post("/note", headers=headers, json=n)
+            note_ids.append(r.json["result"])
+
+        return note_ids
+
+    def test_post(self):
+        """Test the Post method of the Note List resource.
+
+        This test creates a notebook with some tags and notes and then tries to
+        get the all the notes of the notebook, which should work.
+        """
+        # Log in
+        headers = self._login(self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = self._create_notebook(headers)
+
+        # Create tags
+        tags = self._get_tags(notebook_id)
+        tag_names = [t["name"] for t in tags]
+        self._create_tags(headers, tags)
+
+        # Create notes
+        notes = self._get_notes(notebook_id, tags)
+        note_ids = self._create_notes(headers, notes)
+
+        # Get all notes
+        r = self.client.post(f"/notes/{notebook_id}", headers=headers)
+        res_notes = r.json["result"]
+
+        # Check list
+        self.assertEqual(type(res_notes), list)
+        c = len(res_notes)
+        self.assertEqual(c, len(notes))
+
+        for i in range(c):
+            self.assertEqual(type(res_notes[i]), dict)
+            self.assertEqual(len(res_notes[i]), 7)
+
+            for j in (
+                "id", "active", "title", "body", "creation_ts",
+                "last_modification_ts", "tags"
+            ):
+                self.assertIn(j, res_notes[i])
+
+            self.assertNotIn("notebook_id", res_notes[i])
+            self.assertEqual(res_notes[i]["id"], note_ids[i])
+
+            for j in ("active", "title", "body", "tags"):
+                self.assertEqual(res_notes[i][j], notes[i][j])
+
+            self.assertEqual(
+                res_notes[i]["creation_ts"],
+                res_notes[i]["last_modification_ts"])
+
+    def test_post_active(self):
+        """Test the Post method of the Note List resource.
+
+        This test creates a notebook with some tags and notes and then tries to
+        get all the active notes of the notebook, which should work.
+        """
+        # Log in
+        headers = self._login(self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = self._create_notebook(headers)
+
+        # Create tags
+        tags = self._get_tags(notebook_id)
+        tag_names = [t["name"] for t in tags]
+        self._create_tags(headers, tags)
+
+        # Create notes
+        notes = self._get_notes(notebook_id, tags)
+        note_ids = self._create_notes(headers, notes)
+
+        # Get all active notes
+        f = {"active": True}
+        r = self.client.post(f"/notes/{notebook_id}", headers=headers, json=f)
+        res_notes = r.json["result"]
+
+        # Check list
+        self.assertEqual(type(res_notes), list)
+        c = len(res_notes)
+        self.assertEqual(c, 2)
+
+        for i in range(c):
+            self.assertEqual(type(res_notes[i]), dict)
+            self.assertEqual(len(res_notes[i]), 7)
+
+            for j in (
+                "id", "active", "title", "body", "creation_ts",
+                "last_modification_ts", "tags"
+            ):
+                self.assertIn(j, res_notes[i])
+
+            self.assertNotIn("notebook_id", res_notes[i])
+            self.assertEqual(res_notes[i]["id"], note_ids[i])
+
+        for i in range(2):
+            for j in ("active", "title", "body", "tags"):
+                self.assertEqual(res_notes[i][j], notes[i][j])
+
+            self.assertEqual(
+                res_notes[i]["creation_ts"],
+                res_notes[i]["last_modification_ts"])
+
+            self.assertEqual(len(res_notes[i]["tags"]), len(notes[i]["tags"]))
+
+            for j in range(len(res_notes[i]["tags"])):
+                self.assertEqual(res_notes[i]["tags"][j], notes[i]["tags"][j])
+
+    def test_post_active_tags(self):
+        """Test the Post method of the Note List resource.
+
+        This test creates a notebook with some tags and notes and then tries to
+        get all the active notes of the notebook that have any tag of a given
+        list of tags, which should work.
+        """
+        # Log in
+        headers = self._login(self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = self._create_notebook(headers)
+
+        # Create tags
+        tags = self._get_tags(notebook_id)
+        tag_names = [t["name"] for t in tags]
+        self._create_tags(headers, tags)
+
+        # Create notes
+        notes = self._get_notes(notebook_id, tags)
+        note_ids = self._create_notes(headers, notes)
+
+        # Get all active notes with the second tag
+        f = {"active": True, "tags": [tag_names[1]]}
+        r = self.client.post(f"/notes/{notebook_id}", headers=headers, json=f)
+        res_notes = r.json["result"]
+
+        # Check list
+        self.assertEqual(type(res_notes), list)
+        c = len(res_notes)
+        self.assertEqual(c, 1)
+
+        n = res_notes[0]
+        j = 0
+
+        self.assertEqual(type(n), dict)
+        self.assertEqual(len(n), 7)
+
+        for k in (
+            "id", "active", "title", "body", "creation_ts",
+            "last_modification_ts", "tags"
+        ):
+            self.assertIn(k, n)
+
+        self.assertNotIn("notebook_id", n)
+        self.assertEqual(n["id"], note_ids[j])
+
+        for k in ("active", "title", "body", "tags"):
+            self.assertEqual(n[k], notes[j][k])
+
+        self.assertEqual(n["creation_ts"], n["last_modification_ts"])
+        self.assertEqual(len(n["tags"]), len(notes[j]["tags"]))
+
+        for k in range(len(n["tags"])):
+            self.assertEqual(n["tags"][k], notes[j]["tags"][k])
+
+    def test_post_active_tags_no_tags(self):
+        """Test the Post method of the Note List resource.
+
+        This test creates a notebook with some tags and notes and then tries to
+        get all the active notes of the notebook that have any tag of a given
+        list of tags and all the active notes of the notebook that don't have
+        any tag, which should work.
+        """
+        # Log in
+        headers = self._login(self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = self._create_notebook(headers)
+
+        # Create tags
+        tags = self._get_tags(notebook_id)
+        tag_names = [t["name"] for t in tags]
+        self._create_tags(headers, tags)
+
+        # Create notes
+        notes = self._get_notes(notebook_id, tags)
+        note_ids = self._create_notes(headers, notes)
+
+        # Get all active notes with the second tag
+        f = {"active": True, "tags": [tag_names[1]], "no_tags": True}
+        r = self.client.post(f"/notes/{notebook_id}", headers=headers, json=f)
+        res_notes = r.json["result"]
+
+        # Check list
+        self.assertEqual(type(res_notes), list)
+        self.assertEqual(len(res_notes), 1)
+
+        n = res_notes[0]
+        self.assertEqual(type(n), dict)
+        self.assertEqual(len(n), 7)
+
+        j = 0
+
+        for k in (
+            "id", "active", "title", "body", "creation_ts",
+            "last_modification_ts", "tags"
+        ):
+            self.assertIn(k, n)
+
+        self.assertNotIn("notebook_id", n)
+        self.assertEqual(n["id"], note_ids[j])
+
+        for k in ("active", "title", "body", "tags"):
+            self.assertEqual(n[k], notes[j][k])
+
+        self.assertEqual(n["creation_ts"], n["last_modification_ts"])
+        self.assertEqual(len(n["tags"]), len(notes[j]["tags"]))
+
+        for k in range(len(n["tags"])):
+            self.assertEqual(n["tags"][k], notes[j]["tags"][k])
+
+    def test_post_inactive(self):
+        """Test the Post method of the Note List resource.
+
+        This test creates a notebook with some tags and notes and then tries to
+        get all the inactive notes of the notebook, which should work.
+        """
+        # Log in
+        headers = self._login(self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = self._create_notebook(headers)
+
+        # Create tags
+        tags = self._get_tags(notebook_id)
+        tag_names = [t["name"] for t in tags]
+        self._create_tags(headers, tags)
+
+        # Create notes
+        notes = self._get_notes(notebook_id, tags)
+        note_ids = self._create_notes(headers, notes)
+
+        # Get all inactive notes
+        f = {"active": False}
+        r = self.client.post(f"/notes/{notebook_id}", headers=headers, json=f)
+        res_notes = r.json["result"]
+
+        # Check list
+        self.assertEqual(type(res_notes), list)
+        c = len(res_notes)
+        self.assertEqual(c, 2)
+
+        for i in range(c):
+            j = i + 2
+            self.assertEqual(type(res_notes[i]), dict)
+            self.assertEqual(len(res_notes[i]), 7)
+
+            for k in (
+                "id", "active", "title", "body", "creation_ts",
+                "last_modification_ts", "tags"
+            ):
+                self.assertIn(k, res_notes[i])
+
+            self.assertNotIn("notebook_id", res_notes[i])
+            self.assertEqual(res_notes[i]["id"], note_ids[j])
+
+            for k in ("active", "title", "body", "tags"):
+                self.assertEqual(res_notes[i][k], notes[j][k])
+
+            self.assertEqual(
+                res_notes[i]["creation_ts"],
+                res_notes[i]["last_modification_ts"])
+
+            self.assertEqual(len(res_notes[i]["tags"]), len(notes[j]["tags"]))
+
+            for k in range(len(res_notes[i]["tags"])):
+                self.assertEqual(res_notes[i]["tags"][k], notes[j]["tags"][k])
+
+    def test_post_inactive_tags(self):
+        """Test the Post method of the Note List resource.
+
+        This test creates a notebook with some tags and notes and then tries to
+        get all the inactive notes of the notebook that have any tag of a given
+        list of tags, which should work.
+        """
+        # Log in
+        headers = self._login(self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = self._create_notebook(headers)
+
+        # Create tags
+        tags = self._get_tags(notebook_id)
+        tag_names = [t["name"] for t in tags]
+        self._create_tags(headers, tags)
+
+        # Create notes
+        notes = self._get_notes(notebook_id, tags)
+        note_ids = self._create_notes(headers, notes)
+
+        # Get all active notes with the second tag
+        f = {"active": False, "tags": [tag_names[1]]}
+        r = self.client.post(f"/notes/{notebook_id}", headers=headers, json=f)
+        res_notes = r.json["result"]
+
+        # Check list
+        self.assertEqual(type(res_notes), list)
+        c = len(res_notes)
+        self.assertEqual(c, 1)
+
+        n = res_notes[0]
+        j = 2
+
+        self.assertEqual(type(n), dict)
+        self.assertEqual(len(n), 7)
+
+        for k in (
+            "id", "active", "title", "body", "creation_ts",
+            "last_modification_ts", "tags"
+        ):
+            self.assertIn(k, n)
+
+        self.assertNotIn("notebook_id", n)
+        self.assertEqual(n["id"], note_ids[j])
+
+        for k in ("active", "title", "body", "tags"):
+            self.assertEqual(n[k], notes[j][k])
+
+        self.assertEqual(n["creation_ts"], n["last_modification_ts"])
+        self.assertEqual(len(n["tags"]), len(notes[j]["tags"]))
+
+        for k in range(len(n["tags"])):
+            self.assertEqual(n["tags"][k], notes[j]["tags"][k])
+
+    def test_post_inactive_tags_no_tags(self):
+        """Test the Post method of the Note List resource.
+
+        This test creates a notebook with some tags and notes and then tries to
+        get all the inactive notes of the notebook that have any tag of a given
+        list of tags and all the inactive notes of the notebook that don't have
+        any tag, which should work.
+        """
+        # Log in
+        headers = self._login(self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = self._create_notebook(headers)
+
+        # Create tags
+        tags = self._get_tags(notebook_id)
+        tag_names = [t["name"] for t in tags]
+        self._create_tags(headers, tags)
+
+        # Create notes
+        notes = self._get_notes(notebook_id, tags)
+        note_ids = self._create_notes(headers, notes)
+
+        # Get all active notes with the second tag
+        f = {"active": False, "tags": [tag_names[1]], "no_tags": True}
+        r = self.client.post(f"/notes/{notebook_id}", headers=headers, json=f)
+        res_notes = r.json["result"]
+
+        # Check list
+        self.assertEqual(type(res_notes), list)
+        c = len(res_notes)
+        self.assertEqual(c, 2)
+
+        for i in range(c):
+            j = i + 2
+            self.assertEqual(type(res_notes[i]), dict)
+            self.assertEqual(len(res_notes[i]), 7)
+
+            for k in (
+                "id", "active", "title", "body", "creation_ts",
+                "last_modification_ts", "tags"
+            ):
+                self.assertIn(k, res_notes[i])
+
+            self.assertNotIn("notebook_id", res_notes[i])
+            self.assertEqual(res_notes[i]["id"], note_ids[j])
+
+            for k in ("active", "title", "body", "tags"):
+                self.assertEqual(res_notes[i][k], notes[j][k])
+
+            self.assertEqual(
+                res_notes[i]["creation_ts"],
+                res_notes[i]["last_modification_ts"])
+
+            self.assertEqual(len(res_notes[i]["tags"]), len(notes[j]["tags"]))
+
+            for k in range(len(res_notes[i]["tags"])):
+                self.assertEqual(res_notes[i]["tags"][k], notes[j]["tags"][k])
+
+    def test_post_tags(self):
+        """Test the Post method of the Note List resource.
+
+        This test creates a notebook with some tags and notes and then tries to
+        get all the notes of the notebook that have any tag of a given list of
+        tags, which should work.
+        """
+        # Log in
+        headers = self._login(self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = self._create_notebook(headers)
+
+        # Create tags
+        tags = self._get_tags(notebook_id)
+        tag_names = [t["name"] for t in tags]
+        self._create_tags(headers, tags)
+
+        # Create notes
+        notes = self._get_notes(notebook_id, tags)
+        note_ids = self._create_notes(headers, notes)
+
+        # Get all notes with the second tag
+        f = {"tags": [tag_names[1]]}
+        r = self.client.post(f"/notes/{notebook_id}", headers=headers, json=f)
+        res_notes = r.json["result"]
+
+        # Check list
+        self.assertEqual(type(res_notes), list)
+        c = len(res_notes)
+        self.assertEqual(c, 2)
+
+        for i in range(c):
+            j = i * 2
+            self.assertEqual(type(res_notes[i]), dict)
+            self.assertEqual(len(res_notes[i]), 7)
+
+            for k in (
+                "id", "active", "title", "body", "creation_ts",
+                "last_modification_ts", "tags"
+            ):
+                self.assertIn(k, res_notes[i])
+
+            self.assertNotIn("notebook_id", res_notes[i])
+            self.assertEqual(res_notes[i]["id"], note_ids[j])
+
+            for k in ("active", "title", "body", "tags"):
+                self.assertEqual(res_notes[i][k], notes[j][k])
+
+            self.assertEqual(
+                res_notes[i]["creation_ts"],
+                res_notes[i]["last_modification_ts"])
+
+            self.assertEqual(len(res_notes[i]["tags"]), len(notes[j]["tags"]))
+
+            for k in range(len(res_notes[i]["tags"])):
+                self.assertEqual(res_notes[i]["tags"][k], notes[j]["tags"][k])
+
+    def test_post_tags_no_tags(self):
+        """Test the Post method of the Note List resource.
+
+        This test creates a notebook with some tags and notes and then tries to
+        get all the notes of the notebook that have any tag of a given list of
+        tags and all the notes of the notebook that don't have any tag, which
+        should work.
+        """
+        # Log in
+        headers = self._login(self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = self._create_notebook(headers)
+
+        # Create tags
+        tags = self._get_tags(notebook_id)
+        tag_names = [t["name"] for t in tags]
+        self._create_tags(headers, tags)
+
+        # Create notes
+        notes = self._get_notes(notebook_id, tags)
+        note_ids = self._create_notes(headers, notes)
+
+        # Get all notes with the second tag
+        f = {"tags": [tag_names[1]], "no_tags": True}
+        r = self.client.post(f"/notes/{notebook_id}", headers=headers, json=f)
+        res_notes = r.json["result"]
+
+        # Check list
+        self.assertEqual(type(res_notes), list)
+        c = len(res_notes)
+        self.assertEqual(c, 3)
+        j1 = {0: 0, 1: 2, 2: 3}
+
+        for i in range(c):
+            j2 = j1[i]
+            self.assertEqual(type(res_notes[i]), dict)
+            self.assertEqual(len(res_notes[i]), 7)
+
+            for k in (
+                "id", "active", "title", "body", "creation_ts",
+                "last_modification_ts", "tags"
+            ):
+                self.assertIn(k, res_notes[i])
+
+            self.assertNotIn("notebook_id", res_notes[i])
+            self.assertEqual(res_notes[i]["id"], note_ids[j2])
+
+            for k in ("active", "title", "body", "tags"):
+                self.assertEqual(res_notes[i][k], notes[j2][k])
+
+            self.assertEqual(
+                res_notes[i]["creation_ts"],
+                res_notes[i]["last_modification_ts"])
+
+            self.assertEqual(len(res_notes[i]["tags"]), len(notes[j2]["tags"]))
+
+            for k in range(len(res_notes[i]["tags"])):
+                self.assertEqual(res_notes[i]["tags"][k], notes[j2]["tags"][k])
+
+    def test_post_no_tags_1(self):
+        """Test the Post method of the Note List resource.
+
+        This test creates a notebook with some tags and notes and then tries to
+        get all the notes of the notebook that don't have any tag, which should
+        work.
+        """
+        # Log in
+        headers = self._login(self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = self._create_notebook(headers)
+
+        # Create tags
+        tags = self._get_tags(notebook_id)
+        tag_names = [t["name"] for t in tags]
+        self._create_tags(headers, tags)
+
+        # Create notes
+        notes = self._get_notes(notebook_id, tags)
+        note_ids = self._create_notes(headers, notes)
+
+        # Get all notes without tags
+        f = {"tags": [], "no_tags": True}
+        r = self.client.post(f"/notes/{notebook_id}", headers=headers, json=f)
+        res_notes = r.json["result"]
+
+        # Check list
+        self.assertEqual(type(res_notes), list)
+        c = len(res_notes)
+        self.assertEqual(c, 1)
+
+        n = res_notes[0]
+        j = 3
+
+        self.assertEqual(type(n), dict)
+        self.assertEqual(len(n), 7)
+
+        for k in (
+            "id", "active", "title", "body", "creation_ts",
+            "last_modification_ts", "tags"
+        ):
+            self.assertIn(k, n)
+
+        self.assertNotIn("notebook_id", n)
+        self.assertEqual(n["id"], note_ids[j])
+
+        for k in ("active", "title", "body", "tags"):
+            self.assertEqual(n[k], notes[j][k])
+
+        self.assertEqual(n["creation_ts"], n["last_modification_ts"])
+        self.assertEqual(len(n["tags"]), 0)
+
+    def test_post_no_tags_2(self):
+        """Test the Post method of the Note List resource.
+
+        This test creates a notebook with some tags and notes and then tries to
+        get all the notes of the notebook filtering by tags with an empty tag
+        list and without selecting the notes that have no tags (which should be
+        no notes), which should work.
+        """
+        # Log in
+        headers = self._login(self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = self._create_notebook(headers)
+
+        # Create tags
+        tags = self._get_tags(notebook_id)
+        tag_names = [t["name"] for t in tags]
+        self._create_tags(headers, tags)
+
+        # Create notes
+        notes = self._get_notes(notebook_id, tags)
+        note_ids = self._create_notes(headers, notes)
+
+        # Get all notes without tags
+        f = {"tags": []}
+        r = self.client.post(f"/notes/{notebook_id}", headers=headers, json=f)
+        res_notes = r.json["result"]
+
+        # Check list
+        self.assertEqual(type(res_notes), list)
+        self.assertEqual(len(res_notes), 0)
+
+        # Get all notes without tags
+        f = {"tags": [], "no_tags": False}
+        r = self.client.post(f"/notes/{notebook_id}", headers=headers, json=f)
+        res_notes = r.json["result"]
+
+        # Check list
+        self.assertEqual(type(res_notes), list)
+        self.assertEqual(len(res_notes), 0)
+
+
+if __name__ == "__main__":
+    unittest.main()
