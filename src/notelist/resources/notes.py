@@ -8,6 +8,7 @@ from flask_restful import Resource
 from flask_jwt_extended import jwt_required, get_jwt
 
 from notelist.models.notebooks import Notebook
+from notelist.models.tags import Tag
 from notelist.models.notes import Note
 from notelist.schemas.notes import NoteSchema
 from notelist.resources import Response, MISSING_DATA, VALIDATION_ERROR, \
@@ -106,6 +107,17 @@ class NoteResource(Resource):
         """
         return round(datetime.now().timestamp())
 
+    def _select_tag(self, notebook_id: int, name: str) -> Tag:
+        """Returns a copy of a given request data tag if the tag doesn't exist
+        in the notebook or the existing tag.
+
+        :notebook_id: Notebook ID.
+        :param name: Request data tag name.
+        :return: Copy of `t` or the existing tag.
+        """
+        tag = Tag.get_by_name(notebook_id, name)
+        return tag if tag else Tag(notebook_id=notebook_id, name=name)
+
     @jwt_required()
     def get(self, note_id: int) -> Response:
         """Handle a Note Get request.
@@ -163,6 +175,13 @@ class NoteResource(Resource):
         note.creation_ts = now
         note.last_modification_ts = now
 
+        # For each request data tag, check if the tag already exists in the
+        # notebook and if so, replace the request data tag by the existing tag.
+        # This way, the request tags that already exist won't be created again,
+        # as they will have their ID value defined (not None).
+        note.tags = list(map(
+            lambda t: self._select_tag(note.notebook_id, t.name), note.tags))
+
         # Save note
         note.save()
 
@@ -214,6 +233,16 @@ class NoteResource(Resource):
             # Set creation timestamp
             note.creation_ts = now
 
+            # For each request data tag, check if the tag already exists in the
+            # notebook and if so, replace the request data tag by the existing
+            # tag. This way, the request tags that already exist won't be
+            # created again, as they will have their ID value defined (not
+            # None). As "note" is a new note, the tags will be saved when
+            # calling "note.save".
+            note.tags = list(map(
+                lambda t: self._select_tag(note.notebook_id, t.name),
+                note.tags))
+
             message = NOTE_CREATED
             code = 201
         else:
@@ -249,6 +278,28 @@ class NoteResource(Resource):
             # Check if a new value for the body is provided
             if "body" in data:
                 note.body = data["body"]
+
+            # Check if a new value for the tags is provided. For each request
+            # data tag, check if the tag already exists in the notebook and if
+            # so, replace the request data tag by the existing tag. This way,
+            # the request tags that already exist won't be created again, as
+            # they will have their ID value defined (not None). As "note" is an
+            # existing note, new tags will be saved after assigning
+            # "note.tags".
+            if "tags" in data:
+                # Check if any tag name is invalid
+                tags = note_schema.load_tags(data["tags"])
+                # for i in data["tags"]:
+                #     if type(i) != str or not i.strip():
+                #         return get_response_data(
+                #             VALIDATION_ERROR.format(["tags"])), 400
+
+                # note.tags = list(map(
+                #     lambda t: self._select_tag(note.notebook_id, t), tags))
+
+                note.tags = list(map(
+                    lambda t: self._select_tag(note.notebook_id, t.name),
+                    tags))
 
             message = NOTE_UPDATED
             code = 200
