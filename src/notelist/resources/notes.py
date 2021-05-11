@@ -289,13 +289,6 @@ class NoteResource(Resource):
             if "tags" in data:
                 # Check if any tag name is invalid
                 tags = note_schema.load_tags(data["tags"])
-                # for i in data["tags"]:
-                #     if type(i) != str or not i.strip():
-                #         return get_response_data(
-                #             VALIDATION_ERROR.format(["tags"])), 400
-
-                # note.tags = list(map(
-                #     lambda t: self._select_tag(note.notebook_id, t), tags))
 
                 note.tags = list(map(
                     lambda t: self._select_tag(note.notebook_id, t.name),

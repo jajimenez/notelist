@@ -52,10 +52,11 @@ class TagListResource(Resource):
             return get_response_data(USER_UNAUTHORIZED), 403
 
         # Get notebook tags
-        c = len(notebook.tags)
+        tags = sorted(notebook.tags, key=lambda t: t.id)
+        c = len(tags)
         m = TAG_RETRIEVED_1 if c == 1 else TAG_RETRIEVED_N.format(c)
 
-        return get_response_data(m, tag_list_schema.dump(notebook.tags)), 200
+        return get_response_data(m, tag_list_schema.dump(tags)), 200
 
 
 class TagResource(Resource):
