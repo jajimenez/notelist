@@ -10,6 +10,9 @@ from notelist.models.tags import Tag
 from notelist.models.notes import Note
 
 
+INVALID_VALUE = "Invalid value."
+
+
 class NoteSchema(ma.SQLAlchemyAutoSchema):
     """Note schema."""
 
@@ -34,8 +37,13 @@ class NoteSchema(ma.SQLAlchemyAutoSchema):
 
     def load_tags(self, value: List[str]) -> List[Tag]:
         """Deserialize the note's tags."""
+        field = "tags"
+
+        if type(value) != list:
+            raise ValidationError({field: INVALID_VALUE})
+
         for i in value:
             if type(i) != str or not i.strip():
-                raise ValidationError({"tags": "Invalid value."})
+                raise ValidationError({field: INVALID_VALUE})
 
         return [Tag(name=i.strip()) for i in value]
