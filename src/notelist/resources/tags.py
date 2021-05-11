@@ -9,7 +9,7 @@ from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 from notelist.models.notebooks import Notebook
 from notelist.models.tags import Tag
 from notelist.schemas.tags import TagSchema
-from notelist.resources import Response, MISSING_DATA, VALIDATION_ERROR, \
+from notelist.resources import Response, VALIDATION_ERROR, \
     OPERATION_NOT_ALLOWED, USER_UNAUTHORIZED, get_response_data
 
 
@@ -102,9 +102,6 @@ class TagResource(Resource):
         # Request data
         data = request.get_json()
 
-        if not data:
-            return get_response_data(MISSING_DATA), 400
-
         # We validate the request data. If any of the Tag model required fields
         # is missing, a "marshmallow.ValidationError" exception is raised.
         tag = tag_schema.load(data)
@@ -142,9 +139,6 @@ class TagResource(Resource):
 
         # Request data
         data = request.get_json()
-
-        if not data:
-            return get_response_data(MISSING_DATA), 400
 
         # If "tag_id" is None, we create a new tag. Otherwise we edit the
         # existing tag with the given ID.

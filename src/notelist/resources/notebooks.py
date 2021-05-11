@@ -8,8 +8,8 @@ from flask_jwt_extended import jwt_required, get_jwt
 
 from notelist.models.notebooks import Notebook
 from notelist.schemas.notebooks import NotebookSchema
-from notelist.resources import Response, MISSING_DATA, VALIDATION_ERROR, \
-    USER_UNAUTHORIZED, get_response_data
+from notelist.resources import Response, VALIDATION_ERROR, USER_UNAUTHORIZED, \
+    get_response_data
 
 
 NOTEBOOK_RETRIEVED_1 = "1 notebook retrieved."
@@ -84,10 +84,7 @@ class NotebookResource(Resource):
         uid = get_jwt()["user_id"]
 
         # Request data
-        data = request.get_json()
-
-        if not data:
-            return get_response_data(MISSING_DATA), 400
+        data = request.get_json() or dict()
 
         # We validate the request data. If any of the Notebook model required
         # fields is missing, a "marshmallow.ValidationError" exception is
@@ -123,9 +120,6 @@ class NotebookResource(Resource):
 
         # Request data
         data = request.get_json()
-
-        if not data:
-            return get_response_data(MISSING_DATA), 400
 
         # If "notebook_id" is None, we create a new notebook. Otherwise we edit
         # the existing notebook with the given ID.

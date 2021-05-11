@@ -11,8 +11,8 @@ from flask_jwt_extended import jwt_required, create_access_token, \
 
 from notelist.models.users import User
 from notelist.schemas.users import UserSchema
-from notelist.resources import Response, MISSING_DATA, VALIDATION_ERROR, \
-    USER_UNAUTHORIZED, get_response_data
+from notelist.resources import Response, VALIDATION_ERROR, USER_UNAUTHORIZED, \
+    get_response_data
 from notelist import tools
 
 
@@ -48,9 +48,6 @@ class LoginResource(Resource):
         """
         # Request data
         data = request.get_json()
-
-        if not data:
-            return get_response_data(MISSING_DATA), 400
 
         # Validate request data
         u = "username"
@@ -202,9 +199,6 @@ class UserResource(Resource):
         # Request data
         data = request.get_json()
 
-        if not data:
-            return get_response_data(MISSING_DATA), 400
-
         # We validate the request data. If any of the User model required
         # fields is missing, a "marshmallow.ValidationError" exception is
         # raised.
@@ -249,9 +243,6 @@ class UserResource(Resource):
 
         # Request data
         data = request.get_json()
-
-        if not data:
-            return get_response_data(MISSING_DATA), 400
 
         # If "user_id" is None, we create a new user. Otherwise we edit the
         # existing user with the given ID.

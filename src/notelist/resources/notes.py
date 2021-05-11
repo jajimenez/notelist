@@ -11,8 +11,8 @@ from notelist.models.notebooks import Notebook
 from notelist.models.tags import Tag
 from notelist.models.notes import Note
 from notelist.schemas.notes import NoteSchema
-from notelist.resources import Response, MISSING_DATA, VALIDATION_ERROR, \
-    USER_UNAUTHORIZED, get_response_data
+from notelist.resources import Response, VALIDATION_ERROR, USER_UNAUTHORIZED, \
+    get_response_data
 
 
 NOTE_RETRIEVED_1 = "1 note retrieved."
@@ -152,10 +152,7 @@ class NoteResource(Resource):
         uid = get_jwt()["user_id"]
 
         # Request data
-        data = request.get_json()
-
-        if not data:
-            return get_response_data(MISSING_DATA), 400
+        data = request.get_json() or dict()
 
         # Current timestamp
         now = self._get_current_ts()
@@ -204,10 +201,7 @@ class NoteResource(Resource):
         uid = get_jwt()["user_id"]
 
         # Request data
-        data = request.get_json()
-
-        if not data:
-            return get_response_data(MISSING_DATA), 400
+        data = request.get_json() or dict()
 
         # Current timestamp
         now = self._get_current_ts()
