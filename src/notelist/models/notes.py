@@ -80,9 +80,11 @@ class Note(db.Model):
             :param n: Note.
             :return: `True` if `n` should be included. `False` otherwise.
             """
+            note_tags = [t.name for t in n.tags]
+
             return (
-                (no_tags and len(n.tags) == 0) or
-                any(map(lambda t: t in n.tags, tags)))
+                (no_tags and len(note_tags) == 0) or
+                any(map(lambda t: t in note_tags, tags)))
 
         return notes if tags is None else list(filter(select_note, notes))
 
