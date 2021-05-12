@@ -225,7 +225,8 @@ class TagTestCase(common.BaseTestCase):
         This test tries to get the data of a tag without providing the access
         token, which shouldn't work.
         """
-        # Get the data of the tag with ID 1 (which doesn't exist)
+        # Get the tag with ID 1 (which doesn't exist) without providing the
+        # acess token.
         r = self.client.get("/tag/1")
 
         # Check status code
@@ -237,7 +238,8 @@ class TagTestCase(common.BaseTestCase):
         This test tries to get the data of some tag providing an invalid access
         token, which shouldn't work.
         """
-        # Get data providing an invalid access token ("1234")
+        # Get the tag with ID 1 (which doesn't exist) providing an invalid
+        # access token ("1234").
         headers = {"Authorization": "Bearer 1234"}
         r = self.client.get("/tag/1", headers=headers)
 
@@ -405,7 +407,7 @@ class TagTestCase(common.BaseTestCase):
         notebook_id = r.json["result"]
 
         # Create tag (without data)
-        r = self.client.put("/tag", headers=headers)
+        r = self.client.post("/tag", headers=headers)
 
         # Check status code
         self.assertEqual(r.status_code, 400)
