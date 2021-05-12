@@ -10,101 +10,107 @@ TagSet = List[Dict[str, str]]
 NoteSet = List[Dict[str, Union[str, bool, List[str]]]]
 
 
+def _get_tags(notebook_id: str) -> TagSet:
+    """Return test tags.
+
+    :param notebook_id: Notebook ID.
+    :return: Tuple containing tag names and tag dictionaries.
+    """
+    return [
+        {"notebook_id": notebook_id, "name": "Test Tag 1"},
+        {"notebook_id": notebook_id, "name": "Test Tag 2"}]
+
+
+def _get_notes(notebook_id: str, tags: TagSet) -> NoteSet:
+    """Return test notes.
+
+    :param notebook_id: Notebook ID.
+    :param tags: Tags.
+    :return: List containing note dictionaries.
+    """
+    return [{
+        "notebook_id": notebook_id,
+        "active": True,
+        "title": "Test Note 1",
+        "body": "This is a test note",
+        "tags": [t["name"] for t in tags]
+    }, {
+        "notebook_id": notebook_id,
+        "active": True,
+        "title": "Test Note 2",
+        "body": "This is another test note",
+        "tags": [tags[0]["name"]]
+    }, {
+        "notebook_id": notebook_id,
+        "active": False,
+        "title": "Test Note 3",
+        "body": "Another note",
+        "tags": [tags[1]["name"]]
+    }, {
+        "notebook_id": notebook_id,
+        "active": False,
+        "title": "Test Note 3",
+        "body": "Another note",
+        "tags": []
+    }]
+
+
+def _login(client, username: str, password: str) -> Dict[str, str]:
+    """Log in.
+
+    :username: Username.
+    :password: Password.
+    :return: Headers with the access token.
+    """
+    data = {"username": username, "password": password}
+    r = client.post("/login", json=data)
+    access_token = r.json["result"]["access_token"]
+
+    return {"Authorization": f"Bearer {access_token}"}
+
+
+def _create_notebook(client, headers: Dict[str, str]) -> int:
+    """Create a notebook.
+
+    :headers: Headers with the access token.
+    :return: Notebook ID.
+    """
+    n = {"name": "Test Notebook"}
+    r = client.post("/notebook", headers=headers, json=n)
+
+    return r.json["result"]
+
+
+def _create_tags(client, headers: Dict[str, str], tags: TagSet):
+    """Create tags.
+
+    :headers: Headers with the access token.
+    :tags: Tags.
+    """
+    for t in tags:
+        client.post("/tag", headers=headers, json=t)
+
+
+def _create_notes(
+    client, headers: Dict[str, str], notes: NoteSet
+) -> List[int]:
+    """Create notes.
+
+    :headers: Headers with the access token.
+    :notes: Notes.
+    :return: Note IDs.
+    """
+    note_ids = []
+
+    for n in notes:
+        r = client.post("/note", headers=headers, json=n)
+        note_ids.append(r.json["result"])
+
+    return note_ids
+
+
 class NoteListTestCase(common.BaseTestCase):
     """Note List resource unit tests."""
-
-    def _get_tags(self, notebook_id: str) -> TagSet:
-        """Return test tags.
-
-        :param notebook_id: Notebook ID.
-        :return: Tuple containing tag names and tag dictionaries.
-        """
-        return [
-            {"notebook_id": notebook_id, "name": "Test Tag 1"},
-            {"notebook_id": notebook_id, "name": "Test Tag 2"}]
-
-    def _get_notes(self, notebook_id: str, tags: TagSet) -> NoteSet:
-        """Return test notes.
-
-        :param notebook_id: Notebook ID.
-        :param tags: Tags.
-        :return: List containing note dictionaries.
-        """
-        return [{
-            "notebook_id": notebook_id,
-            "active": True,
-            "title": "Test Note 1",
-            "body": "This is a test note",
-            "tags": [t["name"] for t in tags]
-        }, {
-            "notebook_id": notebook_id,
-            "active": True,
-            "title": "Test Note 2",
-            "body": "This is another test note",
-            "tags": [tags[0]["name"]]
-        }, {
-            "notebook_id": notebook_id,
-            "active": False,
-            "title": "Test Note 3",
-            "body": "Another note",
-            "tags": [tags[1]["name"]]
-        }, {
-            "notebook_id": notebook_id,
-            "active": False,
-            "title": "Test Note 3",
-            "body": "Another note",
-            "tags": []
-        }]
-
-    def _login(self, username: str, password: str) -> Dict[str, str]:
-        """Log in.
-
-        :username: Username.
-        :password: Password.
-        :return: Headers with the access token.
-        """
-        data = {"username": username, "password": password}
-        r = self.client.post("/login", json=data)
-        access_token = r.json["result"]["access_token"]
-
-        return {"Authorization": f"Bearer {access_token}"}
-
-    def _create_notebook(self, headers: Dict[str, str]) -> int:
-        """Create a notebook.
-
-        :headers: Headers with the access token.
-        :return: Notebook ID.
-        """
-        n = {"name": "Test Notebook"}
-        r = self.client.post("/notebook", headers=headers, json=n)
-
-        return r.json["result"]
-
-    def _create_tags(self, headers: Dict[str, str], tags: TagSet):
-        """Create tags.
-
-        :headers: Headers with the access token.
-        :tags: Tags.
-        """
-        for t in tags:
-            self.client.post("/tag", headers=headers, json=t)
-
-    def _create_notes(
-        self, headers: Dict[str, str], notes: NoteSet
-    ) -> List[int]:
-        """Create notes.
-
-        :headers: Headers with the access token.
-        :notes: Notes.
-        :return: Note IDs.
-        """
-        note_ids = []
-
-        for n in notes:
-            r = self.client.post("/note", headers=headers, json=n)
-            note_ids.append(r.json["result"])
-
-        return note_ids
 
     def test_get(self):
         """Test the Get method of the Note List resource.
@@ -125,19 +131,20 @@ class NoteListTestCase(common.BaseTestCase):
         get the all the notes of the notebook, which should work.
         """
         # Log in
-        headers = self._login(self.reg1["username"], self.reg1["password"])
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
 
         # Create notebook
-        notebook_id = self._create_notebook(headers)
+        notebook_id = _create_notebook(self.client, headers)
 
         # Create tags
-        tags = self._get_tags(notebook_id)
+        tags = _get_tags(notebook_id)
         tag_names = [t["name"] for t in tags]
-        self._create_tags(headers, tags)
+        _create_tags(self.client, headers, tags)
 
         # Create notes
-        notes = self._get_notes(notebook_id, tags)
-        note_ids = self._create_notes(headers, notes)
+        notes = _get_notes(notebook_id, tags)
+        note_ids = _create_notes(self.client, headers, notes)
 
         # Get all notes
         r = self.client.post(f"/notes/{notebook_id}", headers=headers)
@@ -175,19 +182,20 @@ class NoteListTestCase(common.BaseTestCase):
         get all the active notes of the notebook, which should work.
         """
         # Log in
-        headers = self._login(self.reg1["username"], self.reg1["password"])
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
 
         # Create notebook
-        notebook_id = self._create_notebook(headers)
+        notebook_id = _create_notebook(self.client, headers)
 
         # Create tags
-        tags = self._get_tags(notebook_id)
+        tags = _get_tags(notebook_id)
         tag_names = [t["name"] for t in tags]
-        self._create_tags(headers, tags)
+        _create_tags(self.client, headers, tags)
 
         # Create notes
-        notes = self._get_notes(notebook_id, tags)
-        note_ids = self._create_notes(headers, notes)
+        notes = _get_notes(notebook_id, tags)
+        note_ids = _create_notes(self.client, headers, notes)
 
         # Get all active notes
         f = {"active": True}
@@ -220,10 +228,7 @@ class NoteListTestCase(common.BaseTestCase):
                 res_notes[i]["creation_ts"],
                 res_notes[i]["last_modification_ts"])
 
-            self.assertEqual(len(res_notes[i]["tags"]), len(notes[i]["tags"]))
-
-            for j in range(len(res_notes[i]["tags"])):
-                self.assertEqual(res_notes[i]["tags"][j], notes[i]["tags"][j])
+            self.assertEqual(res_notes[i]["tags"], notes[i]["tags"])
 
     def test_post_active_tags(self):
         """Test the Post method of the Note List resource.
@@ -233,19 +238,20 @@ class NoteListTestCase(common.BaseTestCase):
         list of tags, which should work.
         """
         # Log in
-        headers = self._login(self.reg1["username"], self.reg1["password"])
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
 
         # Create notebook
-        notebook_id = self._create_notebook(headers)
+        notebook_id = _create_notebook(self.client, headers)
 
         # Create tags
-        tags = self._get_tags(notebook_id)
+        tags = _get_tags(notebook_id)
         tag_names = [t["name"] for t in tags]
-        self._create_tags(headers, tags)
+        _create_tags(self.client, headers, tags)
 
         # Create notes
-        notes = self._get_notes(notebook_id, tags)
-        note_ids = self._create_notes(headers, notes)
+        notes = _get_notes(notebook_id, tags)
+        note_ids = _create_notes(self.client, headers, notes)
 
         # Get all active notes with the second tag
         f = {"active": True, "tags": [tag_names[1]]}
@@ -290,19 +296,20 @@ class NoteListTestCase(common.BaseTestCase):
         any tag, which should work.
         """
         # Log in
-        headers = self._login(self.reg1["username"], self.reg1["password"])
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
 
         # Create notebook
-        notebook_id = self._create_notebook(headers)
+        notebook_id = _create_notebook(self.client, headers)
 
         # Create tags
-        tags = self._get_tags(notebook_id)
+        tags = _get_tags(notebook_id)
         tag_names = [t["name"] for t in tags]
-        self._create_tags(headers, tags)
+        _create_tags(self.client, headers, tags)
 
         # Create notes
-        notes = self._get_notes(notebook_id, tags)
-        note_ids = self._create_notes(headers, notes)
+        notes = _get_notes(notebook_id, tags)
+        note_ids = _create_notes(self.client, headers, notes)
 
         # Get all active notes with the second tag
         f = {"active": True, "tags": [tag_names[1]], "no_tags": True}
@@ -344,19 +351,20 @@ class NoteListTestCase(common.BaseTestCase):
         get all the inactive notes of the notebook, which should work.
         """
         # Log in
-        headers = self._login(self.reg1["username"], self.reg1["password"])
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
 
         # Create notebook
-        notebook_id = self._create_notebook(headers)
+        notebook_id = _create_notebook(self.client, headers)
 
         # Create tags
-        tags = self._get_tags(notebook_id)
+        tags = _get_tags(notebook_id)
         tag_names = [t["name"] for t in tags]
-        self._create_tags(headers, tags)
+        _create_tags(self.client, headers, tags)
 
         # Create notes
-        notes = self._get_notes(notebook_id, tags)
-        note_ids = self._create_notes(headers, notes)
+        notes = _get_notes(notebook_id, tags)
+        note_ids = _create_notes(self.client, headers, notes)
 
         # Get all inactive notes
         f = {"active": False}
@@ -389,10 +397,7 @@ class NoteListTestCase(common.BaseTestCase):
                 res_notes[i]["creation_ts"],
                 res_notes[i]["last_modification_ts"])
 
-            self.assertEqual(len(res_notes[i]["tags"]), len(notes[j]["tags"]))
-
-            for k in range(len(res_notes[i]["tags"])):
-                self.assertEqual(res_notes[i]["tags"][k], notes[j]["tags"][k])
+            self.assertEqual(res_notes[i]["tags"], notes[j]["tags"])
 
     def test_post_inactive_tags(self):
         """Test the Post method of the Note List resource.
@@ -402,19 +407,20 @@ class NoteListTestCase(common.BaseTestCase):
         list of tags, which should work.
         """
         # Log in
-        headers = self._login(self.reg1["username"], self.reg1["password"])
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
 
         # Create notebook
-        notebook_id = self._create_notebook(headers)
+        notebook_id = _create_notebook(self.client, headers)
 
         # Create tags
-        tags = self._get_tags(notebook_id)
+        tags = _get_tags(notebook_id)
         tag_names = [t["name"] for t in tags]
-        self._create_tags(headers, tags)
+        _create_tags(self.client, headers, tags)
 
         # Create notes
-        notes = self._get_notes(notebook_id, tags)
-        note_ids = self._create_notes(headers, notes)
+        notes = _get_notes(notebook_id, tags)
+        note_ids = _create_notes(self.client, headers, notes)
 
         # Get all active notes with the second tag
         f = {"active": False, "tags": [tag_names[1]]}
@@ -459,19 +465,20 @@ class NoteListTestCase(common.BaseTestCase):
         any tag, which should work.
         """
         # Log in
-        headers = self._login(self.reg1["username"], self.reg1["password"])
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
 
         # Create notebook
-        notebook_id = self._create_notebook(headers)
+        notebook_id = _create_notebook(self.client, headers)
 
         # Create tags
-        tags = self._get_tags(notebook_id)
+        tags = _get_tags(notebook_id)
         tag_names = [t["name"] for t in tags]
-        self._create_tags(headers, tags)
+        _create_tags(self.client, headers, tags)
 
         # Create notes
-        notes = self._get_notes(notebook_id, tags)
-        note_ids = self._create_notes(headers, notes)
+        notes = _get_notes(notebook_id, tags)
+        note_ids = _create_notes(self.client, headers, notes)
 
         # Get all active notes with the second tag
         f = {"active": False, "tags": [tag_names[1]], "no_tags": True}
@@ -504,10 +511,7 @@ class NoteListTestCase(common.BaseTestCase):
                 res_notes[i]["creation_ts"],
                 res_notes[i]["last_modification_ts"])
 
-            self.assertEqual(len(res_notes[i]["tags"]), len(notes[j]["tags"]))
-
-            for k in range(len(res_notes[i]["tags"])):
-                self.assertEqual(res_notes[i]["tags"][k], notes[j]["tags"][k])
+            self.assertEqual(res_notes[i]["tags"], notes[j]["tags"])
 
     def test_post_tags(self):
         """Test the Post method of the Note List resource.
@@ -517,19 +521,20 @@ class NoteListTestCase(common.BaseTestCase):
         tags, which should work.
         """
         # Log in
-        headers = self._login(self.reg1["username"], self.reg1["password"])
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
 
         # Create notebook
-        notebook_id = self._create_notebook(headers)
+        notebook_id = _create_notebook(self.client, headers)
 
         # Create tags
-        tags = self._get_tags(notebook_id)
+        tags = _get_tags(notebook_id)
         tag_names = [t["name"] for t in tags]
-        self._create_tags(headers, tags)
+        _create_tags(self.client, headers, tags)
 
         # Create notes
-        notes = self._get_notes(notebook_id, tags)
-        note_ids = self._create_notes(headers, notes)
+        notes = _get_notes(notebook_id, tags)
+        note_ids = _create_notes(self.client, headers, notes)
 
         # Get all notes with the second tag
         f = {"tags": [tag_names[1]]}
@@ -562,10 +567,7 @@ class NoteListTestCase(common.BaseTestCase):
                 res_notes[i]["creation_ts"],
                 res_notes[i]["last_modification_ts"])
 
-            self.assertEqual(len(res_notes[i]["tags"]), len(notes[j]["tags"]))
-
-            for k in range(len(res_notes[i]["tags"])):
-                self.assertEqual(res_notes[i]["tags"][k], notes[j]["tags"][k])
+            self.assertEqual(res_notes[i]["tags"], notes[j]["tags"])
 
     def test_post_tags_no_tags(self):
         """Test the Post method of the Note List resource.
@@ -576,19 +578,20 @@ class NoteListTestCase(common.BaseTestCase):
         should work.
         """
         # Log in
-        headers = self._login(self.reg1["username"], self.reg1["password"])
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
 
         # Create notebook
-        notebook_id = self._create_notebook(headers)
+        notebook_id = _create_notebook(self.client, headers)
 
         # Create tags
-        tags = self._get_tags(notebook_id)
+        tags = _get_tags(notebook_id)
         tag_names = [t["name"] for t in tags]
-        self._create_tags(headers, tags)
+        _create_tags(self.client, headers, tags)
 
         # Create notes
-        notes = self._get_notes(notebook_id, tags)
-        note_ids = self._create_notes(headers, notes)
+        notes = _get_notes(notebook_id, tags)
+        note_ids = _create_notes(self.client, headers, notes)
 
         # Get all notes with the second tag
         f = {"tags": [tag_names[1]], "no_tags": True}
@@ -622,10 +625,7 @@ class NoteListTestCase(common.BaseTestCase):
                 res_notes[i]["creation_ts"],
                 res_notes[i]["last_modification_ts"])
 
-            self.assertEqual(len(res_notes[i]["tags"]), len(notes[j2]["tags"]))
-
-            for k in range(len(res_notes[i]["tags"])):
-                self.assertEqual(res_notes[i]["tags"][k], notes[j2]["tags"][k])
+            self.assertEqual(res_notes[i]["tags"], notes[j2]["tags"])
 
     def test_post_no_tags_1(self):
         """Test the Post method of the Note List resource.
@@ -635,19 +635,20 @@ class NoteListTestCase(common.BaseTestCase):
         work.
         """
         # Log in
-        headers = self._login(self.reg1["username"], self.reg1["password"])
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
 
         # Create notebook
-        notebook_id = self._create_notebook(headers)
+        notebook_id = _create_notebook(self.client, headers)
 
         # Create tags
-        tags = self._get_tags(notebook_id)
+        tags = _get_tags(notebook_id)
         tag_names = [t["name"] for t in tags]
-        self._create_tags(headers, tags)
+        _create_tags(self.client, headers, tags)
 
         # Create notes
-        notes = self._get_notes(notebook_id, tags)
-        note_ids = self._create_notes(headers, notes)
+        notes = _get_notes(notebook_id, tags)
+        note_ids = _create_notes(self.client, headers, notes)
 
         # Get all notes without tags
         f = {"tags": [], "no_tags": True}
@@ -689,19 +690,20 @@ class NoteListTestCase(common.BaseTestCase):
         no notes), which should work.
         """
         # Log in
-        headers = self._login(self.reg1["username"], self.reg1["password"])
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
 
         # Create notebook
-        notebook_id = self._create_notebook(headers)
+        notebook_id = _create_notebook(self.client, headers)
 
         # Create tags
-        tags = self._get_tags(notebook_id)
+        tags = _get_tags(notebook_id)
         tag_names = [t["name"] for t in tags]
-        self._create_tags(headers, tags)
+        _create_tags(self.client, headers, tags)
 
         # Create notes
-        notes = self._get_notes(notebook_id, tags)
-        note_ids = self._create_notes(headers, notes)
+        notes = _get_notes(notebook_id, tags)
+        note_ids = _create_notes(self.client, headers, notes)
 
         # Get all notes without tags
         f = {"tags": []}
@@ -729,19 +731,20 @@ class NoteListTestCase(common.BaseTestCase):
         token, which shouldn't work.
         """
         # Log in
-        headers = self._login(self.reg1["username"], self.reg1["password"])
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
 
         # Create notebook
-        notebook_id = self._create_notebook(headers)
+        notebook_id = _create_notebook(self.client, headers)
 
         # Create tags
-        tags = self._get_tags(notebook_id)
+        tags = _get_tags(notebook_id)
         tag_names = [t["name"] for t in tags]
-        self._create_tags(headers, tags)
+        _create_tags(self.client, headers, tags)
 
         # Create notes
-        notes = self._get_notes(notebook_id, tags)
-        note_ids = self._create_notes(headers, notes)
+        notes = _get_notes(notebook_id, tags)
+        note_ids = _create_notes(self.client, headers, notes)
 
         # Get notes
         r = self.client.post(f"/notes/{notebook_id}")
@@ -757,19 +760,20 @@ class NoteListTestCase(common.BaseTestCase):
         token, which shouldn't work.
         """
         # Log in
-        headers = self._login(self.reg1["username"], self.reg1["password"])
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
 
         # Create notebook
-        notebook_id = self._create_notebook(headers)
+        notebook_id = _create_notebook(self.client, headers)
 
         # Create tags
-        tags = self._get_tags(notebook_id)
+        tags = _get_tags(notebook_id)
         tag_names = [t["name"] for t in tags]
-        self._create_tags(headers, tags)
+        _create_tags(self.client, headers, tags)
 
         # Create notes
-        notes = self._get_notes(notebook_id, tags)
-        note_ids = self._create_notes(headers, notes)
+        notes = _get_notes(notebook_id, tags)
+        note_ids = _create_notes(self.client, headers, notes)
 
         # Get notes providing an invalid access token ("1234")
         headers = {"Authorization": "Bearer 1234"}
@@ -801,6 +805,302 @@ class NoteListTestCase(common.BaseTestCase):
         # Check status codes
         self.assertEqual(r1.status_code, 404)
         self.assertEqual(r2.status_code, 405)
+
+
+class NoteTestCase(common.BaseTestCase):
+    """Note resource unit tests."""
+
+    def test_get(self):
+        """Test the Get method of the Note resource.
+
+        This test creates a notebook with a note and then tries to get the
+        note, which should work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create tags
+        tags = _get_tags(notebook_id)
+        _create_tags(self.client, headers, tags)
+
+        # Create note
+        n = _get_notes(notebook_id, tags)[0]
+        note_id = _create_notes(self.client, headers, [n])[0]
+
+        # Get note
+        r = self.client.get(f"/note/{note_id}", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Check result
+        self.assertIn("result", r.json)
+        note = r.json["result"]
+        self.assertEqual(type(note), dict)
+        self.assertEqual(len(note), 7)
+
+        for i in (
+            "id", "active", "title", "body", "creation_ts",
+            "last_modification_ts", "tags"
+        ):
+            self.assertIn(i, note)
+
+        self.assertNotIn("notebook_id", note)
+        self.assertEqual(note["id"], note_id)
+
+        for i in ("active", "title", "body", "tags"):
+            self.assertEqual(note[i], n[i])
+
+        self.assertEqual(note["creation_ts"], note["last_modification_ts"])
+
+    def test_get_missing_access_token(self):
+        """Test the Get method of the Note resource.
+
+        This test tries to get the data of some note without providing the
+        access token, which shouldn't work.
+        """
+        # Get the note with ID 1 (which doesn't exist) without providing the
+        # access token.
+        r = self.client.get("/note/1")
+
+        # Check status code
+        self.assertEqual(r.status_code, 401)
+
+    def test_get_invalid_access_token(self):
+        """Test the Get method of the Note resource.
+
+        This test tries to get the data of some note providing an invalid
+        access token, which shouldn't work.
+        """
+        # Get the note with ID 1 (which doesn't exist) providing an invalid
+        # access token ("1234").
+        headers = {"Authorization": "Bearer 1234"}
+        r = self.client.get("/note/1", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 422)
+
+    def test_get_unauthorized_user(self):
+        """Test the Get method of the Note resource.
+
+        This test tries to get a note of a user from another user, which
+        shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.admin["username"], self.admin["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create tags
+        tags = _get_tags(notebook_id)
+        _create_tags(self.client, headers, tags)
+
+        # Create note
+        n = _get_notes(notebook_id, tags)[0]
+        note_id = _create_notes(self.client, headers, [n])[0]
+
+        # Log in as another user
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Get note
+        r = self.client.get(f"/note/{note_id}", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 403)
+
+    def test_get_note_not_found(self):
+        """Test the Get method of the Note resource.
+
+        This test tries to get a note that doesn't exist, which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.admin["username"], self.admin["password"])
+
+        # Get the note with ID 1 (which doesn't exist)
+        r = self.client.get("/note/1", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 403)
+
+    def test_post(self):
+        """Test the Post method of the Note resource.
+
+        This test tries to create a note, which should work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create note
+        n = {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note 1",
+            "body": "This is a test note",
+            "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
+        r = self.client.post("/note", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 201)
+
+        # Check result
+        self.assertIn("result", r.json)
+        note_id = r.json["result"]
+        self.assertEqual(type(note_id), int)
+
+        # Check notebook tags
+        r = self.client.get(f"/tags/{notebook_id}", headers=headers)
+        tags = r.json["result"]
+        tag_names = [t["name"] for t in tags]
+        self.assertEqual(tag_names, n["tags"])
+
+    def test_post_missing_access_token(self):
+        """Test the Post method of the Note resource.
+
+        This test tries to create a note without providing the access token,
+        which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create note
+        n = {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note 1",
+            "body": "This is a test note",
+            "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
+        r = self.client.post("/note", json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 401)
+
+    def test_post_invalid_access_token(self):
+        """Test the Post method of the Note resource.
+
+        This test tries to create a note providing an invalid access token,
+        which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create a note providing an invalid access token ("1234")
+        headers = {"Authorization": "Bearer 1234"}
+        n = {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note 1",
+            "body": "This is a test note",
+            "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
+        r = self.client.post("/note", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 422)
+
+    def test_post_missing_fields(self):
+        """Test the Post method of the Note resource.
+
+        This test tries to create a note with some mandatory field missing,
+        which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create note (without data)
+        r = self.client.post("/note", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+        # Create note (without the notebook ID)
+        r = self.client.post("/note", headers=headers, json=dict())
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+    def test_post_invalid_fields(self):
+        """Test the Post method of the Note resource.
+
+        This test tries to create a note providing some invalid/unexpected
+        field, which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create a note with an invalid field ("invalid_field")
+        n = {"notebook_id": notebook_id, "invalid_field": 1}
+        r = self.client.post("/note", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+    def test_post_notebook_user_unauthorized(self):
+        """Test the Post method of the Note resource.
+
+        This test tries to create a note for a notebook that doesn't belong to
+        the request user, which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.admin["username"], self.admin["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Log in as another user
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create note
+        n = {"notebook_id": notebook_id}
+        r = self.client.post("/note", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 403)
+
+    def test_post_notebook_not_found(self):
+        """Test the Post method of the Note resource.
+
+        This test tries to create a note for a notebook that doesn't exist,
+        which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.admin["username"], self.admin["password"])
+
+        # Create a note for the notebook with ID 1 (which doesn't exist)
+        n = {"notebook_id": 1}
+        r = self.client.post("/note", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 403)
 
 
 if __name__ == "__main__":
