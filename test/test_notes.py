@@ -106,6 +106,18 @@ class NoteListTestCase(common.BaseTestCase):
 
         return note_ids
 
+    def test_get(self):
+        """Test the Get method of the Note List resource.
+
+        This test tries to call the Get method, which shouldn't work.
+        """
+        r1 = self.client.get("/notes")
+        r2 = self.client.get("/notes/1")
+
+        # Check status codes
+        self.assertEqual(r1.status_code, 404)
+        self.assertEqual(r2.status_code, 405)
+
     def test_post(self):
         """Test the Post method of the Note List resource.
 
@@ -708,6 +720,87 @@ class NoteListTestCase(common.BaseTestCase):
         # Check list
         self.assertEqual(type(res_notes), list)
         self.assertEqual(len(res_notes), 0)
+
+    def test_post_missing_access_token(self):
+        """Test the Post method of the Note List resource.
+
+        This test creates a notebook with some tags and notes and then tries to
+        get the all the notes of the notebook without providing the access
+        token, which shouldn't work.
+        """
+        # Log in
+        headers = self._login(self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = self._create_notebook(headers)
+
+        # Create tags
+        tags = self._get_tags(notebook_id)
+        tag_names = [t["name"] for t in tags]
+        self._create_tags(headers, tags)
+
+        # Create notes
+        notes = self._get_notes(notebook_id, tags)
+        note_ids = self._create_notes(headers, notes)
+
+        # Get notes
+        r = self.client.post(f"/notes/{notebook_id}")
+
+        # Check status code
+        self.assertEqual(r.status_code, 401)
+
+    def test_post_invalid_access_token(self):
+        """Test the Post method of the Note List resource.
+
+        This test creates a notebook with some tags and notes and then tries to
+        get the all the notes of the notebook providing an invalid access
+        token, which shouldn't work.
+        """
+        # Log in
+        headers = self._login(self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = self._create_notebook(headers)
+
+        # Create tags
+        tags = self._get_tags(notebook_id)
+        tag_names = [t["name"] for t in tags]
+        self._create_tags(headers, tags)
+
+        # Create notes
+        notes = self._get_notes(notebook_id, tags)
+        note_ids = self._create_notes(headers, notes)
+
+        # Get notes providing an invalid access token ("1234")
+        headers = {"Authorization": "Bearer 1234"}
+        r = self.client.post(f"/notes/{notebook_id}", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 422)
+
+    def test_put(self):
+        """Test the Put method of the Note List resource.
+
+        This test tries to call the Put method, which shouldn't work.
+        """
+        r1 = self.client.put("/notes")
+        r2 = self.client.put("/notes/1")
+
+        # Check status codes
+        self.assertEqual(r1.status_code, 404)
+        self.assertEqual(r2.status_code, 405)
+
+    def test_delete(self):
+        """Test the Delete method of the Note List resource.
+
+        This test tries to call the Delete method, which shouldn't work.
+        """
+        r1 = self.client.delete("/notes")
+        r2 = self.client.delete("/notes/1")
+
+        # Check status codes
+        self.assertEqual(r1.status_code, 404)
+        self.assertEqual(r2.status_code, 405)
 
 
 if __name__ == "__main__":
