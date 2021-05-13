@@ -570,7 +570,7 @@ class TagTestCase(common.BaseTestCase):
     def test_put_edit(self):
         """Test the Put method of the Tag resource.
 
-        This test tries to edit one of tags of one of the request user's
+        This test tries to edit one of the tags of one of the request user's
         notebooks, which should work.
         """
         # Log in
@@ -600,11 +600,11 @@ class TagTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 200)
 
-        # Get tag data
+        # Get tag
         r = self.client.get(f"/tag/{tag_id}", headers=headers)
         tag = r.json["result"]
 
-        # Check data
+        # Check tag
         self.assertEqual(len(tag), 3)
 
         for i in ("id", "name", "color"):
@@ -692,7 +692,7 @@ class TagTestCase(common.BaseTestCase):
         r = self.client.post("/notebook", headers=headers, json=n)
         notebook_id = r.json["result"]
 
-        # Create a tag providing an invalid access token ("1234")
+        # Create tag providing an invalid access token ("1234")
         headers = {"Authorization": "Bearer 1234"}
         t = {"notebook_id": notebook_id, "name": "Test Tag"}
         r = self.client.put("/tag", headers=headers, json=t)
@@ -703,8 +703,8 @@ class TagTestCase(common.BaseTestCase):
     def test_put_edit_invalid_access_token(self):
         """Test the Put method of the Tag resource.
 
-        This test tries to edit one of tags of one of the request user's
-        notebooks providing an invalid access token, which shouldn't work.
+        This test tries to edit a tag providing an invalid access token, which
+        shouldn't work.
         """
         # Log in
         data = {
