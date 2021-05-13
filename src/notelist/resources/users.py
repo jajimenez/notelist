@@ -47,7 +47,7 @@ class LoginResource(Resource):
         :return: Dictionary with the message.
         """
         # Request data
-        data = request.get_json()
+        data = request.get_json() or dict()
 
         # Validate request data
         u = "username"
@@ -197,7 +197,7 @@ class UserResource(Resource):
             return get_response_data(USER_UNAUTHORIZED), 403
 
         # Request data
-        data = request.get_json()
+        data = request.get_json() or dict()
 
         # We validate the request data. If any of the User model required
         # fields is missing, a "marshmallow.ValidationError" exception is
@@ -242,7 +242,7 @@ class UserResource(Resource):
         admin = jwt["admin"]
 
         # Request data
-        data = request.get_json()
+        data = request.get_json() or dict()
 
         # If "user_id" is None, we create a new user. Otherwise we edit the
         # existing user with the given ID.
