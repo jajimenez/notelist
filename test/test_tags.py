@@ -536,7 +536,7 @@ class TagTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 400)
 
-    def test_put(self):
+    def test_put_new(self):
         """Test the Put method of the Tag resource.
 
         This test tries to create a tag, which should work.
