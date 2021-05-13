@@ -1102,6 +1102,392 @@ class NoteTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 403)
 
+    def test_put_new(self):
+        """Test the Put method of the Note resource.
+
+        This test tries to create a note, which should work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create note
+        n = {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note 1",
+            "body": "This is a test note",
+            "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
+        r = self.client.put("/note", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 201)
+
+        # Check result
+        self.assertIn("result", r.json)
+        note_id = r.json["result"]
+        self.assertEqual(type(note_id), int)
+
+        # Check notebook tags
+        r = self.client.get(f"/tags/{notebook_id}", headers=headers)
+        tags = r.json["result"]
+        tag_names = [t["name"] for t in tags]
+        self.assertEqual(tag_names, n["tags"])
+
+    def test_put_edit(self):
+        """Test the Put method of the Note resource.
+
+        This test tries to edit one of the notes of one of the request user's
+        notebooks, which should work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create note
+        n = {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note",
+            "body": "This is a test note",
+            "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
+        r = self.client.put("/note", headers=headers, json=n)
+        note_id = r.json["result"]
+
+        # Edit note
+        new_tag = {
+            "active": False,
+            "title": "New Test Note",
+            "body": "This is a new test note",
+            "tags": ["New Test Tag 1", "New Test Tag 2"]}
+        r = self.client.put(f"/note/{note_id}", headers=headers, json=new_tag)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Get note
+        r = self.client.get(f"/note/{note_id}", headers=headers)
+        note = r.json["result"]
+
+        # Check note
+        for i in (
+            "id", "active", "title", "body", "creation_ts",
+            "last_modification_ts", "tags"
+        ):
+            self.assertIn(i, note)
+
+        self.assertNotIn("notebook_id", note)
+        self.assertEqual(note["id"], note_id)
+
+        for i in ("active", "title", "body", "tags"):
+            self.assertEqual(note[i], new_tag[i])
+
+        self.assertEqual(note["creation_ts"], note["last_modification_ts"])
+
+    def test_put_new_missing_access_token(self):
+        """Test the Put method of the Note resource.
+
+        This test tries to create a note without providing the access token,
+        which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create note
+        n = {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note 1",
+            "body": "This is a test note",
+            "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
+        r = self.client.put("/note", json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 401)
+
+    def test_put_edit_missing_access_token(self):
+        """Test the Put method of the Note resource.
+
+        This test tries to edit one of the notes of one of the request user's
+        notebooks without providing the access token, which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create note
+        n = {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note 1",
+            "body": "This is a test note",
+            "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
+        r = self.client.put("/note", headers=headers, json=n)
+        note_id = r.json["result"]
+
+        # Edit note
+        new_tag = {
+            "active": False,
+            "title": "New Test Note",
+            "body": "This is a new test note",
+            "tags": ["New Test Tag 1", "New Test Tag 2"]}
+        r = self.client.put(f"/note/{note_id}", json=new_tag)
+
+        # Check status code
+        self.assertEqual(r.status_code, 401)
+
+    def test_put_new_invalid_access_token(self):
+        """Test the Put method of the Note resource.
+
+        This test tries to create a note providing an invalid access token,
+        which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create note providing an invalid access token ("1234")
+        headers = {"Authorization": "Bearer 1234"}
+        n = {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note 1",
+            "body": "This is a test note",
+            "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
+        r = self.client.put("/note", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 422)
+
+    def test_put_edit_invalid_access_token(self):
+        """Test the Put method of the Note resource.
+
+        This test tries to edit a note providing an invalid access token, which
+        shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create note
+        n = {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note 1",
+            "body": "This is a test note",
+            "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
+        r = self.client.put("/note", headers=headers, json=n)
+        note_id = r.json["result"]
+
+        # Edit note providing an invalid access token ("1234")
+        headers = {"Authorization": "Bearer 1234"}
+        new_tag = {
+            "active": False,
+            "title": "New Test Note",
+            "body": "This is a new test note",
+            "tags": ["New Test Tag 1", "New Test Tag 2"]}
+        r = self.client.put(f"/note/{note_id}", headers=headers, json=new_tag)
+
+        # Check status code
+        self.assertEqual(r.status_code, 422)
+
+    def test_put_new_missing_fields(self):
+        """Test the Put method of the Note resource.
+
+        This test tries to create a note with some mandatory field missing,
+        which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create note without data
+        r = self.client.put("/note", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+        # Create note without the notebook ID
+        n = {
+            "active": True,
+            "title": "Test Note 1",
+            "body": "This is a test note",
+            "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
+        r = self.client.put("/note", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+    def test_put_edit_notebook(self):
+        """Test the Put method of the Note resource.
+
+        This test tries to edit a note specifying its notebook, which shouldn't
+        work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create note
+        n = {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note 1",
+            "body": "This is a test note",
+            "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
+        r = self.client.put("/note", headers=headers, json=n)
+        note_id = r.json["result"]
+
+        # Edit note
+        new_tag = {
+            "notebook_id": notebook_id,
+            "active": False,
+            "title": "New Test Note",
+            "body": "This is a new test note",
+            "tags": ["New Test Tag 1", "New Test Tag 2"]}
+        r = self.client.put(f"/note/{note_id}", headers=headers, json=new_tag)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+    def test_put_new_invalid_fields(self):
+        """Test the Put method of the Note resource.
+
+        This test tries to create a note providing some invalid/unexpected
+        field, which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create note with an invalid field ("invalid_field")
+        n = {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note 1",
+            "body": "This is a test note",
+            "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"],
+            "invalid_field": 1}
+        r = self.client.put("/note", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+    def test_put_edit_invalid_fields(self):
+        """Test the Put method of the Note resource.
+
+        This test tries to edit a note providing some invalid/unexpected field,
+        which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create note
+        n = {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note 1",
+            "body": "This is a test note",
+            "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
+        r = self.client.put("/note", headers=headers, json=n)
+        note_id = r.json["result"]
+
+        # Edit note with an invalid field ("invalid_field")
+        new_tag = {
+            "notebook_id": notebook_id,
+            "active": False,
+            "title": "New Test Note",
+            "body": "This is a new test note",
+            "tags": ["New Test Tag 1", "New Test Tag 2"],
+            "invalid_field": 1}
+        r = self.client.put(f"/note/{note_id}", headers=headers, json=new_tag)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
+
+    def test_put_new_notebook_user_unauthorized(self):
+        """Test the Put method of the Note resource.
+
+        This test tries to create a note for a notebook that doesn't belong to
+        the request user, which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.admin["username"], self.admin["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Log in as another user
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create note
+        n = {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note 1",
+            "body": "This is a test note",
+            "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
+        r = self.client.put("/note", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 403)
+
+    def test_put_new_notebook_not_found(self):
+        """Test the Put method of the Note resource.
+
+        This test tries to create a note for a notebook that doesn't exist,
+        which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.admin["username"], self.admin["password"])
+
+        # Create note for the notebook with ID 1 (which doesn't exist)
+        n = {
+            "notebook_id": 1,
+            "active": True,
+            "title": "Test Note 1",
+            "body": "This is a test note",
+            "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
+        r = self.client.put("/note", headers=headers, json=n)
+
+        # Check status code
+        self.assertEqual(r.status_code, 403)
+
 
 if __name__ == "__main__":
     unittest.main()
