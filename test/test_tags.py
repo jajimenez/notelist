@@ -910,6 +910,45 @@ class TagTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 403)
 
+    def test_put_edit_user_unauthorized(self):
+        """Test the Put method of the Tag resource.
+
+        This test tries to edit a tag of a notebook that doesn't belong to the
+        request user, which shouldn't work.
+        """
+        # Log in
+        data = {
+            "username": self.admin["username"],
+            "password": self.admin["password"]}
+        r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
+
+        # Create notebook
+        headers = {"Authorization": f"Bearer {access_token}"}
+        n = {"name": "Test Notebook"}
+        r = self.client.post("/notebook", headers=headers, json=n)
+        notebook_id = r.json["result"]
+
+        # Create tag
+        t = {"notebook_id": notebook_id, "name": "Test Tag"}
+        r = self.client.put("/tag", headers=headers, json=t)
+        tag_id = r.json["result"]
+
+        # Log in as another user
+        data = {
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
+        r = self.client.post("/login", json=data)
+        access_token = r.json["result"]["access_token"]
+
+        # Edit tag
+        headers = {"Authorization": f"Bearer {access_token}"}
+        new_tag = {"name": "Test Tag 2"}
+        r = self.client.put(f"/tag/{tag_id}", headers=headers, json=new_tag)
+
+        # Check status code
+        self.assertEqual(r.status_code, 403)
+
     def test_put_new_tag_exists(self):
         """Test the Put method of the Tag resource.
 

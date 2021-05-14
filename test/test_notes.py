@@ -1488,6 +1488,38 @@ class NoteTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 403)
 
+    def test_put_edit_user_unauthorized(self):
+        """Test the Put method of the Note resource.
+
+        This test tries to edit a note of a notebook that doesn't belong to the
+        request user, which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.admin["username"], self.admin["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create note
+        n = {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note 1"}
+        r = self.client.put("/note", headers=headers, json=n)
+        note_id = r.json["result"]
+
+        # Log in as another user
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Edit note
+        new_note = {"title": "Test Note 2"}
+        r = self.client.put(f"/tag/{note_id}", headers=headers, json=new_note)
+
+        # Check status code
+        self.assertEqual(r.status_code, 403)
+
 
 if __name__ == "__main__":
     unittest.main()
