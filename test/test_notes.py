@@ -726,8 +726,8 @@ class NoteListTestCase(common.BaseTestCase):
     def test_post_missing_access_token(self):
         """Test the Post method of the Note List resource.
 
-        This test creates a notebook with some tags and notes and then tries to
-        get the all the notes of the notebook without providing the access
+        This test creates a notebook with some tags and some notes and then
+        tries to get all the notes of the notebook without providing the access
         token, which shouldn't work.
         """
         # Log in
@@ -756,8 +756,8 @@ class NoteListTestCase(common.BaseTestCase):
         """Test the Post method of the Note List resource.
 
         This test creates a notebook with some tags and notes and then tries to
-        get the all the notes of the notebook providing an invalid access
-        token, which shouldn't work.
+        get all the notes of the notebook providing an invalid access token,
+        which shouldn't work.
         """
         # Log in
         headers = _login(
@@ -781,6 +781,36 @@ class NoteListTestCase(common.BaseTestCase):
 
         # Check status code
         self.assertEqual(r.status_code, 422)
+
+    def test_post_invalid_invalid_field(self):
+        """Test the Post method of the Note List resource.
+
+        This test creates a notebook with some tags and some notes and then
+        tries to get all the notes of the notebook providing an invalid field,
+        which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create tags
+        tags = _get_tags(notebook_id)
+        tag_names = [t["name"] for t in tags]
+        _create_tags(self.client, headers, tags)
+
+        # Create notes
+        notes = _get_notes(notebook_id, tags)
+        note_ids = _create_notes(self.client, headers, notes)
+
+        # Get notes providing an invalid field ("invalid_field")
+        f = {"active": True, "invalid_field": 1}
+        r = self.client.post(f"/notes/{notebook_id}", headers=headers, json=f)
+
+        # Check status code
+        self.assertEqual(r.status_code, 400)
 
     def test_put(self):
         """Test the Put method of the Note List resource.
