@@ -202,9 +202,9 @@ class NoteResource(Resource):
         if not notebook or uid != notebook.user_id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
-        # Set creation and last modification timestamps
-        note.creation_ts = now
-        note.last_modification_ts = now
+        # Set Created and Last modified timestamps
+        note.created_ts = now
+        note.last_modified_ts = now
 
         # For each request data tag, check if the tag already exists in the
         # notebook and if so, replace the request data tag by the existing tag.
@@ -258,8 +258,8 @@ class NoteResource(Resource):
             if not notebook or uid != notebook.user_id:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
-            # Set creation timestamp
-            note.creation_ts = now
+            # Set Created timestamp
+            note.created_ts = now
 
             # For each request data tag, check if the tag already exists in the
             # notebook and if so, replace the request data tag by the existing
@@ -325,8 +325,8 @@ class NoteResource(Resource):
             message = NOTE_UPDATED
             code = 200
 
-        # Set last modification timestamp
-        note.last_modification_ts = now
+        # Set Last Modified timestamp
+        note.last_modified_ts = now
 
         # Save note
         note.save()

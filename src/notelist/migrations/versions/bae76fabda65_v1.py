@@ -43,8 +43,8 @@ def upgrade():
     sa.Column('active', sa.Boolean(), nullable=False),
     sa.Column('title', sa.String(length=100), nullable=True),
     sa.Column('body', sa.String(length=1000), nullable=True),
-    sa.Column('creation_ts', sa.Integer(), nullable=True),
-    sa.Column('last_modification_ts', sa.Integer(), nullable=True),
+    sa.Column('created_ts', sa.Integer(), nullable=True),
+    sa.Column('last_modified_ts', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['notebook_id'], ['notebooks.id'], ),
     sa.PrimaryKeyConstraint('id')
     )

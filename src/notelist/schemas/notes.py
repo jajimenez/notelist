@@ -21,11 +21,11 @@ class NoteSchema(ma.SQLAlchemyAutoSchema):
 
         model = Note
         fields = [
-            "id", "notebook_id", "active", "title", "body", "creation_ts",
-            "last_modification_ts", "tags"]
+            "id", "notebook_id", "active", "title", "body", "created_ts",
+            "last_modified_ts", "tags"]
         include_fk = True
         load_only = ["notebook_id"]
-        dump_only = ["id", "creation_ts", "last_modification_ts"]
+        dump_only = ["id", "created_ts", "last_modified_ts"]
         ordered = True
         load_instance = True
 

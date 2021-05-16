@@ -33,8 +33,8 @@ class Note(db.Model):
     active = db.Column(db.Boolean, nullable=False, default=True)
     title = db.Column(db.String(100), nullable=True)
     body = db.Column(db.String(1000), nullable=True)
-    creation_ts = db.Column(db.Integer, nullable=True)
-    last_modification_ts = db.Column(db.Integer, nullable=True)
+    created_ts = db.Column(db.Integer, nullable=True)
+    last_modified_ts = db.Column(db.Integer, nullable=True)
 
     tags = db.relationship(
         "Tag", secondary=note_tags, lazy="subquery",
@@ -72,13 +72,13 @@ class Note(db.Model):
 
         # Order
         if last_mod and asc:
-            notes = notes.order_by(Note.last_modification_ts).all()
+            notes = notes.order_by(Note.last_modified_ts).all()
         elif last_mod and not asc:
-            notes = notes.order_by(desc(Note.last_modification_ts)).all()
+            notes = notes.order_by(desc(Note.last_modified_ts)).all()
         elif not last_mod and asc:
-            notes = notes.order_by(Note.creation_ts).all()
+            notes = notes.order_by(Note.created_ts).all()
         else:
-            notes = notes.order_by(desc(Note.creation_ts)).all()
+            notes = notes.order_by(desc(Note.created_ts)).all()
 
         # Tags and Not Tags filters
         def select_note(n: "Note") -> bool:

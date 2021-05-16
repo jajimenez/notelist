@@ -1,7 +1,8 @@
 """Note resources unit tests."""
 
 import unittest
-from typing import Tuple, List, Dict, Union
+import time
+from typing import Tuple, List, Dict, Optional, Union
 
 import common
 
@@ -58,8 +59,9 @@ def _get_notes(notebook_id: str, tags: TagSet) -> NoteSet:
 def _login(client, username: str, password: str) -> Dict[str, str]:
     """Log in.
 
-    :username: Username.
-    :password: Password.
+    :param client: Test API client.
+    :param username: Username.
+    :param password: Password.
     :return: Headers with the access token.
     """
     data = {"username": username, "password": password}
@@ -72,7 +74,8 @@ def _login(client, username: str, password: str) -> Dict[str, str]:
 def _create_notebook(client, headers: Dict[str, str]) -> int:
     """Create a notebook.
 
-    :headers: Headers with the access token.
+    :param client: Test API client.
+    :param headers: Headers with the access token.
     :return: Notebook ID.
     """
     n = {"name": "Test Notebook"}
@@ -84,7 +87,9 @@ def _create_notebook(client, headers: Dict[str, str]) -> int:
 def _create_tags(client, headers: Dict[str, str], tags: TagSet):
     """Create tags.
 
-    :headers: Headers with the access token.
+    :param client: Test API client.
+    :param headers: Headers with the access token.
+    :param tags: Tags.
     :tags: Tags.
     """
     for t in tags:
@@ -92,12 +97,16 @@ def _create_tags(client, headers: Dict[str, str], tags: TagSet):
 
 
 def _create_notes(
-    client, headers: Dict[str, str], notes: NoteSet
+    client, headers: Dict[str, str], notes: NoteSet,
+    delay: Optional[int] = None
 ) -> List[int]:
     """Create notes.
 
-    :headers: Headers with the access token.
-    :notes: Notes.
+    :param client: Test API client.
+    :param headers: Headers with the access token.
+    :param notes: Notes.
+    :param delay: Delay in seconds between note creations, in order to make the
+    notes timestamps different.
     :return: Note IDs.
     """
     note_ids = []
@@ -105,6 +114,9 @@ def _create_notes(
     for n in notes:
         r = client.post("/note", headers=headers, json=n)
         note_ids.append(r.json["result"])
+
+        if delay:
+            time.sleep(delay)
 
     return note_ids
 
@@ -160,8 +172,8 @@ class NoteListTestCase(common.BaseTestCase):
             self.assertEqual(len(res_notes[i]), 7)
 
             for j in (
-                "id", "active", "title", "body", "creation_ts",
-                "last_modification_ts", "tags"
+                "id", "active", "title", "body", "created_ts",
+                "last_modified_ts", "tags"
             ):
                 self.assertIn(j, res_notes[i])
 
@@ -172,8 +184,8 @@ class NoteListTestCase(common.BaseTestCase):
                 self.assertEqual(res_notes[i][j], notes[i][j])
 
             self.assertEqual(
-                res_notes[i]["creation_ts"],
-                res_notes[i]["last_modification_ts"])
+                res_notes[i]["created_ts"],
+                res_notes[i]["last_modified_ts"])
 
     def test_post_active(self):
         """Test the Post method of the Note List resource.
@@ -212,8 +224,8 @@ class NoteListTestCase(common.BaseTestCase):
             self.assertEqual(len(res_notes[i]), 7)
 
             for j in (
-                "id", "active", "title", "body", "creation_ts",
-                "last_modification_ts", "tags"
+                "id", "active", "title", "body", "created_ts",
+                "last_modified_ts", "tags"
             ):
                 self.assertIn(j, res_notes[i])
 
@@ -225,8 +237,8 @@ class NoteListTestCase(common.BaseTestCase):
                 self.assertEqual(res_notes[i][j], notes[i][j])
 
             self.assertEqual(
-                res_notes[i]["creation_ts"],
-                res_notes[i]["last_modification_ts"])
+                res_notes[i]["created_ts"],
+                res_notes[i]["last_modified_ts"])
 
             self.assertEqual(res_notes[i]["tags"], notes[i]["tags"])
 
@@ -270,8 +282,8 @@ class NoteListTestCase(common.BaseTestCase):
         self.assertEqual(len(n), 7)
 
         for k in (
-            "id", "active", "title", "body", "creation_ts",
-            "last_modification_ts", "tags"
+            "id", "active", "title", "body", "created_ts", "last_modified_ts",
+            "tags"
         ):
             self.assertIn(k, n)
 
@@ -281,7 +293,7 @@ class NoteListTestCase(common.BaseTestCase):
         for k in ("active", "title", "body", "tags"):
             self.assertEqual(n[k], notes[j][k])
 
-        self.assertEqual(n["creation_ts"], n["last_modification_ts"])
+        self.assertEqual(n["created_ts"], n["last_modified_ts"])
         self.assertEqual(len(n["tags"]), len(notes[j]["tags"]))
 
         for k in range(len(n["tags"])):
@@ -327,8 +339,8 @@ class NoteListTestCase(common.BaseTestCase):
         j = 0
 
         for k in (
-            "id", "active", "title", "body", "creation_ts",
-            "last_modification_ts", "tags"
+            "id", "active", "title", "body", "created_ts", "last_modified_ts",
+            "tags"
         ):
             self.assertIn(k, n)
 
@@ -338,7 +350,7 @@ class NoteListTestCase(common.BaseTestCase):
         for k in ("active", "title", "body", "tags"):
             self.assertEqual(n[k], notes[j][k])
 
-        self.assertEqual(n["creation_ts"], n["last_modification_ts"])
+        self.assertEqual(n["created_ts"], n["last_modified_ts"])
         self.assertEqual(len(n["tags"]), len(notes[j]["tags"]))
 
         for k in range(len(n["tags"])):
@@ -382,8 +394,8 @@ class NoteListTestCase(common.BaseTestCase):
             self.assertEqual(len(res_notes[i]), 7)
 
             for k in (
-                "id", "active", "title", "body", "creation_ts",
-                "last_modification_ts", "tags"
+                "id", "active", "title", "body", "created_ts",
+                "last_modified_ts", "tags"
             ):
                 self.assertIn(k, res_notes[i])
 
@@ -394,8 +406,8 @@ class NoteListTestCase(common.BaseTestCase):
                 self.assertEqual(res_notes[i][k], notes[j][k])
 
             self.assertEqual(
-                res_notes[i]["creation_ts"],
-                res_notes[i]["last_modification_ts"])
+                res_notes[i]["created_ts"],
+                res_notes[i]["last_modified_ts"])
 
             self.assertEqual(res_notes[i]["tags"], notes[j]["tags"])
 
@@ -439,8 +451,8 @@ class NoteListTestCase(common.BaseTestCase):
         self.assertEqual(len(n), 7)
 
         for k in (
-            "id", "active", "title", "body", "creation_ts",
-            "last_modification_ts", "tags"
+            "id", "active", "title", "body", "created_ts", "last_modified_ts",
+            "tags"
         ):
             self.assertIn(k, n)
 
@@ -450,7 +462,7 @@ class NoteListTestCase(common.BaseTestCase):
         for k in ("active", "title", "body", "tags"):
             self.assertEqual(n[k], notes[j][k])
 
-        self.assertEqual(n["creation_ts"], n["last_modification_ts"])
+        self.assertEqual(n["created_ts"], n["last_modified_ts"])
         self.assertEqual(len(n["tags"]), len(notes[j]["tags"]))
 
         for k in range(len(n["tags"])):
@@ -496,8 +508,8 @@ class NoteListTestCase(common.BaseTestCase):
             self.assertEqual(len(res_notes[i]), 7)
 
             for k in (
-                "id", "active", "title", "body", "creation_ts",
-                "last_modification_ts", "tags"
+                "id", "active", "title", "body", "created_ts",
+                "last_modified_ts", "tags"
             ):
                 self.assertIn(k, res_notes[i])
 
@@ -508,8 +520,8 @@ class NoteListTestCase(common.BaseTestCase):
                 self.assertEqual(res_notes[i][k], notes[j][k])
 
             self.assertEqual(
-                res_notes[i]["creation_ts"],
-                res_notes[i]["last_modification_ts"])
+                res_notes[i]["created_ts"],
+                res_notes[i]["last_modified_ts"])
 
             self.assertEqual(res_notes[i]["tags"], notes[j]["tags"])
 
@@ -552,8 +564,8 @@ class NoteListTestCase(common.BaseTestCase):
             self.assertEqual(len(res_notes[i]), 7)
 
             for k in (
-                "id", "active", "title", "body", "creation_ts",
-                "last_modification_ts", "tags"
+                "id", "active", "title", "body", "created_ts",
+                "last_modified_ts", "tags"
             ):
                 self.assertIn(k, res_notes[i])
 
@@ -564,8 +576,8 @@ class NoteListTestCase(common.BaseTestCase):
                 self.assertEqual(res_notes[i][k], notes[j][k])
 
             self.assertEqual(
-                res_notes[i]["creation_ts"],
-                res_notes[i]["last_modification_ts"])
+                res_notes[i]["created_ts"],
+                res_notes[i]["last_modified_ts"])
 
             self.assertEqual(res_notes[i]["tags"], notes[j]["tags"])
 
@@ -610,8 +622,8 @@ class NoteListTestCase(common.BaseTestCase):
             self.assertEqual(len(res_notes[i]), 7)
 
             for k in (
-                "id", "active", "title", "body", "creation_ts",
-                "last_modification_ts", "tags"
+                "id", "active", "title", "body", "created_ts",
+                "last_modified_ts", "tags"
             ):
                 self.assertIn(k, res_notes[i])
 
@@ -622,8 +634,8 @@ class NoteListTestCase(common.BaseTestCase):
                 self.assertEqual(res_notes[i][k], notes[j2][k])
 
             self.assertEqual(
-                res_notes[i]["creation_ts"],
-                res_notes[i]["last_modification_ts"])
+                res_notes[i]["created_ts"],
+                res_notes[i]["last_modified_ts"])
 
             self.assertEqual(res_notes[i]["tags"], notes[j2]["tags"])
 
@@ -667,8 +679,8 @@ class NoteListTestCase(common.BaseTestCase):
         self.assertEqual(len(n), 7)
 
         for k in (
-            "id", "active", "title", "body", "creation_ts",
-            "last_modification_ts", "tags"
+            "id", "active", "title", "body", "created_ts", "last_modified_ts",
+            "tags"
         ):
             self.assertIn(k, n)
 
@@ -678,7 +690,7 @@ class NoteListTestCase(common.BaseTestCase):
         for k in ("active", "title", "body", "tags"):
             self.assertEqual(n[k], notes[j][k])
 
-        self.assertEqual(n["creation_ts"], n["last_modification_ts"])
+        self.assertEqual(n["created_ts"], n["last_modified_ts"])
         self.assertEqual(len(n["tags"]), 0)
 
     def test_post_no_tags_2(self):
@@ -722,6 +734,60 @@ class NoteListTestCase(common.BaseTestCase):
         # Check list
         self.assertEqual(type(res_notes), list)
         self.assertEqual(len(res_notes), 0)
+
+    def test_post_last_mod(self):
+        """Test the Post method of the Note List resource.
+
+        This test creates a notebook with some tags and notes and then tries to
+        get all the notes of the notebook sorted by their Last Modified
+        timestamp, which should work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create tags
+        tags = _get_tags(notebook_id)
+        tag_names = [t["name"] for t in tags]
+        _create_tags(self.client, headers, tags)
+
+        # Create notes
+        notes = _get_notes(notebook_id, tags)
+        note_ids = _create_notes(self.client, headers, notes, 1)
+
+        # Edit the second note
+        n = {"title": "New title"}
+        r = self.client.put(f"/note/{note_ids[1]}", headers=headers, json=n)
+
+        # Get notes sorted by Last Modified timetamp (ascending)
+        f = {"last_mod": True}
+        r = self.client.post(f"/notes/{notebook_id}", headers=headers, json=f)
+        res_notes = r.json["result"]
+
+        # Check list
+        self.assertEqual(type(res_notes), list)
+        c = len(res_notes)
+        self.assertEqual(c, len(notes))
+        expected_ids = [note_ids[0]] + note_ids[2:] + [note_ids[1]]
+
+        for i in range(c):
+            self.assertEqual(res_notes[i]["id"], expected_ids[i])
+
+        # Get notes sorted by Last Modified timetamp (descending)
+        f = {"last_mod": True, "asc": False}
+        r = self.client.post(f"/notes/{notebook_id}", headers=headers, json=f)
+        res_notes = r.json["result"]
+
+        # Check list
+        self.assertEqual(type(res_notes), list)
+        c = len(res_notes)
+        self.assertEqual(c, len(notes))
+
+        for i in range(c):
+            self.assertEqual(res_notes[i]["id"], expected_ids[-(i + 1)])
 
     def test_post_missing_access_token(self):
         """Test the Post method of the Note List resource.
@@ -874,8 +940,8 @@ class NoteTestCase(common.BaseTestCase):
         self.assertEqual(len(note), 7)
 
         for i in (
-            "id", "active", "title", "body", "creation_ts",
-            "last_modification_ts", "tags"
+            "id", "active", "title", "body", "created_ts", "last_modified_ts",
+            "tags"
         ):
             self.assertIn(i, note)
 
@@ -885,7 +951,7 @@ class NoteTestCase(common.BaseTestCase):
         for i in ("active", "title", "body", "tags"):
             self.assertEqual(note[i], n[i])
 
-        self.assertEqual(note["creation_ts"], note["last_modification_ts"])
+        self.assertEqual(note["created_ts"], note["last_modified_ts"])
 
     def test_get_missing_access_token(self):
         """Test the Get method of the Note resource.
@@ -1207,8 +1273,8 @@ class NoteTestCase(common.BaseTestCase):
 
         # Check note
         for i in (
-            "id", "active", "title", "body", "creation_ts",
-            "last_modification_ts", "tags"
+            "id", "active", "title", "body", "created_ts", "last_modified_ts",
+            "tags"
         ):
             self.assertIn(i, note)
 
@@ -1218,7 +1284,7 @@ class NoteTestCase(common.BaseTestCase):
         for i in ("active", "title", "body", "tags"):
             self.assertEqual(note[i], new_tag[i])
 
-        self.assertEqual(note["creation_ts"], note["last_modification_ts"])
+        self.assertEqual(note["created_ts"], note["last_modified_ts"])
 
     def test_put_new_missing_access_token(self):
         """Test the Put method of the Note resource.
