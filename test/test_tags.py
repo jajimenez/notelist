@@ -1053,6 +1053,7 @@ class TagTestCase(common.BaseTestCase):
 
         # Check list
         self.assertEqual(len(tags), 1)
+        self.assertEqual(tags[0]["id"], tag_id)
         self.assertEqual(tags[0]["name"], t["name"])
 
         # Delete tag
@@ -1092,7 +1093,7 @@ class TagTestCase(common.BaseTestCase):
         r = self.client.post("/tag", headers=headers, json=t)
         tag_id = r.json["result"]
 
-        # Delete tag without providing the access token
+        # Delete tag
         r = self.client.delete(f"/tag/{tag_id}")
 
         # Check status code
