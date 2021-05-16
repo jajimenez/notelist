@@ -1,6 +1,8 @@
 """Module with the database note models."""
 
 from typing import List, Optional
+from sqlalchemy import desc
+
 from notelist.db import db
 
 
@@ -42,7 +44,7 @@ class Note(db.Model):
     def get_by_filter(
         cls, notebook_id: int, active: Optional[bool] = None,
         tags: Optional[List[str]] = None, no_tags: bool = False,
-        order_by_last_mod: bool = False
+        last_mod: bool = False, asc: bool = True
     ) -> List["Note"]:
         """Return all the notes of a notebook by a filter.
 
@@ -53,9 +55,11 @@ class Note(db.Model):
         :param no_tags: Notes with No Tags filter (include notes with no tags).
         This filter is only applicable if a tag filter has been provided, i.e.
         `tags` is not None).
-        :param order_by_last_mod: `True` if notes should be sorted by their
-        last modification timestamp. `False` if notes should be sorted by their
-        creation timestamp (default).
+        :param last_mod: `True` if notes should be sorted by their Last
+        Modified timestamp. `False` if notes should be sorted by their Created
+        timestamp (default).
+        :param asc: Whether the notes order should be ascending (default) or
+        not.
         :return: List of `Note` instances.
         """
         notes = cls.query.filter_by(notebook_id=notebook_id)
@@ -67,10 +71,14 @@ class Note(db.Model):
             notes = notes.filter_by(active=False)
 
         # Order
-        if order_by_last_mod:
+        if last_mod and asc:
             notes = notes.order_by(Note.last_modification_ts).all()
-        else:
+        elif last_mod and not asc:
+            notes = notes.order_by(desc(Note.last_modification_ts)).all()
+        elif not last_mod and asc:
             notes = notes.order_by(Note.creation_ts).all()
+        else:
+            notes = notes.order_by(desc(Note.creation_ts)).all()
 
         # Tags and Not Tags filters
         def select_note(n: "Note") -> bool:

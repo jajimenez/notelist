@@ -40,10 +40,7 @@ class NoteListResource(Resource):
         :return: Dictionary with the message and result.
         """
         # Request data fields
-        act = "active"
-        tag = "tags"
-        nta = "no_tags"
-        sea = "search"
+        fields = ["active", "tags", "no_tags", "last_mod", "asc"]
 
         # JWT payload data
         uid = get_jwt()["user_id"]
@@ -58,39 +55,76 @@ class NoteListResource(Resource):
         # Request data
         data = request.get_json() or dict()
 
+        # Check if the request data contains any invalid field.
+        inv_fields = ", ".join([
+            i for i in data if i not in fields])
+
+        if inv_fields:
+            return get_response_data(VALIDATION_ERROR.format(inv_fields)), 400
+
         # State filter (include active notes or not active notes)
-        if act in data:
-            active = data[act]
+        f = fields[0]
+
+        if f in data:
+            active = data[f]
 
             if type(active) != bool:
-                return get_response_data(VALIDATION_ERROR.format(act)), 400
+                return get_response_data(VALIDATION_ERROR.format(f)), 400
         else:
             active = None
 
         # Tag filter (include notes that has any of these tags)
-        if tag in data:
-            tags = data[tag]
+        f = fields[1]
+
+        if f in data:
+            tags = data[f]
 
             if (
                 type(tags) != list or
                 any(map(lambda x: type(x) != str or not x, tags))
             ):
-                return get_response_data(VALIDATION_ERROR.format(tag)), 400
+                return get_response_data(VALIDATION_ERROR.format(f)), 400
         else:
             tags = None
 
         # Notes with No Tags filter (include notes with no tags). This filter
         # is only applicable if a tag filter has been provided, i.e. "tags" is
         # not None).
-        if nta in data:
-            no_tags = data[nta]
+        f = fields[2]
+
+        if f in data:
+            no_tags = data[f]
 
             if tags is None or type(no_tags) != bool:
-                return get_response_data(VALIDATION_ERROR.format(nta)), 400
+                return get_response_data(VALIDATION_ERROR.format(f)), 400
         else:
             no_tags = None
 
-        notes = Note.get_by_filter(notebook_id, active, tags, no_tags)
+        # Order by Last Modified timestamp
+        f = fields[3]
+
+        if f in data:
+            last_mod = data[f]
+
+            if last_mod is None or type(last_mod) != bool:
+                return get_response_data(VALIDATION_ERROR.format(f)), 400
+        else:
+            last_mod = False
+
+        # Ascending order
+        f = fields[4]
+
+        if f in data:
+            asc = data[f]
+
+            if asc is None or type(asc) != bool:
+                return get_response_data(VALIDATION_ERROR.format(f)), 400
+        else:
+            asc = True
+
+        notes = Note.get_by_filter(
+            notebook_id, active, tags, no_tags, last_mod, asc)
+
         c = len(notes)
         m = NOTE_RETRIEVED_1 if c == 1 else NOTE_RETRIEVED_N.format(c)
 
