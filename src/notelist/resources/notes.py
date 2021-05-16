@@ -314,7 +314,7 @@ class NoteResource(Resource):
         uid = get_jwt()["user_id"]
 
         # Get note
-        note = Tag.get_by_id(note_id)
+        note = Note.get(note_id)
 
         # Check if the note doesn't exist and the permissions (the request user
         # must be the same as the note's notebook user).
