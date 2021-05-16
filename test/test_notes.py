@@ -1520,6 +1520,152 @@ class NoteTestCase(common.BaseTestCase):
         # Check status code
         self.assertEqual(r.status_code, 403)
 
+    def test_delete(self):
+        """Test the Delete method of the Note resource.
+
+        This test creates a note and then tries to delete it, which should
+        work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create note
+        n = {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note"}
+        r = self.client.put("/note", headers=headers, json=n)
+        note_id = r.json["result"]
+
+        # Get notebook note list
+        r = self.client.post(f"/notes/{notebook_id}", headers=headers)
+        notes = r.json["result"]
+
+        # Check list
+        self.assertEqual(len(notes), 1)
+        self.assertEqual(notes[0]["id"], note_id)
+        self.assertEqual(notes[0]["active"], n["active"])
+        self.assertEqual(notes[0]["title"], n["title"])
+
+        # Delete note
+        r = self.client.delete(f"/note/{note_id}", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 200)
+
+        # Get notebook note list
+        r = self.client.post(f"/notes/{notebook_id}", headers=headers)
+        notes = r.json["result"]
+
+        # Check list
+        self.assertEqual(len(notes), 0)
+
+    def test_delete_missing_access_token(self):
+        """Test the Delete method of the Note resource.
+
+        This test tries to delete an existing note without providing the access
+        token, which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create note
+        n = {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note"}
+        r = self.client.put("/note", headers=headers, json=n)
+        note_id = r.json["result"]
+
+        # Delete note
+        r = self.client.delete(f"/note/{note_id}")
+
+        # Check status code
+        self.assertEqual(r.status_code, 401)
+
+    def test_delete_invalid_access_token(self):
+        """Test the Delete method of the Note resource.
+
+        This test tries to delete a note providing an invalid access token,
+        which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create note
+        n = {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note"}
+        r = self.client.put("/note", headers=headers, json=n)
+        note_id = r.json["result"]
+
+        # Delete note providing an invalid access token ("1234")
+        headers = {"Authorization": "Bearer 1234"}
+        r = self.client.delete(f"/note/{note_id}", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 422)
+
+    def test_delete_unauthorized_user(self):
+        """Test the Delete method of the Note resource.
+
+        This test tries to delete a note of a user different than the request
+        user, which shouldn't work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.admin["username"], self.admin["password"])
+
+        # Create notebook
+        notebook_id = _create_notebook(self.client, headers)
+
+        # Create note
+        n = {
+            "notebook_id": notebook_id,
+            "active": True,
+            "title": "Test Note"}
+        r = self.client.put("/note", headers=headers, json=n)
+        note_id = r.json["result"]
+
+        # Log in as another user
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Delete note
+        r = self.client.delete(f"/note/{note_id}", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 403)
+
+    def test_delete_note_not_found(self):
+        """Test the Delete method of the Note resource.
+
+        This test tries to delete a note that doesn't exist, which shouldn't
+        work.
+        """
+        # Log in
+        headers = _login(
+            self.client, self.reg1["username"], self.reg1["password"])
+
+        # Delete the note with ID 1 (which doesn't exist)
+        r = self.client.delete("/note/1", headers=headers)
+
+        # Check status code
+        self.assertEqual(r.status_code, 403)
+
 
 if __name__ == "__main__":
     unittest.main()
