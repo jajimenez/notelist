@@ -65,7 +65,7 @@ class NotebookResource(Resource):
         # Get the notebook
         notebook = Notebook.get_by_id(notebook_id)
 
-        # Check if the notebook doesn't exist and the permissions
+        # Check if the notebook exists and the permissions
         if not notebook or uid != notebook.user_id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
@@ -192,8 +192,8 @@ class NotebookResource(Resource):
         # Get notebook
         notebook = Notebook.get_by_id(notebook_id)
 
-        # Check if the notebook doesn't exist and the permissions (the request
-        # user can only delete their own notebooks).
+        # Check if the notebook exists and the permissions (the request user
+        # can only delete their own notebooks).
         if not notebook or uid != notebook.user.id:
             return get_response_data(USER_UNAUTHORIZED), 403
 

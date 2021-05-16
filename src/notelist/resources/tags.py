@@ -47,7 +47,7 @@ class TagListResource(Resource):
         # Get notebook
         notebook = Notebook.get_by_id(notebook_id)
 
-        # Check if the notebook doesn't exist and the permissions
+        # Check if the notebook exists and the permissions
         if not notebook or uid != notebook.user_id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
@@ -81,7 +81,7 @@ class TagResource(Resource):
         # Get tag
         tag = Tag.get_by_id(tag_id)
 
-        # Check if the tag doesn't exist and the permissions
+        # Check if the tag exists and the permissions
         if not tag or uid != tag.notebook.user_id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
@@ -153,8 +153,8 @@ class TagResource(Resource):
             # Get tag's notebook
             notebook = Notebook.get_by_id(tag.notebook_id)
 
-            # Check if the notebook doesn't exist and the permissions (the
-            # request user must be the same as the notebook's user).
+            # Check if the notebook exists and the permissions (the request
+            # user must be the same as the notebook's user).
             if not notebook or uid != notebook.user_id:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
@@ -169,7 +169,7 @@ class TagResource(Resource):
             # Get existing tag
             tag = Tag.get_by_id(tag_id)
 
-            # Check if the tag doesn't exist and the permissions
+            # Check if the tag exists and the permissions
             if not tag or uid != tag.notebook.user_id:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
@@ -227,8 +227,8 @@ class TagResource(Resource):
         # Get tag
         tag = Tag.get_by_id(tag_id)
 
-        # Check if the tag doesn't exist and the permissions (the request user
-        # must be the same as the tag's notebook user).
+        # Check if the tag exists and the permissions (the request user must be
+        # the same as the tag's notebook user).
         if not tag or uid != tag.notebook.user_id:
             return get_response_data(USER_UNAUTHORIZED), 403
 

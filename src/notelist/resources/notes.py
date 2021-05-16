@@ -39,23 +39,21 @@ class NoteListResource(Resource):
         :param notebook_id: Notebook ID.
         :return: Dictionary with the message and result.
         """
-        # Request data fields
-        fields = ["active", "tags", "no_tags", "last_mod", "asc"]
-
         # JWT payload data
         uid = get_jwt()["user_id"]
 
         # Get the notebook
         notebook = Notebook.get_by_id(notebook_id)
 
-        # Check if the notebook doesn't exist and the permissions
+        # Check if the notebook exists and the permissions
         if not notebook or uid != notebook.user_id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
         # Request data
+        fields = ["active", "tags", "no_tags", "last_mod", "asc"]
         data = request.get_json() or dict()
 
-        # Check if the request data contains any invalid field.
+        # Check if the request data contains any invalid field
         inv_fields = ", ".join([
             i for i in data if i not in fields])
 
@@ -167,7 +165,7 @@ class NoteResource(Resource):
         # Get the note
         note = Note.get(note_id)
 
-        # Check if the note doesn't exist and the permissions
+        # Check if the note exists and the permissions
         if not note or uid != note.notebook.user_id:
             return get_response_data(USER_UNAUTHORIZED), 403
 
@@ -253,8 +251,8 @@ class NoteResource(Resource):
             # Get note's notebook
             notebook = Notebook.get_by_id(note.notebook_id)
 
-            # Check if the notebook doesn't exist and the permissions (the
-            # request user must be the same as the notebook's user).
+            # Check if the notebook exists and the permissions (the request
+            # user must be the same as the notebook's user).
             if not notebook or uid != notebook.user_id:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
@@ -277,7 +275,7 @@ class NoteResource(Resource):
             # Get existing note
             note = Note.get(note_id)
 
-            # Check if the note doesn't exist and the permissions
+            # Check if the note exists and the permissions
             if not note or uid != note.notebook.user_id:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
@@ -350,8 +348,8 @@ class NoteResource(Resource):
         # Get note
         note = Note.get(note_id)
 
-        # Check if the note doesn't exist and the permissions (the request user
-        # must be the same as the note's notebook user).
+        # Check if the note exists and the permissions (the request user must
+        # be the same as the note's notebook user).
         if not note or uid != note.notebook.user_id:
             return get_response_data(USER_UNAUTHORIZED), 403
 

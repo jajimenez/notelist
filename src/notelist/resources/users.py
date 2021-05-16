@@ -277,9 +277,9 @@ class UserResource(Resource):
             # Get existing user
             user = User.get_by_id(user_id)
 
-            # Check if the user doesn't exist and the permissions. "username",
-            # "admin" and "enabled" are the fields that not administrator users
-            # aren't allowed to modify.
+            # Check if the user exists and the permissions. "username", "admin"
+            # and "enabled" are the fields that not administrator users aren't
+            # allowed to modify.
             if (
                 not admin and (
                     not user or uid != user.id or "username" in data
