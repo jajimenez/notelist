@@ -29,21 +29,32 @@ class NoteSchema(ma.SQLAlchemyAutoSchema):
         ordered = True
         load_instance = True
 
+    title = fields.Method("dump_title", "load_title")
     tags = fields.Method("dump_tags", "load_tags")
+
+    def dump_title(self, obj: Note) -> str:
+        """Serialize the note's title."""
+        # return obj.title.strip() if obj.title else obj.title
+        return obj.title
+
+    def load_title(self, val: str) -> str:
+        """Deserialize the note's title."""
+        if type(val) != str or not val.strip():
+            raise ValidationError({"title": INVALID_VALUE})
+
+        return val.strip()
 
     def dump_tags(self, obj: Note) -> List[str]:
         """Serialize the note's tags."""
+        # return [t.name.strip() for t in obj.tags]
         return [t.name for t in obj.tags]
 
-    def load_tags(self, value: List[str]) -> List[Tag]:
+    def load_tags(self, val: List[str]) -> List[Tag]:
         """Deserialize the note's tags."""
-        field = "tags"
+        if (
+            type(val) != list or
+            any(map(lambda i: type(i) != str or not i.strip(), val))
+        ):
+            raise ValidationError({"tags": INVALID_VALUE})
 
-        if type(value) != list:
-            raise ValidationError({field: INVALID_VALUE})
-
-        for i in value:
-            if type(i) != str or not i.strip():
-                raise ValidationError({field: INVALID_VALUE})
-
-        return [Tag(name=i.strip()) for i in value]
+        return [Tag(name=i.strip()) for i in val]

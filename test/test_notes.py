@@ -50,7 +50,7 @@ def _get_notes(notebook_id: str, tags: TagSet) -> NoteSet:
     }, {
         "notebook_id": notebook_id,
         "active": False,
-        "title": "Test Note 3",
+        "title": "Test Note 4",
         "body": "Another note",
         "tags": []
     }]

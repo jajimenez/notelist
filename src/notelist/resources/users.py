@@ -27,8 +27,6 @@ USER_DELETED = "User deleted."
 INVALID_CREDENTIALS = "Invalid credentials."
 USER_NOT_FOUND = "User not found."
 USER_EXISTS = "A user with the same username already exists."
-MIN_PASSWORD = 8
-MAX_PASSWORD = 100
 INVALID_PASSWORD = "Invalid password. It must have 8-100 characters."
 
 user_list_schema = UserSchema(many=True)
@@ -47,7 +45,7 @@ class LoginResource(Resource):
         :return: Dictionary with the message.
         """
         # Request data
-        data = request.get_json() or dict()
+        data = request.get_json() or {}
 
         # Validate request data
         u = "username"
@@ -197,26 +195,19 @@ class UserResource(Resource):
             return get_response_data(USER_UNAUTHORIZED), 403
 
         # Request data
-        data = request.get_json() or dict()
+        data = request.get_json() or {}
 
         # We validate the request data. If any of the User model required
         # fields is missing, a "marshmallow.ValidationError" exception is
         # raised.
         user = user_schema.load(data)
 
-        # Validate password length
-        c = len(user.password)
+        if user.password is None:
+            return get_response_data(VALIDATION_ERROR.format("password")), 400
 
-        if c < MIN_PASSWORD or c > MAX_PASSWORD:
-            return get_response_data(INVALID_PASSWORD), 400
-
-        # Check if the user already exists (based on the username)
+        # Check if the user already exists (based on its username)
         if User.get_by_username(user.username):
             return get_response_data(USER_EXISTS), 400
-
-        # We get the hash of the password, to store the password encrypted in
-        # the database.
-        user.password = tools.get_hash(user.password)
 
         # Save the user
         user.save()
@@ -242,13 +233,13 @@ class UserResource(Resource):
         admin = jwt["admin"]
 
         # Request data
-        data = request.get_json() or dict()
+        data = request.get_json() or {}
 
         # If "user_id" is None, we create a new user. Otherwise we edit the
         # existing user with the given ID.
-        new_user = user_id is None
+        new = user_id is None
 
-        if new_user:
+        if new:
             # Check permissions
             if not admin:
                 return get_response_data(USER_UNAUTHORIZED), 403
@@ -256,18 +247,13 @@ class UserResource(Resource):
             # We validate the request data. If any of the User model required
             # fields is missing, a "marshmallow.ValidationError" exception is
             # raised.
-            user = user_schema.load(data)
+            user = user_schema.load(data)  # It only validates "username"
 
-            # Validate password length
-            c = len(data["password"])
+            if user.password is None:
+                return get_response_data(
+                    VALIDATION_ERROR.format("password")), 400
 
-            if c < MIN_PASSWORD or c > MAX_PASSWORD:
-                return get_response_data(INVALID_PASSWORD), 400
-
-            # Replace the password by its hash to store the password encrypted
-            user.password = tools.get_hash(user.password)
-
-            # Check if the user already exists (based on the username)
+            # Check if the user already exists (based on its username)
             if User.get_by_username(user.username):
                 return get_response_data(USER_EXISTS), 400
 
@@ -289,13 +275,8 @@ class UserResource(Resource):
             elif admin and not user:
                 return get_response_data(USER_NOT_FOUND), 404
 
-            # Check if the request data contains any invalid field (i.e. any
-            # field that doesn't exist in the user model schema).
-            fields = ", ".join([
-                i for i in data if i not in user_schema.load_fields])
-
-            if fields:
-                return get_response_data(VALIDATION_ERROR.format(fields)), 400
+            # Make a copy of the request data
+            data = data.copy()
 
             # Check if a new username is provided and if there is already a
             # user with this username.
@@ -305,39 +286,47 @@ class UserResource(Resource):
                     User.get_by_username(data["username"])
                 ):
                     return get_response_data(USER_EXISTS), 400
+            else:
+                data["username"] = user.username
 
-                user.username = data["username"]
+            # Check if new values for "enabled", "admin", "name" or "email" are
+            # provided.
+            if "enabled" not in data:
+                data["enabled"] = user.enabled
 
-            # Check if a new password is provided and validate it
-            if "password" in data:
-                c = len(data["password"])
+            if "admin" not in data:
+                data["admin"] = user.admin
 
-                if c < MIN_PASSWORD or c > MAX_PASSWORD:
-                    return get_response_data(INVALID_PASSWORD), 400
+            if "name" not in data:
+                data["name"] = user.name
 
-                # Encrypt password
-                user.password = tools.get_hash(data["password"])
+            if "email" not in data:
+                data["email"] = user.email
 
-            # Check if new values are provided for "enabled", "admin", "name"
-            # and "email".
-            if "enabled" in data:
-                user.enabled = data["enabled"]
+            # Check if a new value for the password is provided. If not, we
+            # need to temporarily store the current encrypted password and
+            # recover it later as "user_schema.load" will encrypt again the
+            # password.
+            password = user.password if "password" not in data else None
 
-            if "admin" in data:
-                user.admin = data["admin"]
+            # We validate the request data. If any provided field is invalid,
+            # a "marshmallow.ValidationError" exception is raised.
+            new_user = user_schema.load(data)
 
-            if "name" in data:
-                user.name = data["name"]
-
-            if "email" in data:
-                user.email = data["email"]
+            # Update user object
+            user.username = new_user.username
+            user.admin = new_user.admin
+            user.enabled = new_user.enabled
+            user.name = new_user.name
+            user.email = new_user.email
+            user.password = password if password else new_user.password
 
             message = USER_UPDATED
             code = 200
 
         # Save the user
         user.save()
-        result = user.id if new_user else None
+        result = user.id if new else None
 
         return get_response_data(message, result), code
 

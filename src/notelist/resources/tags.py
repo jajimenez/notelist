@@ -100,13 +100,14 @@ class TagResource(Resource):
         uid = get_jwt()["user_id"]
 
         # Request data
-        data = request.get_json()
+        data = request.get_json() or {}
 
         # We validate the request data. If any of the Tag model required fields
         # is missing, a "marshmallow.ValidationError" exception is raised.
         tag = tag_schema.load(data)
 
-        # Check if the tag's notebook user is the same as the request user
+        # Check if the notebook exists and the permissions (the request user
+        # must be the same as the notebook's user).
         notebook = Notebook.get_by_id(tag.notebook_id)
 
         if not notebook or uid != notebook.user_id:
@@ -138,13 +139,13 @@ class TagResource(Resource):
         uid = get_jwt()["user_id"]
 
         # Request data
-        data = request.get_json()
+        data = request.get_json() or {}
 
         # If "tag_id" is None, we create a new tag. Otherwise we edit the
         # existing tag with the given ID.
-        new_tag = tag_id is None
+        new = tag_id is None
 
-        if new_tag:
+        if new:
             # We validate the request data. If any of the Tag model required
             # fields is missing, a "marshmallow.ValidationError" exception is
             # raised.
@@ -173,19 +174,16 @@ class TagResource(Resource):
             if not tag or uid != tag.notebook.user_id:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
-            # Check if the request data contains any invalid field (i.e. any
-            # field that doesn't exist in the Tag model schema).
-            fields = ", ".join([
-                i for i in data if i not in tag_schema.load_fields])
-
-            if fields:
-                return get_response_data(VALIDATION_ERROR.format(fields)), 400
+            # Make a copy of the request data
+            data = data.copy()
 
             # Check if a new value for the "notebook_id" field is provided,
             # which is not allowed.
             if "notebook_id" in data:
                 return get_response_data(
                     VALIDATION_ERROR.format("notebook_id")), 400
+            else:
+                data["notebook_id"] = tag.notebook_id
 
             # Check if a new value for the name is provided and if the notebook
             # has already a tag with this name.
@@ -195,19 +193,27 @@ class TagResource(Resource):
                     Tag.get_by_name(tag.notebook_id, data["name"])
                 ):
                     return get_response_data(TAG_EXISTS), 400
-
-                tag.name = data["name"]
+            else:
+                data["name"] = tag.name
 
             # Check if a new value for the color is provided
-            if "color" in data:
-                tag.color = data["color"]
+            if "color" not in data:
+                data["color"] = tag.color
+
+            # We validate the request data. If any provided field is invalid,
+            # a "marshmallow.ValidationError" exception is raised.
+            new_tag = tag_schema.load(data)
+
+            # Update tag object
+            tag.name = new_tag.name
+            tag.color = new_tag.color
 
             message = TAG_UPDATED
             code = 200
 
         # Save tag
         tag.save()
-        result = tag.id if new_tag else None
+        result = tag.id if new else None
 
         return get_response_data(message, result), code
 

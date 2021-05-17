@@ -51,7 +51,7 @@ class NoteListResource(Resource):
 
         # Request data
         fields = ["active", "tags", "no_tags", "last_mod", "asc"]
-        data = request.get_json() or dict()
+        data = request.get_json() or {}
 
         # Check if the request data contains any invalid field
         inv_fields = ", ".join([
@@ -79,9 +79,11 @@ class NoteListResource(Resource):
 
             if (
                 type(tags) != list or
-                any(map(lambda x: type(x) != str or not x, tags))
+                any(map(lambda t: type(t) != str or not t.strip(), tags))
             ):
                 return get_response_data(VALIDATION_ERROR.format(f)), 400
+
+            tags = [t.strip() for t in tags]
         else:
             tags = None
 
@@ -184,7 +186,7 @@ class NoteResource(Resource):
         uid = get_jwt()["user_id"]
 
         # Request data
-        data = request.get_json() or dict()
+        data = request.get_json() or {}
 
         # Current timestamp
         now = self._get_current_ts()
@@ -233,19 +235,19 @@ class NoteResource(Resource):
         uid = get_jwt()["user_id"]
 
         # Request data
-        data = request.get_json() or dict()
+        data = request.get_json() or {}
 
         # Current timestamp
         now = self._get_current_ts()
 
         # If "note_id" is None, we create a new note. Otherwise we edit the
         # existing note with the given ID.
-        new_note = note_id is None
+        new = note_id is None
 
-        if new_note:
+        if new:
             # We validate the request data. If any of the Note model required
-            # fields is missing, a "marshmallow.ValidationError" exception is
-            # raised.
+            # fields is missing, or any provided field is invalid, a
+            # "marshmallow.ValidationError" exception is raised.
             note = note_schema.load(data)
 
             # Get note's notebook
@@ -279,46 +281,51 @@ class NoteResource(Resource):
             if not note or uid != note.notebook.user_id:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
-            # Check if the request data contains any invalid field (i.e. any
-            # field that doesn't exist in the Note model schema).
-            fields = ", ".join([
-                i for i in data if i not in note_schema.load_fields])
-
-            if fields:
-                return get_response_data(VALIDATION_ERROR.format(fields)), 400
+            # Make a copy of the request data
+            data = data.copy()
 
             # Check if a new value for the "notebook_id" field is provided,
             # which is not allowed.
             if "notebook_id" in data:
                 return get_response_data(
                     VALIDATION_ERROR.format("notebook_id")), 400
+            else:
+                data["notebook_id"] = note.notebook_id
 
-            # Check if a new value for the state is provided
-            if "active" in data:
-                note.active = data["active"]
+            # Check if new values for the state, the title, the body or the
+            # tags are provided.
+            if "active" not in data:
+                data["active"] = note.active
 
-            # Check if a new value for the title is provided
-            if "title" in data:
-                note.title = data["title"]
+            if "title" not in data:
+                data["title"] = note.title
 
-            # Check if a new value for the body is provided
-            if "body" in data:
-                note.body = data["body"]
+            if "body" not in data:
+                data["body"] = note.body
 
-            # Check if a new value for the tags is provided. For each request
-            # data tag, check if the tag already exists in the notebook and if
-            # so, replace the request data tag by the existing tag. This way,
-            # the request tags that already exist won't be created again, as
-            # they will have their ID value defined (not None). As "note" is an
-            # existing note, new tags will be saved after assigning
-            # "note.tags".
-            if "tags" in data:
-                # Check if any tag name is invalid
-                tags = note_schema.load_tags(data["tags"])
+            if "tags" not in data:
+                data["tags"] = [t.name for t in note.tags]
 
-                note.tags = list(map(
-                    lambda t: self._select_tag(note.notebook_id, t.name),
-                    tags))
+            # We validate the request data. If any provided field is invalid,
+            # a "marshmallow.ValidationError" exception is raised.
+            new_note = note_schema.load(data)
+
+            # For each tag, check if the tag already exists in the notebook and
+            # if so, replace the tag object by the existing tag object (which
+            # contains its ID). This way, the tags that already exist won't be
+            # created again as they will have their ID value defined (not
+            # None).
+            tags = list(map(
+                lambda t: self._select_tag(new_note.notebook_id, t.name),
+                new_note.tags))
+
+            # Update note object. Note: we can't run "note.tags =
+            # new_note.tags", as it would duplicate the note in the database
+            # (that's why "tags" is a different list object).
+            note.active = new_note.active
+            note.title = new_note.title
+            note.body = new_note.body
+            note.tags = tags
 
             message = NOTE_UPDATED
             code = 200
@@ -328,7 +335,7 @@ class NoteResource(Resource):
 
         # Save note
         note.save()
-        result = note.id if new_note else None
+        result = note.id if new else None
 
         return get_response_data(message, result), code
 

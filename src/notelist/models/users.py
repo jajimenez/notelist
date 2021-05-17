@@ -4,6 +4,10 @@ from typing import List
 from notelist.db import db
 
 
+MIN_PASSWORD = 8
+MAX_PASSWORD = 100
+
+
 class User(db.Model):
     """Database User model."""
 

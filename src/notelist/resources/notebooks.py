@@ -84,7 +84,7 @@ class NotebookResource(Resource):
         uid = get_jwt()["user_id"]
 
         # Request data
-        data = request.get_json() or dict()
+        data = request.get_json() or {}
 
         # We validate the request data. If any of the Notebook model required
         # fields is missing, a "marshmallow.ValidationError" exception is
@@ -119,19 +119,19 @@ class NotebookResource(Resource):
         uid = get_jwt()["user_id"]
 
         # Request data
-        data = request.get_json()
+        data = request.get_json() or {}
 
         # If "notebook_id" is None, we create a new notebook. Otherwise we edit
         # the existing notebook with the given ID.
-        new_notebook = notebook_id is None
+        new = notebook_id is None
 
-        if new_notebook:
+        if new:
             # We validate the request data. If any of the Notebook model
-            # required fields is missing, a "marshmallow.ValidationError"
-            # exception is raised.
+            # required fields is missing, or any provided field is invalid, a
+            # "marshmallow.ValidationError" exception is raised.
             notebook = notebook_schema.load(data)
 
-            # Check if the notebook already exists (based on the name) for the
+            # Check if the notebook already exists (based on its name) for the
             # request user.
             if Notebook.get_by_name(uid, notebook.name):
                 return get_response_data(NOTEBOOK_EXISTS), 400
@@ -143,19 +143,14 @@ class NotebookResource(Resource):
             # Get existing notebook
             notebook = Notebook.get_by_id(notebook_id)
 
-            # Check if the notebook doesn't exist (based on the name) for the
-            # request user and check the permissions (the request user must be
-            # the same as the notebook user).
+            # Check if the notebook exists (based on its name) for the request
+            # user and check the permissions (the request user must be the same
+            # as the notebook user).
             if not notebook or uid != notebook.user_id:
                 return get_response_data(USER_UNAUTHORIZED), 403
 
-            # Check if the request data contains any invalid field (i.e. any
-            # field that doesn't exist in the notebook model schema).
-            fields = ", ".join([
-                i for i in data if i not in notebook_schema.load_fields])
-
-            if fields:
-                return get_response_data(VALIDATION_ERROR.format(fields)), 400
+            # Make a copy of the request data
+            data = data.copy()
 
             # Check if a new name is provided and if the request user has
             # already a notebook with this name.
@@ -165,15 +160,22 @@ class NotebookResource(Resource):
                     Notebook.get_by_name(uid, data["name"])
                 ):
                     return get_response_data(NOTEBOOK_EXISTS), 400
+            else:
+                data["name"] = notebook.name
 
-                notebook.name = data["name"]
+            # We validate the request data. If any provided field is invalid,
+            # a "marshmallow.ValidationError" exception is raised.
+            new_notebook = notebook_schema.load(data)
+
+            # Update notebook object
+            notebook.name = new_notebook.name
 
             message = NOTEBOOK_UPDATED
             code = 200
 
         # Save the notebook
         notebook.save()
-        result = notebook.id if new_notebook else None
+        result = notebook.id if new else None
 
         return get_response_data(message, result), code
 
