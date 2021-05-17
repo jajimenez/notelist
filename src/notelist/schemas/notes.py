@@ -34,20 +34,18 @@ class NoteSchema(ma.SQLAlchemyAutoSchema):
 
     def dump_title(self, obj: Note) -> str:
         """Serialize the note's title."""
-        # return obj.title.strip() if obj.title else obj.title
-        return obj.title
+        return obj.title.strip() if obj.title else obj.title
 
     def load_title(self, val: str) -> str:
         """Deserialize the note's title."""
-        if type(val) != str or not val.strip():
+        if val is not None and type(val) != str:
             raise ValidationError({"title": INVALID_VALUE})
 
-        return val.strip()
+        return val.strip() if val else val
 
     def dump_tags(self, obj: Note) -> List[str]:
         """Serialize the note's tags."""
-        # return [t.name.strip() for t in obj.tags]
-        return [t.name for t in obj.tags]
+        return [t.name.strip() for t in obj.tags]
 
     def load_tags(self, val: List[str]) -> List[Tag]:
         """Deserialize the note's tags."""
