@@ -196,6 +196,9 @@ class NoteResource(Resource):
         # raised.
         note = note_schema.load(data)
 
+        if note.title:
+            note.title = note.title.strip()
+
         # Check if the note's notebook user is the same as the request user
         notebook = Notebook.get_by_id(note.notebook_id)
 
@@ -249,6 +252,9 @@ class NoteResource(Resource):
             # fields is missing, or any provided field is invalid, a
             # "marshmallow.ValidationError" exception is raised.
             note = note_schema.load(data)
+
+            if note.title:
+                note.title = note.title.strip()
 
             # Get note's notebook
             notebook = Notebook.get_by_id(note.notebook_id)
@@ -309,6 +315,9 @@ class NoteResource(Resource):
             # We validate the request data. If any provided field is invalid,
             # a "marshmallow.ValidationError" exception is raised.
             new_note = note_schema.load(data)
+
+            if new_note.title:
+                new_note.title = new_note.title.strip()
 
             # For each tag, check if the tag already exists in the notebook and
             # if so, replace the tag object by the existing tag object (which

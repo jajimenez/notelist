@@ -53,15 +53,15 @@ class LoginResource(Resource):
 
         fields = [
             i for i in [u, p]
-            if i not in data or type(data[i]) != str or not data[i]]
+            if i not in data or type(data[i]) != str or not data[i].strip()]
 
         if fields:
             return get_response_data(VALIDATION_ERROR.format(fields)), 400
 
         # We get the hash of the request password, as passwords are stored
         # encrypted in the database.
-        req_pw = tools.get_hash(data[p])
-        user = User.get_by_username(data[u])
+        req_pw = tools.get_hash(data[p].strip())
+        user = User.get_by_username(data[u].strip())
 
         # Check password
         if user and user.enabled and safe_str_cmp(req_pw, user.password):
@@ -201,9 +201,10 @@ class UserResource(Resource):
         # fields is missing, a "marshmallow.ValidationError" exception is
         # raised.
         user = user_schema.load(data)
+        user.username = user.username.strip()
 
-        if user.password is None:
-            return get_response_data(VALIDATION_ERROR.format("password")), 400
+        if not user.username:
+            return get_response_data(VALIDATION_ERROR.format("username")), 400
 
         # Check if the user already exists (based on its username)
         if User.get_by_username(user.username):
@@ -247,11 +248,12 @@ class UserResource(Resource):
             # We validate the request data. If any of the User model required
             # fields is missing, a "marshmallow.ValidationError" exception is
             # raised.
-            user = user_schema.load(data)  # It only validates "username"
+            user = user_schema.load(data)
+            user.username = user.username.strip()
 
-            if user.password is None:
+            if not user.username:
                 return get_response_data(
-                    VALIDATION_ERROR.format("password")), 400
+                    VALIDATION_ERROR.format("username")), 400
 
             # Check if the user already exists (based on its username)
             if User.get_by_username(user.username):
@@ -281,6 +283,15 @@ class UserResource(Resource):
             # Check if a new username is provided and if there is already a
             # user with this username.
             if "username" in data:
+                if (
+                    type(data["username"]) != str or
+                    not data["username"].strip()
+                ):
+                    return get_response_data(
+                        VALIDATION_ERROR.format("username")), 400
+
+                data["username"] = data["username"].strip()
+
                 if (
                     data["username"] != user.username and
                     User.get_by_username(data["username"])

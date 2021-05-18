@@ -90,6 +90,10 @@ class NotebookResource(Resource):
         # fields is missing, a "marshmallow.ValidationError" exception is
         # raised.
         notebook = notebook_schema.load(data)
+        notebook.name = notebook.name.strip()
+
+        if not notebook.name:
+            return get_response_data(VALIDATION_ERROR.format("name")), 400
 
         # Check if the request user already has the notebook (based on the
         # notebook name).
@@ -130,6 +134,10 @@ class NotebookResource(Resource):
             # required fields is missing, or any provided field is invalid, a
             # "marshmallow.ValidationError" exception is raised.
             notebook = notebook_schema.load(data)
+            notebook.name = notebook.name.strip()
+
+            if not notebook.name:
+                return get_response_data(VALIDATION_ERROR.format("name")), 400
 
             # Check if the notebook already exists (based on its name) for the
             # request user.
@@ -155,6 +163,12 @@ class NotebookResource(Resource):
             # Check if a new name is provided and if the request user has
             # already a notebook with this name.
             if "name" in data:
+                if type(data["name"]) != str or not data["name"].strip():
+                    return get_response_data(
+                        VALIDATION_ERROR.format("name")), 400
+
+                data["name"] = data["name"].strip()
+
                 if (
                     data["name"] != notebook.name and
                     Notebook.get_by_name(uid, data["name"])

@@ -105,6 +105,10 @@ class TagResource(Resource):
         # We validate the request data. If any of the Tag model required fields
         # is missing, a "marshmallow.ValidationError" exception is raised.
         tag = tag_schema.load(data)
+        tag.name = tag.name.strip()
+
+        if not tag.name:
+            return get_response_data(VALIDATION_ERROR.format("name")), 400
 
         # Check if the notebook exists and the permissions (the request user
         # must be the same as the notebook's user).
@@ -150,6 +154,10 @@ class TagResource(Resource):
             # fields is missing, a "marshmallow.ValidationError" exception is
             # raised.
             tag = tag_schema.load(data)
+            tag.name = tag.name.strip()
+
+            if not tag.name:
+                return get_response_data(VALIDATION_ERROR.format("name")), 400
 
             # Get tag's notebook
             notebook = Notebook.get_by_id(tag.notebook_id)
@@ -188,6 +196,12 @@ class TagResource(Resource):
             # Check if a new value for the name is provided and if the notebook
             # has already a tag with this name.
             if "name" in data:
+                if type(data["name"]) != str or not data["name"].strip():
+                    return get_response_data(
+                        VALIDATION_ERROR.format("name")), 400
+
+                data["name"] = data["name"].strip()
+
                 if (
                     data["name"] != tag.name and
                     Tag.get_by_name(tag.notebook_id, data["name"])
