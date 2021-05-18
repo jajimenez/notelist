@@ -1038,8 +1038,8 @@ class TagTestCase(common.BaseTestCase):
 
         # Create notebook
         headers = {"Authorization": f"Bearer {access_token}"}
-        n = {"name": "Test Notebook"}
-        r = self.client.put("/notebook", headers=headers, json=n)
+        nb = {"name": "Test Notebook"}
+        r = self.client.put("/notebook", headers=headers, json=nb)
         notebook_id = r.json["result"]
 
         # Create tag
@@ -1056,6 +1056,14 @@ class TagTestCase(common.BaseTestCase):
         self.assertEqual(tags[0]["id"], tag_id)
         self.assertEqual(tags[0]["name"], t["name"])
 
+        # Create a note with the tag
+        n = {
+            "notebook_id": notebook_id,
+            "title": "Test Note",
+            "tags": [t["name"]]}
+        r = self.client.post("/note", headers=headers, json=n)
+        note_id = r.json["result"]
+
         # Delete tag
         r = self.client.delete(f"/tag/{tag_id}", headers=headers)
 
@@ -1067,6 +1075,11 @@ class TagTestCase(common.BaseTestCase):
         tags = r.json["result"]
 
         # Check list
+        self.assertEqual(len(tags), 0)
+
+        # Check that the note doesn't have now the tag
+        r = self.client.get(f"/note/{note_id}", headers=headers)
+        tags = r.json["result"]["tags"]
         self.assertEqual(len(tags), 0)
 
     def test_delete_missing_access_token(self):
