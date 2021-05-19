@@ -15,8 +15,8 @@ class NotebookListTestCase(common.BaseTestCase):
         """
         # Log in
         data = {
-            "username": self.admin["username"],
-            "password": self.admin["password"]}
+            "username": self.reg1["username"],
+            "password": self.reg1["password"]}
         r = self.client.post("/login", json=data)
         access_token = r.json["result"]["access_token"]
 
