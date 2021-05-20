@@ -16,7 +16,7 @@ if __name__ == "__main__":
     st.setup(
         name="notelist",
         version="0.1.0",
-        description="REST API based note taking web application",
+        description="Note taking REST API",
         author="Jose A. Jimenez",
         author_email="jajimenezcarm@gmail.com",
         license="MIT",
