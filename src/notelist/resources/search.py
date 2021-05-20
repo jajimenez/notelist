@@ -1,8 +1,9 @@
 """Module with the search resources."""
 
-from flask_restful import Resource
+from flask_restx import Resource
 from flask_jwt_extended import jwt_required, get_jwt
 
+from notelist.apis import search_api
 from notelist.resources import Response, VALIDATION_ERROR, get_response_data
 from notelist.models.notebooks import Notebook
 from notelist.schemas.notebooks import NotebookSchema
@@ -18,6 +19,7 @@ tag_list_schema = TagSchema(many=True)
 note_list_schema = NoteSchema(many=True)
 
 
+@search_api.route("/search/<search>")
 class SearchResource(Resource):
     """Search resource."""
 

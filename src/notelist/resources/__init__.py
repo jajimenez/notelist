@@ -6,6 +6,12 @@ from typing import Optional, Union, Any, List, Dict
 Result = Optional[Union[Dict, List[Dict]]]
 Response = Dict[str, Union[str, Dict]]
 
+RESPONSE_SUCCESS = "Success"
+RESPONSE_VALIDATION_ERROR = "Validation error"
+RESPONSE_INVALID_CREDENTIALS = "Invalid credentials"
+RESPONSE_USER_UNAUTHORIZED = "User unauthorized"
+RESPONSE_NOT_FOUND = "Not found"
+
 VALIDATION_ERROR = "Validation error: {}."
 OPERATION_NOT_ALLOWED = "Operation not allowed."
 USER_UNAUTHORIZED = "User unauthorized."

@@ -3,9 +3,10 @@
 from typing import Optional
 
 from flask import request
-from flask_restful import Resource
+from flask_restx import Resource
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 
+from notelist.apis import tags_api
 from notelist.models.notebooks import Notebook
 from notelist.models.tags import Tag
 from notelist.schemas.tags import TagSchema
@@ -25,6 +26,7 @@ tag_list_schema = TagSchema(many=True)
 tag_schema = TagSchema()
 
 
+@tags_api.route("/tags/<int:notebook_id>")
 class TagListResource(Resource):
     """Tag resource.
 
@@ -59,6 +61,7 @@ class TagListResource(Resource):
         return get_response_data(m, tag_list_schema.dump(tags)), 200
 
 
+@tags_api.route("/tag", "/tag/<int:tag_id>")
 class TagResource(Resource):
     """Tag resource.
 

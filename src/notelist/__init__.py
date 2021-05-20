@@ -1,6 +1,6 @@
 """Notelist package.
 
-Notelist is a REST API based note taking web application.
+Notelist is a note taking REST API.
 """
 
 import os
@@ -8,9 +8,9 @@ from os.path import dirname, join
 from typing import Optional, Union, List, Dict
 
 import click
-from flask import Flask, render_template
+from flask import Flask, Blueprint, render_template
 from flask.cli import AppGroup
-from flask_restful import Api
+from flask_restx import Api
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from marshmallow import ValidationError
@@ -18,10 +18,12 @@ from marshmallow import ValidationError
 from notelist import tools
 from notelist.db import db
 from notelist.ma import ma
+from notelist.apis import (
+    auth_api, users_api, notebooks_api, tags_api, notes_api, search_api)
 from notelist.resources import get_response_data, Response
 from notelist.resources.users import (
     LoginResource, TokenRefreshResource, LogoutResource, UserListResource,
-    UserResource, blocklist)
+    NewUserResource, ExistingUserResource, blocklist)
 from notelist.resources.notebooks import NotebookListResource, NotebookResource
 from notelist.resources.tags import TagListResource, TagResource
 from notelist.resources.notes import NoteListResource, NoteResource
@@ -30,6 +32,9 @@ from notelist.models.users import User
 
 
 __version__ = "0.1.0"
+
+API_NAME = "Notelist"
+API_DESC = "Note taking REST API"
 
 # Typing types
 ValErrorData = Dict[str, List[str]]
@@ -65,20 +70,32 @@ db.init_app(app)
 ma.init_app(app)
 mig = Migrate(app, db)
 
-# Resources
-api = Api(app)
-api.add_resource(LoginResource, "/login")
-api.add_resource(TokenRefreshResource, "/refresh")
-api.add_resource(LogoutResource, "/logout")
-api.add_resource(UserListResource, "/users")
-api.add_resource(UserResource, "/user", "/user/<int:user_id>")
-api.add_resource(NotebookListResource, "/notebooks")
-api.add_resource(NotebookResource, "/notebook", "/notebook/<int:notebook_id>")
-api.add_resource(TagListResource, "/tags/<int:notebook_id>")
-api.add_resource(TagResource, "/tag", "/tag/<int:tag_id>")
-api.add_resource(NoteListResource, "/notes/<int:notebook_id>")
-api.add_resource(NoteResource, "/note", "/note/<int:note_id>")
-api.add_resource(SearchResource, "/search/<search>")
+# API
+blue = Blueprint("notelist", __name__, url_prefix="/notelist")
+auth = {"apikey": {"type": "apiKey", "in": "header", "name": "Authorization"}}
+
+api = Api(blue, __version__, API_NAME, API_DESC, authorizations=auth)
+api.add_namespace(auth_api)
+api.add_namespace(users_api)
+api.add_namespace(notebooks_api)
+api.add_namespace(tags_api)
+api.add_namespace(notes_api)
+api.add_namespace(search_api)
+
+app.register_blueprint(blue)
+
+# api.add_resource(LoginResource, "/login")
+# api.add_resource(TokenRefreshResource, "/refresh")
+# api.add_resource(LogoutResource, "/logout")
+# api.add_resource(UserListResource, "/users")
+# api.add_resource(UserResource, "/user", "/user/<int:user_id>")
+# api.add_resource(NotebookListResource, "/notebooks")
+# api.add_resource(NotebookResource, "/notebook", "/notebook/<int:notebook_id>")
+# api.add_resource(TagListResource, "/tags/<int:notebook_id>")
+# api.add_resource(TagResource, "/tag", "/tag/<int:tag_id>")
+# api.add_resource(NoteListResource, "/notes/<int:notebook_id>")
+# api.add_resource(NoteResource, "/note", "/note/<int:note_id>")
+# api.add_resource(SearchResource, "/search/<search>")
 
 # User authentication
 jwt = JWTManager(app)
@@ -199,9 +216,3 @@ def additional_claims_loader(identity) -> Dict[str, bool]:
     """
     user = User.get_by_id(identity)
     return {"user_id": user.id, "admin": user.admin}
-
-
-@app.route("/")
-def home() -> str:
-    """Root route request handler."""
-    return render_template("home.html")

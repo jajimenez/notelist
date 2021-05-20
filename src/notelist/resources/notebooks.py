@@ -3,9 +3,10 @@
 from typing import Optional
 
 from flask import request
-from flask_restful import Resource
+from flask_restx import Resource
 from flask_jwt_extended import jwt_required, get_jwt
 
+from notelist.apis import notebooks_api
 from notelist.models.notebooks import Notebook
 from notelist.schemas.notebooks import NotebookSchema
 from notelist.resources import Response, VALIDATION_ERROR, USER_UNAUTHORIZED, \
@@ -24,6 +25,7 @@ notebook_list_schema = NotebookSchema(many=True)
 notebook_schema = NotebookSchema()
 
 
+@notebooks_api.route("/notebooks")
 class NotebookListResource(Resource):
     """Notebook List resource."""
 
@@ -47,6 +49,7 @@ class NotebookListResource(Resource):
         return get_response_data(m, notebook_list_schema.dump(notebooks)), 200
 
 
+@notebooks_api.route("/notebook", "/notebook/<int:notebook_id>")
 class NotebookResource(Resource):
     """Notebook resource."""
 

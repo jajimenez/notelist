@@ -4,9 +4,10 @@ from typing import Optional
 
 from datetime import datetime
 from flask import request
-from flask_restful import Resource
+from flask_restx import Resource
 from flask_jwt_extended import jwt_required, get_jwt
 
+from notelist.apis import notes_api
 from notelist.models.notebooks import Notebook
 from notelist.models.tags import Tag
 from notelist.models.notes import Note
@@ -26,6 +27,7 @@ note_list_schema = NoteSchema(many=True)
 note_schema = NoteSchema()
 
 
+@notes_api.route("/notes/<int:notebook_id>")
 class NoteListResource(Resource):
     """Note List resource."""
 
@@ -131,6 +133,7 @@ class NoteListResource(Resource):
         return get_response_data(m, note_list_schema.dump(notes)), 200
 
 
+@notes_api.route("/note", "/note/<int:note_id>")
 class NoteResource(Resource):
     """Note resource."""
 
