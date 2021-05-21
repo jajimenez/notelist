@@ -24,9 +24,12 @@ from notelist.resources import get_response_data, Response
 from notelist.resources.users import (
     LoginResource, TokenRefreshResource, LogoutResource, UserListResource,
     NewUserResource, ExistingUserResource, blocklist)
-from notelist.resources.notebooks import NotebookListResource, NotebookResource
-from notelist.resources.tags import TagListResource, TagResource
-from notelist.resources.notes import NoteListResource, NoteResource
+from notelist.resources.notebooks import (
+    NotebookListResource, NewNotebookResource, ExistingNotebookResource)
+from notelist.resources.tags import (
+    TagListResource, NewTagResource, ExistingTagResource)
+from notelist.resources.notes import (
+    NoteListResource, NewNoteResource, ExistingNoteResource)
 from notelist.resources.search import SearchResource
 from notelist.models.users import User
 
@@ -71,7 +74,7 @@ ma.init_app(app)
 mig = Migrate(app, db)
 
 # API
-blue = Blueprint("notelist", __name__, url_prefix="/notelist")
+blue = Blueprint("notelist", __name__, url_prefix="/")
 auth = {"apikey": {"type": "apiKey", "in": "header", "name": "Authorization"}}
 
 api = Api(blue, __version__, API_NAME, API_DESC, authorizations=auth)
@@ -83,19 +86,6 @@ api.add_namespace(notes_api)
 api.add_namespace(search_api)
 
 app.register_blueprint(blue)
-
-# api.add_resource(LoginResource, "/login")
-# api.add_resource(TokenRefreshResource, "/refresh")
-# api.add_resource(LogoutResource, "/logout")
-# api.add_resource(UserListResource, "/users")
-# api.add_resource(UserResource, "/user", "/user/<int:user_id>")
-# api.add_resource(NotebookListResource, "/notebooks")
-# api.add_resource(NotebookResource, "/notebook", "/notebook/<int:notebook_id>")
-# api.add_resource(TagListResource, "/tags/<int:notebook_id>")
-# api.add_resource(TagResource, "/tag", "/tag/<int:tag_id>")
-# api.add_resource(NoteListResource, "/notes/<int:notebook_id>")
-# api.add_resource(NoteResource, "/note", "/note/<int:note_id>")
-# api.add_resource(SearchResource, "/search/<search>")
 
 # User authentication
 jwt = JWTManager(app)

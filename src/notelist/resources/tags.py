@@ -1,17 +1,17 @@
 """Module with the tag resources."""
 
-from typing import Optional
-
 from flask import request
-from flask_restx import Resource
+from flask_restx import Resource, fields
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 
 from notelist.apis import tags_api
 from notelist.models.notebooks import Notebook
 from notelist.models.tags import Tag
 from notelist.schemas.tags import TagSchema
-from notelist.resources import Response, VALIDATION_ERROR, \
-    OPERATION_NOT_ALLOWED, USER_UNAUTHORIZED, get_response_data
+from notelist.resources import (
+    Response, RESPONSE_SUCCESS, RESPONSE_BAD_REQUEST,
+    RESPONSE_USER_UNAUTHORIZED, VALIDATION_ERROR, OPERATION_NOT_ALLOWED,
+    USER_UNAUTHORIZED, get_response_data)
 
 
 TAG_RETRIEVED_1 = "1 tag retrieved."
@@ -27,21 +27,23 @@ tag_schema = TagSchema()
 
 
 @tags_api.route("/tags/<int:notebook_id>")
+@tags_api.doc(params={"notebook_id": "Notebook ID (integer)"})
 class TagListResource(Resource):
-    """Tag resource.
-
-    This resource manages the operations of all the tags of a notebook.
-    """
+    """Tag list resource."""
 
     @jwt_required()
+    @tags_api.doc(
+        security="apikey",
+        responses={200: RESPONSE_SUCCESS, 403: RESPONSE_USER_UNAUTHORIZED})
     def get(self, notebook_id: int) -> Response:
-        """Handle a Tag List Get request.
+        """Get all the tags of a notebook.
 
-        Return all the tags of a notebook given the notebook ID. The request
-        user can only call this endpoint for one of their notebooks.
+        The user can call this operation only for their own notebooks. This
+        operation requires the following header with an access token:
+            "Authorization" = "Bearer access_token"
 
         :param notebook_id: Notebook ID.
-        :return: Dictionary with the message and result.
+        :return: Dictionary with the message and the tags data.
         """
         # JWT payload data
         uid = get_jwt()["user_id"]
@@ -61,43 +63,24 @@ class TagListResource(Resource):
         return get_response_data(m, tag_list_schema.dump(tags)), 200
 
 
-@tags_api.route("/tag", "/tag/<int:tag_id>")
-class TagResource(Resource):
-    """Tag resource.
+@tags_api.route("/tag")
+class NewTagResource(Resource):
+    """New tags resource."""
 
-    This resource manages the operations of a single notebook tag.
-    """
+    # This model is for the HTML documentation that is automatically generated
+    # for the root route ("/"). It shouldn't be confused with the database
+    # models of the "notelist.models" module or the schemas of the "notelist.
+    # schemas" module.
+    req_fields = tags_api.model(
+        "NewTag", {
+            "notebook_id": fields.Integer(required=True),
+            "name": fields.String(required=True),
+            "color": fields.String(default=None, example="#00ff00")})
 
-    @jwt_required()
-    def get(self, tag_id: int) -> Response:
-        """Handle a Tag Get request.
+    def _create_tag(self) -> Response:
+        """Create a new tag.
 
-        Return the tag with the given ID. The request user can only call this
-        endpoint for a tag of any of their own notebooks.
-
-        :param tag_id: Tag ID.
-        :return: Dictionary with the message and result.
-        """
-        # JWT payload data
-        uid = get_jwt()["user_id"]
-
-        # Get tag
-        tag = Tag.get_by_id(tag_id)
-
-        # Check if the tag exists and the permissions
-        if not tag or uid != tag.notebook.user_id:
-            return get_response_data(USER_UNAUTHORIZED), 403
-
-        return get_response_data(TAG_RETRIEVED, tag_schema.dump(tag)), 200
-
-    @jwt_required()
-    def post(self) -> Response:
-        """Handle a Tag Post request.
-
-        Save a new tag with the given request data. The request user can only
-        call this endpoint if the tag's notebook is one of theirs.
-
-        :return: Dictionary with the message and the tag ID as the result.
+        :return: Dictionary with the message and the tag ID.
         """
         # JWT payload data
         uid = get_jwt()["user_id"]
@@ -130,17 +113,100 @@ class TagResource(Resource):
         return get_response_data(TAG_CREATED, tag.id), 201
 
     @jwt_required()
-    def put(self, tag_id: Optional[int] = None) -> Response:
-        """Handle a Tag Put request.
+    @tags_api.expect(req_fields)
+    @tags_api.doc(
+        security="apikey",
+        responses={
+            201: RESPONSE_SUCCESS,
+            400: RESPONSE_BAD_REQUEST,
+            403: RESPONSE_USER_UNAUTHORIZED})
+    def post(self) -> Response:
+        """Create a new tag.
 
-        Save a new or existing tag with the given request data. The request
-        user can only call this endpoint if the tag's notebook is one of
-        theirs. The "notebook_id" field must be specified when creating a new
-        tag but is not allowed to be updated for an existing tag.
+        The user can call this operation only for their own notebooks. This
+        operation requires the following header with an access token:
+            "Authorization" = "Bearer access_token"
 
-        :param tag_id: ID of the tag to update or None to create a new tag.
-        :return: Dictionary with the message and, if the tag has been created,
-        the tag ID as the result.
+        :return: Dictionary with the message and the tag ID.
+        """
+        return self._create_tag()
+
+    @jwt_required()
+    @tags_api.expect(req_fields)
+    @tags_api.doc(
+        security="apikey",
+        responses={
+            201: RESPONSE_SUCCESS,
+            400: RESPONSE_BAD_REQUEST,
+            403: RESPONSE_USER_UNAUTHORIZED})
+    def put(self) -> Response:
+        """Create a new tag.
+
+        The user can call this operation only for their own notebooks. This
+        operation requires the following header with an access token:
+            "Authorization" = "Bearer access_token"
+
+        :return: Dictionary with the message and the tag ID.
+        """
+        return self._create_tag()
+
+
+@tags_api.route("/tag/<int:tag_id>")
+@tags_api.doc(params={"tag_id": "Tag ID (integer)"})
+class ExistingTagResource(Resource):
+    """Existing tags resource."""
+
+    # This model is for the HTML documentation that is automatically generated
+    # for the root route ("/"). It shouldn't be confused with the database
+    # models of the "notelist.models" module or the schemas of the "notelist.
+    # schemas" module.
+    req_fields = tags_api.model(
+        "ExistingTag", {"name": fields.String, "color": fields.String})
+
+    @jwt_required()
+    @tags_api.doc(
+        security="apikey",
+        responses={200: RESPONSE_SUCCESS, 403: RESPONSE_USER_UNAUTHORIZED})
+    def get(self, tag_id: int) -> Response:
+        """Get an existing tag's data.
+
+        The user can call this operation only for their own notebooks' tags.
+        This operation requires the following header with an access token:
+            "Authorization" = "Bearer access_token"
+
+        :param tag_id: Tag ID.
+        :return: Dictionary with the message and the tag data.
+        """
+        # JWT payload data
+        uid = get_jwt()["user_id"]
+
+        # Get tag
+        tag = Tag.get_by_id(tag_id)
+
+        # Check if the tag exists and the permissions
+        if not tag or uid != tag.notebook.user_id:
+            return get_response_data(USER_UNAUTHORIZED), 403
+
+        return get_response_data(TAG_RETRIEVED, tag_schema.dump(tag)), 200
+
+    @jwt_required()
+    @tags_api.expect(req_fields)
+    @tags_api.doc(
+        security="apikey",
+        responses={
+            200: RESPONSE_SUCCESS,
+            400: RESPONSE_BAD_REQUEST,
+            403: RESPONSE_USER_UNAUTHORIZED})
+    def put(self, tag_id: int) -> Response:
+        """Edit an existing tag.
+
+        The user can call this operation only for their own notebooks' tags and
+        the notebook ID of the tag cannot be changed. This operation requires
+        the following header with an access token:
+            "Authorization" = "Bearer access_token"
+
+        :param tag_id: Tag ID.
+        :return: Dictionary with the message.
         """
         # JWT payload data
         uid = get_jwt()["user_id"]
@@ -148,98 +214,71 @@ class TagResource(Resource):
         # Request data
         data = request.get_json() or {}
 
-        # If "tag_id" is None, we create a new tag. Otherwise we edit the
-        # existing tag with the given ID.
-        new = tag_id is None
+        # Get existing tag
+        tag = Tag.get_by_id(tag_id)
 
-        if new:
-            # We validate the request data. If any of the Tag model required
-            # fields is missing, a "marshmallow.ValidationError" exception is
-            # raised.
-            tag = tag_schema.load(data)
-            tag.name = tag.name.strip()
+        # Check if the tag exists and the permissions
+        if not tag or uid != tag.notebook.user_id:
+            return get_response_data(USER_UNAUTHORIZED), 403
 
-            if not tag.name:
-                return get_response_data(VALIDATION_ERROR.format("name")), 400
+        # Make a copy of the request data
+        data = data.copy()
 
-            # Get tag's notebook
-            notebook = Notebook.get_by_id(tag.notebook_id)
-
-            # Check if the notebook exists and the permissions (the request
-            # user must be the same as the notebook's user).
-            if not notebook or uid != notebook.user_id:
-                return get_response_data(USER_UNAUTHORIZED), 403
-
-            # Check if there is any existing tag with the same name in the
-            # notebook.
-            if Tag.get_by_name(notebook.id, tag.name):
-                return get_response_data(TAG_EXISTS), 400
-
-            message = TAG_CREATED
-            code = 201
+        # Check if a new value for the "notebook_id" field is provided,
+        # which is not allowed.
+        if "notebook_id" in data:
+            return get_response_data(
+                VALIDATION_ERROR.format("notebook_id")), 400
         else:
-            # Get existing tag
-            tag = Tag.get_by_id(tag_id)
+            data["notebook_id"] = tag.notebook_id
 
-            # Check if the tag exists and the permissions
-            if not tag or uid != tag.notebook.user_id:
-                return get_response_data(USER_UNAUTHORIZED), 403
-
-            # Make a copy of the request data
-            data = data.copy()
-
-            # Check if a new value for the "notebook_id" field is provided,
-            # which is not allowed.
-            if "notebook_id" in data:
+        # Check if a new value for the name is provided and if the notebook
+        # has already a tag with this name.
+        if "name" in data:
+            if type(data["name"]) != str or not data["name"].strip():
                 return get_response_data(
-                    VALIDATION_ERROR.format("notebook_id")), 400
-            else:
-                data["notebook_id"] = tag.notebook_id
+                    VALIDATION_ERROR.format("name")), 400
 
-            # Check if a new value for the name is provided and if the notebook
-            # has already a tag with this name.
-            if "name" in data:
-                if type(data["name"]) != str or not data["name"].strip():
-                    return get_response_data(
-                        VALIDATION_ERROR.format("name")), 400
+            data["name"] = data["name"].strip()
 
-                data["name"] = data["name"].strip()
+            if (
+                data["name"] != tag.name and
+                Tag.get_by_name(tag.notebook_id, data["name"])
+            ):
+                return get_response_data(TAG_EXISTS), 400
+        else:
+            data["name"] = tag.name
 
-                if (
-                    data["name"] != tag.name and
-                    Tag.get_by_name(tag.notebook_id, data["name"])
-                ):
-                    return get_response_data(TAG_EXISTS), 400
-            else:
-                data["name"] = tag.name
+        # Check if a new value for the color is provided
+        if "color" not in data:
+            data["color"] = tag.color
 
-            # Check if a new value for the color is provided
-            if "color" not in data:
-                data["color"] = tag.color
+        # We validate the request data. If any provided field is invalid,
+        # a "marshmallow.ValidationError" exception is raised.
+        new_tag = tag_schema.load(data)
 
-            # We validate the request data. If any provided field is invalid,
-            # a "marshmallow.ValidationError" exception is raised.
-            new_tag = tag_schema.load(data)
+        # Update tag object
+        tag.name = new_tag.name
+        tag.color = new_tag.color
 
-            # Update tag object
-            tag.name = new_tag.name
-            tag.color = new_tag.color
-
-            message = TAG_UPDATED
-            code = 200
+        message = TAG_UPDATED
+        code = 200
 
         # Save tag
         tag.save()
-        result = tag.id if new else None
 
-        return get_response_data(message, result), code
+        return get_response_data(TAG_UPDATED), 200
 
     @jwt_required()
+    @tags_api.doc(
+        security="apikey",
+        responses={200: RESPONSE_SUCCESS, 403: RESPONSE_USER_UNAUTHORIZED})
     def delete(self, tag_id: int) -> Response:
-        """Handle a Tag Delete request.
+        """Delete an existing tag.
 
-        Delete an existing tag of one of the request user's notebooks given the
-        tag's ID.
+        The user can call this operation only for their own notebooks' tags.
+        This operation requires the following header with an access token:
+            "Authorization" = "Bearer access_token"
 
         :param tag_id: Tag ID.
         :return: Dictionary with the message.

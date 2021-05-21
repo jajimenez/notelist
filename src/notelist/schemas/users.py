@@ -26,7 +26,7 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         ordered = True
         load_instance = True
 
-    password = fields.Method(None, "load_password")
+    password = fields.Method(None, "load_password", required=True)
 
     def load_password(self, val: str) -> str:
         """Deserialize the user's password."""

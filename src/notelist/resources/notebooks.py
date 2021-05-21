@@ -1,16 +1,16 @@
 """Module with the notebook resources."""
 
-from typing import Optional
-
 from flask import request
-from flask_restx import Resource
+from flask_restx import Resource, fields
 from flask_jwt_extended import jwt_required, get_jwt
 
 from notelist.apis import notebooks_api
 from notelist.models.notebooks import Notebook
 from notelist.schemas.notebooks import NotebookSchema
-from notelist.resources import Response, VALIDATION_ERROR, USER_UNAUTHORIZED, \
-    get_response_data
+from notelist.resources import (
+    Response, RESPONSE_SUCCESS, RESPONSE_BAD_REQUEST,
+    RESPONSE_USER_UNAUTHORIZED, VALIDATION_ERROR, USER_UNAUTHORIZED,
+    get_response_data)
 
 
 NOTEBOOK_RETRIEVED_1 = "1 notebook retrieved."
@@ -27,15 +27,17 @@ notebook_schema = NotebookSchema()
 
 @notebooks_api.route("/notebooks")
 class NotebookListResource(Resource):
-    """Notebook List resource."""
+    """Notebook list resource."""
 
     @jwt_required()
+    @notebooks_api.doc(security="apikey", responses={201: RESPONSE_SUCCESS})
     def get(self) -> Response:
-        """Handle a Notebook List Get request.
+        """Get all the notebooks of the request user.
 
-        Return all the notebooks of the request user.
+        This operation requires the following header with an access token:
+            "Authorization" = "Bearer access_token"
 
-        :return: Dictionary with the message and result.
+        :return: Dictionary with the message and the users data.
         """
         # JWT payload data
         uid = get_jwt()["user_id"]
@@ -49,39 +51,21 @@ class NotebookListResource(Resource):
         return get_response_data(m, notebook_list_schema.dump(notebooks)), 200
 
 
-@notebooks_api.route("/notebook", "/notebook/<int:notebook_id>")
-class NotebookResource(Resource):
-    """Notebook resource."""
+@notebooks_api.route("/notebook")
+class NewNotebookResource(Resource):
+    """New notebooks resource."""
 
-    @jwt_required()
-    def get(self, notebook_id: int) -> Response:
-        """Handle a Notebook Get request.
+    # This model is for the HTML documentation that is automatically generated
+    # for the root route ("/"). It shouldn't be confused with the database
+    # models of the "notelist.models" module or the schemas of the "notelist.
+    # schemas" module.
+    req_fields = notebooks_api.model(
+        "NewNotebook", {"name": fields.String(required=True)})
 
-        Return the request user's notebook with the given ID.
+    def _create_notebook(self) -> Response:
+        """Create a new notebook.
 
-        :param notebook_id: Notebook ID.
-        :return: Dictionary with the message and result.
-        """
-        # JWT payload data
-        uid = get_jwt()["user_id"]
-
-        # Get the notebook
-        notebook = Notebook.get_by_id(notebook_id)
-
-        # Check if the notebook exists and the permissions
-        if not notebook or uid != notebook.user_id:
-            return get_response_data(USER_UNAUTHORIZED), 403
-
-        return get_response_data(
-            NOTEBOOK_RETRIEVED, notebook_schema.dump(notebook)), 200
-
-    @jwt_required()
-    def post(self) -> Response:
-        """Handle a Notebook Post request.
-
-        Save a new notebook of the request user given the request data.
-
-        :return: Dictionary with the message and the notebook ID as the result.
+        :return: Dictionary with the message and the notebook ID.
         """
         # JWT payload data
         uid = get_jwt()["user_id"]
@@ -103,24 +87,99 @@ class NotebookResource(Resource):
         if Notebook.get_by_name(uid, notebook.name):
             return get_response_data(NOTEBOOK_EXISTS), 400
 
-        # Save the notebook
+        # Save notebook
         notebook.user_id = uid
         notebook.save()
 
         return get_response_data(NOTEBOOK_CREATED, notebook.id), 201
 
     @jwt_required()
-    def put(self, notebook_id: Optional[int] = None) -> Response:
-        """Handle a Notebook Put request.
+    @notebooks_api.expect(req_fields)
+    @notebooks_api.doc(
+        security="apikey",
+        responses={201: RESPONSE_SUCCESS, 400: RESPONSE_BAD_REQUEST})
+    def post(self) -> Response:
+        """Create a new notebook.
 
-        Save a new or existing notebook of the request user with the given
-        request data. The "user_id" field of an existing notebook is not
-        allowed to be modified.
+        This operation requires the following header with an access token:
+            "Authorization" = "Bearer access_token"
 
-        :param _id: ID of the notebook to update or None to create a new
-        notebook.
-        :return: Dictionary with the message and, if the notebook has been
-        created, the notebook ID as the result.
+        :return: Dictionary with the message and the notebook ID.
+        """
+        return self._create_notebook()
+
+    @jwt_required()
+    @notebooks_api.expect(req_fields)
+    @notebooks_api.doc(
+        security="apikey",
+        responses={201: RESPONSE_SUCCESS, 400: RESPONSE_BAD_REQUEST})
+    def put(self) -> Response:
+        """Create a new notebook.
+
+        This operation requires the following header with an access token:
+            "Authorization" = "Bearer access_token"
+
+        :return: Dictionary with the message and the notebook ID.
+        """
+        return self._create_notebook()
+
+
+@notebooks_api.route("/notebook/<int:notebook_id>")
+@notebooks_api.doc(params={"notebook_id": "Notebook ID (integer)"})
+class ExistingNotebookResource(Resource):
+    """Existing notebooks resource."""
+
+    # This model is for the HTML documentation that is automatically generated
+    # for the root route ("/"). It shouldn't be confused with the database
+    # models of the "notelist.models" module or the schemas of the "notelist.
+    # schemas" module.
+    req_fields = notebooks_api.model(
+        "ExistingNotebook", {"name": fields.String})
+
+    @jwt_required()
+    @notebooks_api.doc(
+        security="apikey",
+        responses={200: RESPONSE_SUCCESS, 403: RESPONSE_USER_UNAUTHORIZED})
+    def get(self, notebook_id: int) -> Response:
+        """Get an existing notebook's data.
+
+        The user can call this operation only for their own notebooks. This
+        operation requires the following header with an access token:
+            "Authorization" = "Bearer access_token"
+
+        :param notebook_id: Notebook ID.
+        :return: Dictionary with the message and the notebook data.
+        """
+        # JWT payload data
+        uid = get_jwt()["user_id"]
+
+        # Get the notebook
+        notebook = Notebook.get_by_id(notebook_id)
+
+        # Check if the notebook exists and the permissions
+        if not notebook or uid != notebook.user_id:
+            return get_response_data(USER_UNAUTHORIZED), 403
+
+        return get_response_data(
+            NOTEBOOK_RETRIEVED, notebook_schema.dump(notebook)), 200
+
+    @jwt_required()
+    @notebooks_api.expect(req_fields)
+    @notebooks_api.doc(
+        security="apikey",
+        responses={
+            200: RESPONSE_SUCCESS,
+            400: RESPONSE_BAD_REQUEST,
+            403: RESPONSE_USER_UNAUTHORIZED})
+    def put(self, notebook_id: int) -> Response:
+        """Edit an existing notebook.
+
+        The user can call this operation only for their own notebooks. This
+        operation requires the following header with an access token:
+            "Authorization" = "Bearer access_token"
+
+        :param notebook_id: Notebook ID.
+        :return: Dictionary with the message.
         """
         # JWT payload data
         uid = get_jwt()["user_id"]
@@ -128,79 +187,57 @@ class NotebookResource(Resource):
         # Request data
         data = request.get_json() or {}
 
-        # If "notebook_id" is None, we create a new notebook. Otherwise we edit
-        # the existing notebook with the given ID.
-        new = notebook_id is None
+        # Get existing notebook
+        notebook = Notebook.get_by_id(notebook_id)
 
-        if new:
-            # We validate the request data. If any of the Notebook model
-            # required fields is missing, or any provided field is invalid, a
-            # "marshmallow.ValidationError" exception is raised.
-            notebook = notebook_schema.load(data)
-            notebook.name = notebook.name.strip()
+        # Check if the notebook exists (based on its name) for the request
+        # user and check the permissions (the request user must be the same
+        # as the notebook user).
+        if not notebook or uid != notebook.user_id:
+            return get_response_data(USER_UNAUTHORIZED), 403
 
-            if not notebook.name:
-                return get_response_data(VALIDATION_ERROR.format("name")), 400
+        # Make a copy of the request data
+        data = data.copy()
 
-            # Check if the notebook already exists (based on its name) for the
-            # request user.
-            if Notebook.get_by_name(uid, notebook.name):
+        # Check if a new name is provided and if the request user has
+        # already a notebook with this name.
+        if "name" in data:
+            if type(data["name"]) != str or not data["name"].strip():
+                return get_response_data(
+                    VALIDATION_ERROR.format("name")), 400
+
+            data["name"] = data["name"].strip()
+
+            if (
+                data["name"] != notebook.name and
+                Notebook.get_by_name(uid, data["name"])
+            ):
                 return get_response_data(NOTEBOOK_EXISTS), 400
-
-            notebook.user_id = uid
-            message = NOTEBOOK_CREATED
-            code = 201
         else:
-            # Get existing notebook
-            notebook = Notebook.get_by_id(notebook_id)
+            data["name"] = notebook.name
 
-            # Check if the notebook exists (based on its name) for the request
-            # user and check the permissions (the request user must be the same
-            # as the notebook user).
-            if not notebook or uid != notebook.user_id:
-                return get_response_data(USER_UNAUTHORIZED), 403
+        # We validate the request data. If any provided field is invalid,
+        # a "marshmallow.ValidationError" exception is raised.
+        new_notebook = notebook_schema.load(data)
 
-            # Make a copy of the request data
-            data = data.copy()
-
-            # Check if a new name is provided and if the request user has
-            # already a notebook with this name.
-            if "name" in data:
-                if type(data["name"]) != str or not data["name"].strip():
-                    return get_response_data(
-                        VALIDATION_ERROR.format("name")), 400
-
-                data["name"] = data["name"].strip()
-
-                if (
-                    data["name"] != notebook.name and
-                    Notebook.get_by_name(uid, data["name"])
-                ):
-                    return get_response_data(NOTEBOOK_EXISTS), 400
-            else:
-                data["name"] = notebook.name
-
-            # We validate the request data. If any provided field is invalid,
-            # a "marshmallow.ValidationError" exception is raised.
-            new_notebook = notebook_schema.load(data)
-
-            # Update notebook object
-            notebook.name = new_notebook.name
-
-            message = NOTEBOOK_UPDATED
-            code = 200
+        # Update notebook object
+        notebook.name = new_notebook.name
 
         # Save the notebook
         notebook.save()
-        result = notebook.id if new else None
 
-        return get_response_data(message, result), code
+        return get_response_data(NOTEBOOK_UPDATED), 200
 
     @jwt_required(fresh=True)
+    @notebooks_api.doc(
+        security="apikey",
+        responses={200: RESPONSE_SUCCESS, 403: RESPONSE_USER_UNAUTHORIZED})
     def delete(self, notebook_id: int) -> Response:
-        """Handle a Notebook Delete request.
+        """Delete an existing notebook.
 
-        Delete an existing notebook of the request user given the notebook ID.
+        The user can call this operation only for their own notebooks. This
+        operation requires the following header with a fresh access token:
+            "Authorization" = "Bearer fresh_access_token"
 
         :param notebook_id: Notebook ID.
         :return: Dictionary with the message.

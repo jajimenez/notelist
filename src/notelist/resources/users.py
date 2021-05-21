@@ -1,7 +1,6 @@
 """Module with the user resources."""
 
 import hashlib as hl
-from typing import Optional
 
 from flask import request
 from werkzeug.security import safe_str_cmp
@@ -13,7 +12,7 @@ from notelist.apis import auth_api, users_api
 from notelist.models.users import User
 from notelist.schemas.users import UserSchema
 from notelist.resources import (
-    Response, RESPONSE_SUCCESS, RESPONSE_VALIDATION_ERROR,
+    Response, RESPONSE_SUCCESS, RESPONSE_BAD_REQUEST,
     RESPONSE_INVALID_CREDENTIALS, RESPONSE_USER_UNAUTHORIZED, VALIDATION_ERROR,
     USER_UNAUTHORIZED, RESPONSE_NOT_FOUND, get_response_data)
 from notelist import tools
@@ -39,7 +38,7 @@ blocklist = set()
 
 @auth_api.route("/login")
 class LoginResource(Resource):
-    """User Login resource."""
+    """User login resource."""
 
     fields = auth_api.model(
         "Login", {
@@ -50,7 +49,7 @@ class LoginResource(Resource):
     @auth_api.doc(
         responses={
             200: RESPONSE_SUCCESS,
-            400: RESPONSE_VALIDATION_ERROR,
+            400: RESPONSE_BAD_REQUEST,
             401: RESPONSE_INVALID_CREDENTIALS})
     def post(self) -> Response:
         """Log in as an existing user.
@@ -94,7 +93,7 @@ class LoginResource(Resource):
 
 @auth_api.route("/refresh")
 class TokenRefreshResource(Resource):
-    """Token Refresh resource."""
+    """Token refresh resource."""
 
     @jwt_required(refresh=True)
     @auth_api.doc(security="apikey", responses={200: RESPONSE_SUCCESS})
@@ -118,7 +117,7 @@ class TokenRefreshResource(Resource):
 
 @auth_api.route("/logout")
 class LogoutResource(Resource):
-    """Logout resource."""
+    """User logout resource."""
 
     @jwt_required()
     @auth_api.doc(security="apikey", responses={200: RESPONSE_SUCCESS})
@@ -142,10 +141,10 @@ class LogoutResource(Resource):
 
 @users_api.route("/users")
 class UserListResource(Resource):
-    """User List resource."""
+    """User list resource."""
 
     @jwt_required()
-    @auth_api.doc(
+    @users_api.doc(
         security="apikey",
         responses={
             200: RESPONSE_SUCCESS,
@@ -179,28 +178,21 @@ class UserListResource(Resource):
 class NewUserResource(Resource):
     """New users resource."""
 
-    fields = auth_api.model(
-        "User", {
+    # This model is for the HTML documentation that is automatically generated
+    # for the root route ("/"). It shouldn't be confused with the database
+    # models of the "notelist.models" module or the schemas of the "notelist.
+    # schemas" module.
+    req_fields = users_api.model(
+        "NewUser", {
             "username": fields.String(required=True),
             "password": fields.String(required=True),
-            "admin": fields.Boolean,
-            "enabled": fields.Boolean,
-            "name": fields.String,
-            "email": fields.String})
+            "admin": fields.Boolean(default=False),
+            "enabled": fields.Boolean(default=False),
+            "name": fields.String(default=None),
+            "email": fields.String(default=None)})
 
-    @jwt_required()
-    @auth_api.expect(fields)
-    @auth_api.doc(
-        security="apikey",
-        responses={
-            201: RESPONSE_SUCCESS,
-            400: RESPONSE_VALIDATION_ERROR,
-            403: RESPONSE_USER_UNAUTHORIZED})
-    def post(self) -> Response:
+    def _create_user(self) -> Response:
         """Create a new user.
-
-        This operation requires the following header with an access token:
-            "Authorization" = "Bearer access_token"
 
         :return: Dictionary with the message and the user ID.
         """
@@ -233,12 +225,30 @@ class NewUserResource(Resource):
         return get_response_data(USER_CREATED, user.id), 201
 
     @jwt_required()
-    @auth_api.expect(fields)
-    @auth_api.doc(
+    @users_api.expect(req_fields)
+    @users_api.doc(
         security="apikey",
         responses={
             201: RESPONSE_SUCCESS,
-            400: RESPONSE_VALIDATION_ERROR,
+            400: RESPONSE_BAD_REQUEST,
+            403: RESPONSE_USER_UNAUTHORIZED})
+    def post(self) -> Response:
+        """Create a new user.
+
+        This operation requires the following header with an access token:
+            "Authorization" = "Bearer access_token"
+
+        :return: Dictionary with the message and the user ID.
+        """
+        return self._create_user()
+
+    @jwt_required()
+    @users_api.expect(req_fields)
+    @users_api.doc(
+        security="apikey",
+        responses={
+            201: RESPONSE_SUCCESS,
+            400: RESPONSE_BAD_REQUEST,
             403: RESPONSE_USER_UNAUTHORIZED})
     def put(self) -> Response:
         """Create a new user.
@@ -246,38 +256,9 @@ class NewUserResource(Resource):
         This operation requires the following header with an access token:
             "Authorization" = "Bearer access_token"
 
-        :return: Dictionary with the message and the user ID as the result.
+        :return: Dictionary with the message and the user ID.
         """
-        # JWT payload data
-        jwt = get_jwt()
-        uid = jwt["user_id"]
-        admin = jwt["admin"]
-
-        # Request data
-        data = request.get_json() or {}
-
-        # Check permissions
-        if not admin:
-            return get_response_data(USER_UNAUTHORIZED), 403
-
-        # We validate the request data. If any of the User model required
-        # fields is missing, a "marshmallow.ValidationError" exception is
-        # raised.
-        user = user_schema.load(data)
-        user.username = user.username.strip()
-
-        if not user.username:
-            return get_response_data(
-                VALIDATION_ERROR.format("username")), 400
-
-        # Check if the user already exists (based on its username)
-        if User.get_by_username(user.username):
-            return get_response_data(USER_EXISTS), 400
-
-        # Save user
-        user.save()
-
-        return get_response_data(USER_CREATED, user.id), 201
+        return self._create_user()
 
 
 @users_api.route("/user/<int:user_id>")
@@ -285,8 +266,12 @@ class NewUserResource(Resource):
 class ExistingUserResource(Resource):
     """Existing users resource."""
 
-    fields = auth_api.model(
-        "User", {
+    # This model is for the HTML documentation that is automatically generated
+    # for the root route ("/"). It shouldn't be confused with the database
+    # models of the "notelist.models" module or the schemas of the "notelist.
+    # schemas" module.
+    req_fields = users_api.model(
+        "ExistingUser", {
             "username": fields.String,
             "password": fields.String,
             "admin": fields.Boolean,
@@ -295,7 +280,7 @@ class ExistingUserResource(Resource):
             "email": fields.String})
 
     @jwt_required()
-    @auth_api.doc(
+    @users_api.doc(
         security="apikey",
         responses={
             200: RESPONSE_SUCCESS,
@@ -304,7 +289,7 @@ class ExistingUserResource(Resource):
     def get(self, user_id: int) -> Response:
         """Get an existing user's data.
 
-        The user can only call this operation for their own data, unless they
+        The user can call this operation only for their own data, unless they
         are an administrator. This operation requires the following header with
         an access token:
             "Authorization" = "Bearer access_token"
@@ -331,24 +316,24 @@ class ExistingUserResource(Resource):
         return get_response_data(USER_RETRIEVED, user_schema.dump(user)), 200
 
     @jwt_required()
-    @auth_api.expect(fields)
-    @auth_api.doc(
+    @users_api.expect(req_fields)
+    @users_api.doc(
         security="apikey",
         responses={
             200: RESPONSE_SUCCESS,
-            400: RESPONSE_VALIDATION_ERROR,
+            400: RESPONSE_BAD_REQUEST,
             403: RESPONSE_USER_UNAUTHORIZED,
             404: RESPONSE_NOT_FOUND})
     def put(self, user_id: int) -> Response:
         """Edit an existing user.
 
-        The user, if they aren't an administrator, can only call this operation
+        The user, if they aren't an administrator, can call this operation only
         to update their own data, except the "username", "admin" or "enabled"
         fields. This operation requires the following header with an access
         token:
             "Authorization" = "Bearer access_token"
 
-        :param user_id: ID of the user to edit.
+        :param user_id: User ID.
         :return: Dictionary with the message.
         """
         # JWT payload data
@@ -435,7 +420,7 @@ class ExistingUserResource(Resource):
         return get_response_data(USER_UPDATED), 200
 
     @jwt_required(fresh=True)
-    @auth_api.doc(
+    @users_api.doc(
         security="apikey",
         responses={
             200: RESPONSE_SUCCESS,

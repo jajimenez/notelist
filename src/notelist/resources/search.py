@@ -4,7 +4,9 @@ from flask_restx import Resource
 from flask_jwt_extended import jwt_required, get_jwt
 
 from notelist.apis import search_api
-from notelist.resources import Response, VALIDATION_ERROR, get_response_data
+from notelist.resources import (
+    Response, RESPONSE_SUCCESS, RESPONSE_BAD_REQUEST, VALIDATION_ERROR,
+    get_response_data)
 from notelist.models.notebooks import Notebook
 from notelist.schemas.notebooks import NotebookSchema
 from notelist.schemas.tags import TagSchema
@@ -20,16 +22,24 @@ note_list_schema = NoteSchema(many=True)
 
 
 @search_api.route("/search/<search>")
+@search_api.doc(params={"search": "Search text (string)"})
 class SearchResource(Resource):
     """Search resource."""
 
     @jwt_required()
+    @search_api.doc(
+        security="apikey",
+        responses={200: RESPONSE_SUCCESS, 400: RESPONSE_BAD_REQUEST})
     def get(self, search: str) -> Response:
-        """Handle a Search Get request.
+        """Get all the notebooks, tags and notes of the request user that match
+        a text.
 
-        Return all the notebooks, tags and notes that match a search string.
+        This operation requires the following header with an access token:
+            "Authorization" = "Bearer access_token"
 
-        :return: Dictionary with the message and result.
+        :param search: Search text.
+        :return: Dictionary with the message and the search result (notebooks,
+        tags and notes found).
         """
         # JWT payload data
         uid = get_jwt()["user_id"]

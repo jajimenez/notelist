@@ -7,7 +7,7 @@ Result = Optional[Union[Dict, List[Dict]]]
 Response = Dict[str, Union[str, Dict]]
 
 RESPONSE_SUCCESS = "Success"
-RESPONSE_VALIDATION_ERROR = "Validation error"
+RESPONSE_BAD_REQUEST = "Bad request"
 RESPONSE_INVALID_CREDENTIALS = "Invalid credentials"
 RESPONSE_USER_UNAUTHORIZED = "User unauthorized"
 RESPONSE_NOT_FOUND = "Not found"
