@@ -5,8 +5,7 @@ from flask_jwt_extended import jwt_required, get_jwt
 
 from notelist.apis import search_api
 from notelist.resources import (
-    Response, RESPONSE_SUCCESS, RESPONSE_BAD_REQUEST, VALIDATION_ERROR,
-    get_response_data)
+    Response, VALIDATION_ERROR, get_response_data, get_response_codes)
 from notelist.models.notebooks import Notebook
 from notelist.schemas.notebooks import NotebookSchema
 from notelist.schemas.tags import TagSchema
@@ -29,7 +28,7 @@ class SearchResource(Resource):
     @jwt_required()
     @search_api.doc(
         security="apikey",
-        responses={200: RESPONSE_SUCCESS, 400: RESPONSE_BAD_REQUEST})
+        responses=get_response_codes(200, 400, 401, 422))
     def get(self, search: str) -> Response:
         """Get all the notebooks, tags and notes of the request user that match
         a text.

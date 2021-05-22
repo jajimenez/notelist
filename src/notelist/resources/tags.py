@@ -9,9 +9,8 @@ from notelist.models.notebooks import Notebook
 from notelist.models.tags import Tag
 from notelist.schemas.tags import TagSchema
 from notelist.resources import (
-    Response, RESPONSE_SUCCESS, RESPONSE_BAD_REQUEST,
-    RESPONSE_USER_UNAUTHORIZED, VALIDATION_ERROR, OPERATION_NOT_ALLOWED,
-    USER_UNAUTHORIZED, get_response_data)
+    Response, VALIDATION_ERROR, OPERATION_NOT_ALLOWED,
+    USER_UNAUTHORIZED, get_response_data, get_response_codes)
 
 
 TAG_RETRIEVED_1 = "1 tag retrieved."
@@ -34,7 +33,7 @@ class TagListResource(Resource):
     @jwt_required()
     @tags_api.doc(
         security="apikey",
-        responses={200: RESPONSE_SUCCESS, 403: RESPONSE_USER_UNAUTHORIZED})
+        responses=get_response_codes(200, 401, 403, 422))
     def get(self, notebook_id: int) -> Response:
         """Get all the tags of a notebook.
 
@@ -116,10 +115,7 @@ class NewTagResource(Resource):
     @tags_api.expect(req_fields)
     @tags_api.doc(
         security="apikey",
-        responses={
-            201: RESPONSE_SUCCESS,
-            400: RESPONSE_BAD_REQUEST,
-            403: RESPONSE_USER_UNAUTHORIZED})
+        responses=get_response_codes(201, 400, 401, 403, 422))
     def post(self) -> Response:
         """Create a new tag.
 
@@ -135,10 +131,7 @@ class NewTagResource(Resource):
     @tags_api.expect(req_fields)
     @tags_api.doc(
         security="apikey",
-        responses={
-            201: RESPONSE_SUCCESS,
-            400: RESPONSE_BAD_REQUEST,
-            403: RESPONSE_USER_UNAUTHORIZED})
+        responses=get_response_codes(201, 400, 401, 403, 422))
     def put(self) -> Response:
         """Create a new tag.
 
@@ -166,7 +159,7 @@ class ExistingTagResource(Resource):
     @jwt_required()
     @tags_api.doc(
         security="apikey",
-        responses={200: RESPONSE_SUCCESS, 403: RESPONSE_USER_UNAUTHORIZED})
+        responses=get_response_codes(200, 401, 403, 422))
     def get(self, tag_id: int) -> Response:
         """Get an existing tag's data.
 
@@ -193,10 +186,7 @@ class ExistingTagResource(Resource):
     @tags_api.expect(req_fields)
     @tags_api.doc(
         security="apikey",
-        responses={
-            200: RESPONSE_SUCCESS,
-            400: RESPONSE_BAD_REQUEST,
-            403: RESPONSE_USER_UNAUTHORIZED})
+        responses=get_response_codes(200, 400, 401, 403, 422))
     def put(self, tag_id: int) -> Response:
         """Edit an existing tag.
 
@@ -272,7 +262,7 @@ class ExistingTagResource(Resource):
     @jwt_required()
     @tags_api.doc(
         security="apikey",
-        responses={200: RESPONSE_SUCCESS, 403: RESPONSE_USER_UNAUTHORIZED})
+        responses=get_response_codes(200, 401, 403, 422))
     def delete(self, tag_id: int) -> Response:
         """Delete an existing tag.
 

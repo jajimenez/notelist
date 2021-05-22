@@ -52,6 +52,7 @@ VALIDATION_ERROR = "Validation error: {}."
 ACCESS_TOKEN_MISSING = "Access token missing."
 FRESH_ACCESS_TOKEN_REQ = "Fresh access token required."
 EXPIRED_TOKEN = "Expired token."
+REVOKED_TOKEN = "Revoked token."
 INVALID_ACCESS_TOKEN = "Invalid access token."
 
 # Application setup
@@ -174,6 +175,17 @@ def expired_token_loader(header: JwtData, payload: JwtData) -> Response:
     :return: Dictionary containing the error message.
     """
     return get_response_data(EXPIRED_TOKEN), 401
+
+
+@jwt.revoked_token_loader
+def revoked_token_loader(header: JwtData, payload: JwtData) -> Response:
+    """Handle requests with a revoked JWT.
+
+    :param header: JWT header data.
+    :param payload: JWT payload data.
+    :return: Dictionary containing the error message.
+    """
+    return get_response_data(REVOKED_TOKEN), 401
 
 
 @jwt.invalid_token_loader

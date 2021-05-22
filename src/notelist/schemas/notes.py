@@ -33,7 +33,7 @@ class NoteSchema(ma.SQLAlchemyAutoSchema):
 
     def dump_tags(self, obj: Note) -> List[str]:
         """Serialize the note's tags."""
-        return [t.name.strip() for t in obj.tags]
+        return sorted([t.name.strip() for t in obj.tags])
 
     def load_tags(self, val: List[str]) -> List[Tag]:
         """Deserialize the note's tags."""

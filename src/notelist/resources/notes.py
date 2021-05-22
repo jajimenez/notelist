@@ -11,8 +11,7 @@ from notelist.models.tags import Tag
 from notelist.models.notes import Note
 from notelist.schemas.notes import NoteSchema
 from notelist.resources import (
-    Response, RESPONSE_SUCCESS, RESPONSE_BAD_REQUEST,
-    RESPONSE_USER_UNAUTHORIZED, VALIDATION_ERROR, USER_UNAUTHORIZED,
+    Response, VALIDATION_ERROR, USER_UNAUTHORIZED, get_response_codes,
     get_response_data)
 
 
@@ -47,10 +46,7 @@ class NoteListResource(Resource):
     @jwt_required()
     @notes_api.doc(
         security="apikey",
-        responses={
-            200: RESPONSE_SUCCESS,
-            400: RESPONSE_BAD_REQUEST,
-            403: RESPONSE_USER_UNAUTHORIZED})
+        responses=get_response_codes(200, 400, 401, 403, 422))
     def post(self, notebook_id: int) -> Response:
         """Get all the notes of a notebook that match a filter.
 
@@ -235,10 +231,7 @@ class NewNoteResource(Resource):
     @notes_api.expect(req_fields)
     @notes_api.doc(
         security="apikey",
-        responses={
-            201: RESPONSE_SUCCESS,
-            400: RESPONSE_BAD_REQUEST,
-            403: RESPONSE_USER_UNAUTHORIZED})
+        responses=get_response_codes(201, 400, 401, 403, 422))
     def post(self) -> Response:
         """Create a new note.
 
@@ -254,10 +247,7 @@ class NewNoteResource(Resource):
     @notes_api.expect(req_fields)
     @notes_api.doc(
         security="apikey",
-        responses={
-            201: RESPONSE_SUCCESS,
-            400: RESPONSE_BAD_REQUEST,
-            403: RESPONSE_USER_UNAUTHORIZED})
+        responses=get_response_codes(201, 400, 401, 403, 422))
     def put(self) -> Response:
         """Create a new note.
 
@@ -307,7 +297,7 @@ class ExistingNoteResource(Resource):
     @jwt_required()
     @notes_api.doc(
         security="apikey",
-        responses={200: RESPONSE_SUCCESS, 403: RESPONSE_USER_UNAUTHORIZED})
+        responses=get_response_codes(200, 401, 403, 422))
     def get(self, note_id: int) -> Response:
         """Get an existing note's data.
 
@@ -334,10 +324,7 @@ class ExistingNoteResource(Resource):
     @notes_api.expect(req_fields)
     @notes_api.doc(
         security="apikey",
-        responses={
-            200: RESPONSE_SUCCESS,
-            400: RESPONSE_BAD_REQUEST,
-            403: RESPONSE_USER_UNAUTHORIZED})
+        responses=get_response_codes(200, 400, 401, 403, 422))
     def put(self, note_id: int) -> Response:
         """Edit an existing note.
 
@@ -422,7 +409,7 @@ class ExistingNoteResource(Resource):
     @jwt_required()
     @notes_api.doc(
         security="apikey",
-        responses={200: RESPONSE_SUCCESS, 403: RESPONSE_USER_UNAUTHORIZED})
+        responses=get_response_codes(200, 401, 403, 422))
     def delete(self, note_id: int) -> Response:
         """Delete an existing note.
 

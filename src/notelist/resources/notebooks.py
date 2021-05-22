@@ -8,8 +8,7 @@ from notelist.apis import notebooks_api
 from notelist.models.notebooks import Notebook
 from notelist.schemas.notebooks import NotebookSchema
 from notelist.resources import (
-    Response, RESPONSE_SUCCESS, RESPONSE_BAD_REQUEST,
-    RESPONSE_USER_UNAUTHORIZED, VALIDATION_ERROR, USER_UNAUTHORIZED,
+    Response, VALIDATION_ERROR, USER_UNAUTHORIZED, get_response_codes,
     get_response_data)
 
 
@@ -30,7 +29,9 @@ class NotebookListResource(Resource):
     """Notebook list resource."""
 
     @jwt_required()
-    @notebooks_api.doc(security="apikey", responses={201: RESPONSE_SUCCESS})
+    @notebooks_api.doc(
+        security="apikey",
+        responses=get_response_codes(200, 401, 422))
     def get(self) -> Response:
         """Get all the notebooks of the request user.
 
@@ -97,7 +98,7 @@ class NewNotebookResource(Resource):
     @notebooks_api.expect(req_fields)
     @notebooks_api.doc(
         security="apikey",
-        responses={201: RESPONSE_SUCCESS, 400: RESPONSE_BAD_REQUEST})
+        responses=get_response_codes(201, 400, 401, 422))
     def post(self) -> Response:
         """Create a new notebook.
 
@@ -112,7 +113,7 @@ class NewNotebookResource(Resource):
     @notebooks_api.expect(req_fields)
     @notebooks_api.doc(
         security="apikey",
-        responses={201: RESPONSE_SUCCESS, 400: RESPONSE_BAD_REQUEST})
+        responses=get_response_codes(201, 400, 401, 422))
     def put(self) -> Response:
         """Create a new notebook.
 
@@ -139,7 +140,7 @@ class ExistingNotebookResource(Resource):
     @jwt_required()
     @notebooks_api.doc(
         security="apikey",
-        responses={200: RESPONSE_SUCCESS, 403: RESPONSE_USER_UNAUTHORIZED})
+        responses=get_response_codes(200, 401, 403, 422))
     def get(self, notebook_id: int) -> Response:
         """Get an existing notebook's data.
 
@@ -167,10 +168,7 @@ class ExistingNotebookResource(Resource):
     @notebooks_api.expect(req_fields)
     @notebooks_api.doc(
         security="apikey",
-        responses={
-            200: RESPONSE_SUCCESS,
-            400: RESPONSE_BAD_REQUEST,
-            403: RESPONSE_USER_UNAUTHORIZED})
+        responses=get_response_codes(200, 400, 401, 403, 422))
     def put(self, notebook_id: int) -> Response:
         """Edit an existing notebook.
 
@@ -231,7 +229,7 @@ class ExistingNotebookResource(Resource):
     @jwt_required(fresh=True)
     @notebooks_api.doc(
         security="apikey",
-        responses={200: RESPONSE_SUCCESS, 403: RESPONSE_USER_UNAUTHORIZED})
+        responses=get_response_codes(200, 401, 403, 422))
     def delete(self, notebook_id: int) -> Response:
         """Delete an existing notebook.
 

@@ -12,13 +12,13 @@ from notelist.apis import auth_api, users_api
 from notelist.models.users import User
 from notelist.schemas.users import UserSchema
 from notelist.resources import (
-    Response, RESPONSE_SUCCESS, RESPONSE_BAD_REQUEST,
-    RESPONSE_INVALID_CREDENTIALS, RESPONSE_USER_UNAUTHORIZED, VALIDATION_ERROR,
-    USER_UNAUTHORIZED, RESPONSE_NOT_FOUND, get_response_data)
+    Response, VALIDATION_ERROR, USER_UNAUTHORIZED, get_response_data,
+    get_response_codes)
 from notelist import tools
 
 
 USER_LOGGED_IN = "User logged in."
+TOKEN_REFRESHED = "Token refreshed."
 USER_LOGGED_OUT = "User logged out."
 USERS_RETRIEVED_1 = "1 user retrieved."
 USERS_RETRIEVED_N = "{} users retrieved."
@@ -47,12 +47,13 @@ class LoginResource(Resource):
 
     @auth_api.expect(fields)
     @auth_api.doc(
-        responses={
-            200: RESPONSE_SUCCESS,
-            400: RESPONSE_BAD_REQUEST,
-            401: RESPONSE_INVALID_CREDENTIALS})
+        responses=get_response_codes(200, 400, 401))
     def post(self) -> Response:
-        """Log in as an existing user.
+        """Log in.
+
+        This operation returns a fresh access token and a refresh token. Any of
+        the tokens can be provided to an API request in the following header:
+            "Authorization" = "Bearer access_token"
 
         :return: Dictionary with the message, the access token and the refresh
         token.
@@ -96,7 +97,9 @@ class TokenRefreshResource(Resource):
     """Token refresh resource."""
 
     @jwt_required(refresh=True)
-    @auth_api.doc(security="apikey", responses={200: RESPONSE_SUCCESS})
+    @auth_api.doc(
+        security="apikey",
+        responses=get_response_codes(200, 401, 422))
     def get(self) -> Response:
         """Get a new, not fresh, access token.
 
@@ -112,7 +115,7 @@ class TokenRefreshResource(Resource):
         # Create a new, not fresh, access token
         result = {"access_token": create_access_token(uid, fresh=False)}
 
-        return get_response_data(USER_LOGGED_IN, result), 200
+        return get_response_data(TOKEN_REFRESHED, result), 200
 
 
 @auth_api.route("/logout")
@@ -120,11 +123,14 @@ class LogoutResource(Resource):
     """User logout resource."""
 
     @jwt_required()
-    @auth_api.doc(security="apikey", responses={200: RESPONSE_SUCCESS})
+    @auth_api.doc(
+        security="apikey",
+        responses=get_response_codes(200, 401, 422))
     def get(self) -> Response:
-        """Log out a user by revoking the request JWT.
+        """Log out.
 
-        This operation requires the following header with an access token:
+        This operation revokes an access token provided in the request. This
+        operation requires the following header with the access token:
             "Authorization" = "Bearer access_token"
 
         :return: Dictionary with the message.
@@ -146,9 +152,7 @@ class UserListResource(Resource):
     @jwt_required()
     @users_api.doc(
         security="apikey",
-        responses={
-            200: RESPONSE_SUCCESS,
-            403: RESPONSE_USER_UNAUTHORIZED})
+        responses=get_response_codes(200, 401, 403, 422))
     def get(self) -> Response:
         """Get all existing users.
 
@@ -228,10 +232,7 @@ class NewUserResource(Resource):
     @users_api.expect(req_fields)
     @users_api.doc(
         security="apikey",
-        responses={
-            201: RESPONSE_SUCCESS,
-            400: RESPONSE_BAD_REQUEST,
-            403: RESPONSE_USER_UNAUTHORIZED})
+        responses=get_response_codes(201, 400, 401, 403, 422))
     def post(self) -> Response:
         """Create a new user.
 
@@ -246,10 +247,7 @@ class NewUserResource(Resource):
     @users_api.expect(req_fields)
     @users_api.doc(
         security="apikey",
-        responses={
-            201: RESPONSE_SUCCESS,
-            400: RESPONSE_BAD_REQUEST,
-            403: RESPONSE_USER_UNAUTHORIZED})
+        responses=get_response_codes(201, 400, 401, 403, 422))
     def put(self) -> Response:
         """Create a new user.
 
@@ -282,10 +280,7 @@ class ExistingUserResource(Resource):
     @jwt_required()
     @users_api.doc(
         security="apikey",
-        responses={
-            200: RESPONSE_SUCCESS,
-            403: RESPONSE_USER_UNAUTHORIZED,
-            404: RESPONSE_NOT_FOUND})
+        responses=get_response_codes(200, 401, 403, 404, 422))
     def get(self, user_id: int) -> Response:
         """Get an existing user's data.
 
@@ -319,11 +314,7 @@ class ExistingUserResource(Resource):
     @users_api.expect(req_fields)
     @users_api.doc(
         security="apikey",
-        responses={
-            200: RESPONSE_SUCCESS,
-            400: RESPONSE_BAD_REQUEST,
-            403: RESPONSE_USER_UNAUTHORIZED,
-            404: RESPONSE_NOT_FOUND})
+        responses=get_response_codes(200, 400, 401, 403, 404, 422))
     def put(self, user_id: int) -> Response:
         """Edit an existing user.
 
@@ -422,10 +413,7 @@ class ExistingUserResource(Resource):
     @jwt_required(fresh=True)
     @users_api.doc(
         security="apikey",
-        responses={
-            200: RESPONSE_SUCCESS,
-            403: RESPONSE_USER_UNAUTHORIZED,
-            404: RESPONSE_NOT_FOUND})
+        responses=get_response_codes(200, 401, 403, 404, 422))
     def delete(self, user_id: int) -> Response:
         """Delete an existing user.
 
