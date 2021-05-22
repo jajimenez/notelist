@@ -173,7 +173,7 @@ class NewNoteResource(Resource):
         return round(datetime.now().timestamp())
 
     def _select_tag(self, notebook_id: int, name: str) -> Tag:
-        """Returns a copy of a given request data tag if the tag doesn't exist
+        """Return a copy of a given request data tag if the tag doesn't exist
         in the notebook or the existing tag.
 
         :notebook_id: Notebook ID.
@@ -284,7 +284,7 @@ class ExistingNoteResource(Resource):
         return round(datetime.now().timestamp())
 
     def _select_tag(self, notebook_id: int, name: str) -> Tag:
-        """Returns a copy of a given request data tag if the tag doesn't exist
+        """Return a copy of a given request data tag if the tag doesn't exist
         in the notebook or the existing tag.
 
         :notebook_id: Notebook ID.
