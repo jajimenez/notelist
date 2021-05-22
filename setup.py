@@ -41,7 +41,4 @@ if __name__ == "__main__":
             "notelist.migrations": "src/notelist/migrations",
             "notelist.migrations.versions":
                 "src/notelist/migrations/versions"},
-        package_data={
-            "notelist": ["templates/*.html"],
-            "notelist.migrations": ["README", "*.ini", "*.mako"]}
-    )
+        package_data={"notelist.migrations": ["README", "*.ini", "*.mako"]})
