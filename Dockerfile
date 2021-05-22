@@ -5,8 +5,9 @@
 #
 # Run a container in the background from the image:
 #     docker container run --name notelist -d -p 5000:5000 \
-#         -e NOTELIST_DB_URI=<uri> notelist
+#         -e NOTELIST_SECRET_KEY=<key> -e NOTELIST_DB_URI=<uri> notelist
 #
+#     key: Random sequence of letters and numbers (string): f34jgUsvc759fgmAFj.
 #     uri: Database URI (string). Example: sqlite:////usr/src/notelist.db
 #
 # Create all the tables of the database for the running container:
@@ -45,9 +46,11 @@ RUN pip install --no-cache-dir wheel psycopg2==2.8.6 && \
 # Copy Notelist source files
 COPY . .
 
-# Generate Notelist wheel package, install it and delete source files.
+# Generate Notelist wheel package, install it, install production Python
+# libraries and delete Notelist source files.
 RUN python setup.py bdist_wheel && \
     pip install --no-cache-dir ./dist/notelist-* && \
+    pip install -r requirements_pro.txt && \
     rm -rf *
 
 # Set Flask environment variable
@@ -68,7 +71,9 @@ WORKDIR /
 
 # Run the Gunicorn WSGI web server for Notelist on port 5000 with 4 worker
 # processes.
+ENV ACCESS_LOG=/usr/src/access.log
+ENV ERROR_LOG=/usr/src/error.log
+
 EXPOSE 5000
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "--access-logfile", \
-    "/usr/src/access.log", "--error-logfile", "/usr/src/error.log", \
-    "notelist:app"]
+CMD gunicorn -w 4 -b 0.0.0.0:5000 --access-logfile $ACCESS_LOG \
+    --error-logfile $ERROR_LOG notelist:app
