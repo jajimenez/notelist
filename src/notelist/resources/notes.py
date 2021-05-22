@@ -164,7 +164,7 @@ class NewNoteResource(Resource):
     req_fields = notes_api.model(
         "NewNote", {
             "notebook_id": fields.Integer(required=True),
-            "active": fields.String(default=True),
+            "active": fields.Boolean(default=True),
             "title": fields.String(default=None),
             "body": fields.String(default=None),
             "tags": fields.List(fields.String, default=[])})
@@ -281,7 +281,7 @@ class ExistingNoteResource(Resource):
     # schemas" module.
     req_fields = notes_api.model(
         "ExistingNote", {
-            "active": fields.String,
+            "active": fields.Boolean,
             "title": fields.String,
             "body": fields.String,
             "tags": fields.List(fields.String)})
