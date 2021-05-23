@@ -10,8 +10,8 @@ Notelist is a note taking REST API that can be used to manage **notebooks**,
 ## How to install
 
 It's recommended to install Notelist in a Python **virtual environment**. To
-create a virtual environment and activate it (in Linux or Mac OS), run the
-following commands (with Python 3):
+create a virtual environment and activate it (in Linux or Mac OS), you can use
+the `venv` Python module and the `source` command:
 
 ```
 python -m venv env
@@ -168,4 +168,100 @@ Create an administrator user:
 
 ```
 docker container exec -it notelist-api create-user admin somepassword 1 1
-````
+```
+
+## How to run the unit tests
+
+To run all the unit tests, run the following command from the project's root
+directory:
+
+```
+python -m unittest discover test
+```
+
+## Usage examples
+
+The following are some examples of how to make requests to the Notelist API
+(assuming it's running on our local computer and listening on port 5000) from
+Python code using the external Python library `requests`. You can install this
+library from PyPI with PIP:
+
+```
+pip install requests
+```
+
+Log in:
+
+```python
+import requests
+
+data = {"username": "someuser", "password": "somepassword"}
+r = requests.post("http://localhost:5000/login", json=data)
+result = r.json()["result"]
+
+access_token = result["access_token"]
+refresh_token = result["refresh_token"]
+```
+
+Create a notebook:
+
+```python
+headers = {"Authorization": f"Bearer {access_token}"}
+data = {"name": "Work"}
+r = requests.post("http://localhost:5000/notebook", headers=headers, json=data)
+
+notebook_id = r.json()["result"]
+```
+
+Create a note:
+
+```python
+# By default, new notes are "active" (i.e. their "active" property is True).
+data = {
+  "notebook_id": notebook_id,
+  "title": "Test note",
+  "body": "This is a test note.",
+  "tags": ["Test", "Important"]}
+
+r = requests.post("http://localhost:5000/note", headers=headers, json=data)
+note_id = r.json()["result"]
+```
+
+Get all the notebook's notes by a given filter:
+
+```python
+data = {
+  "active": True,                 # Only active notes
+  "tags": ["Test", "Important"],  # Only notes that have any of these tags
+  "no_tags": True,                # Include notes without tags as well
+  "last_mod": True,               # Order notes by Last Modified timestamp
+  "asc": True}                    # Ascending order
+
+r = requests.post(f"http://localhost:5000/notes/{notebook_id}", headers=headers, json=data)
+notes = r.json()["result"]
+```
+
+Search for notebooks, tags and notes that match a given text:
+
+```python
+# Search for items that match "test"
+r = requests.get("http://localhost:5000/search/test", headers=headers)
+result = r.json()["result"]
+
+notebooks = result["notebooks"]
+tags = result["tags"]
+notes = result["notes"]
+```
+
+Archive a note:
+
+```python
+data = {"active": False}
+r = requests.put(f"http://localhost:5000/note/{note_id}", headers=headers, json=data)
+```
+
+Log out:
+
+```
+r = requests.get("http://localhost:5000/logout", headers=headers)
+```
