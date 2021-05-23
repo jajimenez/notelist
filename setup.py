@@ -8,10 +8,6 @@ if __name__ == "__main__":
     with open("README.md") as f:
         long_desc = f.read()
 
-    # Requirements
-    with open("requirements.txt") as f:
-        install_req = [i.replace("\n", "") for i in f.readlines()]
-
     # Setup
     st.setup(
         name="notelist",
@@ -28,7 +24,14 @@ if __name__ == "__main__":
             "Operating System :: OS Independent",
             "License :: OSI Approved :: MIT License"],
         python_requires=">=3.9.2",
-        install_requires=install_req,
+        install_requires=[
+            "Flask==1.1.2",
+            "flask-restx==0.4.0",
+            "Flask-JWT-Extended==4.1.0",
+            "Flask-SQLAlchemy==2.5.1",
+            "Flask-Migrate==2.7.0",
+            "flask-marshmallow==0.14.0",
+            "marshmallow-sqlalchemy==0.24.3"],
         packages=[
             "notelist", "notelist.models", "notelist.schemas",
             "notelist.resources", "notelist.migrations",
