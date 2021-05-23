@@ -7,15 +7,15 @@
 #     docker container run --name notelist -d -p 5000:5000 \
 #         -e NOTELIST_SECRET_KEY=<key> -e NOTELIST_DB_URI=<uri> notelist
 #
-#     key: Random sequence of letters and numbers (string): f34jgUsvc759fgmAFj.
-#     uri: Database URI (string). Example: sqlite:////usr/src/notelist.db
+#     key: Random sequence of characters (string): "f34jgU#vcfk6&(759fg!AFj".
+#     uri: Database URI (string). E.g.: "sqlite:////usr/src/notelist.db".
 #
 # Create all the tables of the database for the running container:
 #     docker container exec -it notelist upgrade-db
 #
 # Create an application user for the running container:
 #     docker container exec -it notelist create-user <username> <password> \
-#         <admin> <enabled> <name> <email>
+#         <admin> <enabled> <full-name> <e-mail>
 #
 #     username: Username (string).
 #     password: Password (string).
@@ -36,12 +36,9 @@ RUN apt-get update && \
     apt-get install -y build-essential python3-dev libpq-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# Build and install the Wheel and Psycopg2 Python packages, uninstall unneeded
-# APT packages and delete APT temporary files.
-RUN pip install --no-cache-dir wheel psycopg2==2.8.6 && \
-    apt-get purge -y build-essential python3-dev libpq-dev && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
+# Install the Wheel Python package and build and install the Psycopg2 Python
+# package.
+RUN pip install --no-cache-dir wheel psycopg2==2.8.6
 
 # Copy Notelist source files
 COPY . .
