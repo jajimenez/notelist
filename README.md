@@ -262,6 +262,6 @@ r = requests.put(f"http://localhost:5000/note/{note_id}", headers=headers, json=
 
 Log out:
 
-```
+```python
 r = requests.get("http://localhost:5000/logout", headers=headers)
 ```
