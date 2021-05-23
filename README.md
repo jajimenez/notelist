@@ -66,8 +66,7 @@ flask db upgrade -d $(flask path migrations)
 To create a user:
 
 ```
-flask user create <username> <password> <admin> <enabled> <full-name> \
-<e-mail> 
+flask user create <username> <password> <admin> <enabled> <full-name> <e-mail> 
 ```
 
 - admin = `0` (default) or `1`
@@ -102,8 +101,7 @@ downloads the Docker image from the Docker Hub repository (if the image doesn't
 exist yet locally) and runs a container from the image:
 
 ```
-docker container run --name notelist -d -p 5000:5000 \
--e NOTELIST_SECRET_KEY=<key> -e NOTELIST_DB_URI=<uri> notelist
+docker container run --name notelist -d -p 5000:5000 -e NOTELIST_SECRET_KEY=<key> -e NOTELIST_DB_URI=<uri> notelist
 ```
 
 Once the container is running, we can create the database tables with this
@@ -116,8 +114,7 @@ docker container exec -it notelist upgrade-db
 To create an administrator user:
 
 ```
-docker container exec -it notelist create-user <username> <password> \
-<admin> <enabled> <name> <email>
+docker container exec -it notelist create-user <username> <password> <admin> <enabled> <name> <email>
 ```
 
 - admin: `0` (default) or `1`
