@@ -102,7 +102,7 @@ downloads the Docker image from the Docker Hub repository (if the image doesn't
 exist yet locally) and runs a container from the image:
 
 ```
-docker container run --name notelist -d -p 5000:5000 -e NOTELIST_SECRET_KEY=<key> -e NOTELIST_DB_URI=<uri> notelist
+docker container run --name notelist -d -p 5000:5000 -e NOTELIST_SECRET_KEY=<key> -e NOTELIST_DB_URI=<uri> jajim/notelist:0.1.0
 ```
 
 Once the container is running, we can create the database tables with this
@@ -133,7 +133,7 @@ PostgreSQL container to store the Notelist data. Create a file named
 version: "3.9"
 services:
   notelist-api:
-    image: notelist:0.1.0
+    image: jajim/notelist:0.1.0
     container_name: notelist-api
     ports:
       - "5000:5000"
@@ -152,7 +152,7 @@ services:
       - POSTGRES_DB=notelist
 ```
 
-Run the containers:
+Run the containers from the same directory of the `docker-compose.yml` file:
 
 ```
 docker compose up -d
