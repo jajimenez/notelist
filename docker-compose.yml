@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  notelist-api:
+    image: notelist
+    build: .
+    container_name: notelist-api
+    ports:
+      - "5000:5000"
+    environment:
+      - NOTELIST_SECRET_KEY=aSecretKey
+      - NOTELIST_DB_URI=postgresql://notelist:somepw@notelist-db:5432/notelist
+
+  notelist-db:
+    image: postgres:13.3
+    container_name: notelist-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=notelist
+      - POSTGRES_PASSWORD=somepw
+      - POSTGRES_DB=notelist
