@@ -18,7 +18,8 @@ python -m venv env
 source env/bin/activate
 ```
 
-Then Notelist can be downloaded from **PyPI** and installed with **PIP**:
+Then Notelist can be downloaded from the **PyPI** repository and installed with
+**PIP**:
 
 ```
 pip install notelist
@@ -38,7 +39,7 @@ To build and install the **Source** package:
 
 ```
 python setup.py sdist
-pip install ./dist/notelist*.whl
+pip install ./dist/notelist*.tar.gz
 ```
 
 ## How to run
