@@ -35,7 +35,7 @@ class NoteListResource(Resource):
     # for the root route ("/"). It shouldn't be confused with the database
     # models of the "notelist.models" module or the schemas of the "notelist.
     # schemas" module.
-    fields = notes_api.model(
+    req_fields = notes_api.model(
         "Filter", {
             "active": fields.Boolean,
             "tags": fields.List(fields.String, default=[]),
@@ -44,6 +44,7 @@ class NoteListResource(Resource):
             "asc": fields.Boolean})
 
     @jwt_required()
+    @notes_api.expect(req_fields)
     @notes_api.doc(
         security="apikey",
         responses=get_response_codes(200, 400, 401, 403, 422))
