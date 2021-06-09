@@ -1,6 +1,5 @@
 """Module with the database tag models."""
 
-from typing import List
 from notelist.db import db
 
 

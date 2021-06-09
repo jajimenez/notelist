@@ -1,20 +1,19 @@
 """Module with the user resources."""
 
-import hashlib as hl
-
 from flask import request
 from werkzeug.security import safe_str_cmp
 from flask_restx import Resource, fields
 from flask_jwt_extended import (
     jwt_required, create_access_token, create_refresh_token, get_jwt,
     get_jwt_identity)
+
+from notelist import tools
 from notelist.apis import auth_api, users_api
 from notelist.models.users import User
 from notelist.schemas.users import UserSchema
 from notelist.resources import (
     Response, VALIDATION_ERROR, USER_UNAUTHORIZED, get_response_data,
     get_response_codes)
-from notelist import tools
 
 
 USER_LOGGED_IN = "User logged in."

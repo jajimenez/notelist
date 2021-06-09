@@ -1,7 +1,5 @@
 """Module with the note schemas."""
 
-from typing import List
-
 from marshmallow import ValidationError
 from flask_marshmallow.fields import fields
 
@@ -31,11 +29,11 @@ class NoteSchema(ma.SQLAlchemyAutoSchema):
 
     tags = fields.Method("dump_tags", "load_tags")
 
-    def dump_tags(self, obj: Note) -> List[str]:
+    def dump_tags(self, obj: Note) -> list[str]:
         """Serialize the note's tags."""
         return sorted([t.name.strip() for t in obj.tags])
 
-    def load_tags(self, val: List[str]) -> List[Tag]:
+    def load_tags(self, val: list[str]) -> list[Tag]:
         """Deserialize the note's tags."""
         if (
             type(val) != list or

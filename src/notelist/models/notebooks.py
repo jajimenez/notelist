@@ -1,6 +1,5 @@
 """Module with the database notebook models."""
 
-from typing import List
 from notelist.db import db
 
 
@@ -22,7 +21,7 @@ class Notebook(db.Model):
         db.UniqueConstraint(user_id, name, name="un_notebooks_uid_name"),)
 
     @classmethod
-    def get_all(cls, user_id: int) -> List["Notebook"]:
+    def get_all(cls, user_id: int) -> list["Notebook"]:
         """Return all the notebooks of a user.
 
         :param user_id: User ID.

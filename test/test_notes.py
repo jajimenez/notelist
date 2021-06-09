@@ -2,13 +2,13 @@
 
 import unittest
 import time
-from typing import Tuple, List, Dict, Optional, Union
+from typing import Optional, Union
 
 import common
 
 
-TagSet = List[Dict[str, str]]
-NoteSet = List[Dict[str, Union[str, bool, List[str]]]]
+TagSet = list[dict[str, str]]
+NoteSet = list[dict[str, Union[str, bool, list[str]]]]
 
 
 def _get_tags(notebook_id: str) -> TagSet:
@@ -56,7 +56,7 @@ def _get_notes(notebook_id: str, tags: TagSet) -> NoteSet:
     }]
 
 
-def _login(client, username: str, password: str) -> Dict[str, str]:
+def _login(client, username: str, password: str) -> dict[str, str]:
     """Log in.
 
     :param client: Test API client.
@@ -71,7 +71,7 @@ def _login(client, username: str, password: str) -> Dict[str, str]:
     return {"Authorization": f"Bearer {access_token}"}
 
 
-def _create_notebook(client, headers: Dict[str, str]) -> int:
+def _create_notebook(client, headers: dict[str, str]) -> int:
     """Create a notebook.
 
     :param client: Test API client.
@@ -84,7 +84,7 @@ def _create_notebook(client, headers: Dict[str, str]) -> int:
     return r.json["result"]
 
 
-def _create_tags(client, headers: Dict[str, str], tags: TagSet):
+def _create_tags(client, headers: dict[str, str], tags: TagSet):
     """Create tags.
 
     :param client: Test API client.
@@ -97,9 +97,9 @@ def _create_tags(client, headers: Dict[str, str], tags: TagSet):
 
 
 def _create_notes(
-    client, headers: Dict[str, str], notes: NoteSet,
+    client, headers: dict[str, str], notes: NoteSet,
     delay: Optional[int] = None
-) -> List[int]:
+) -> list[int]:
     """Create notes.
 
     :param client: Test API client.

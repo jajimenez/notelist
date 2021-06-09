@@ -1,6 +1,5 @@
 """Module with the database user models."""
 
-from typing import List
 from notelist.db import db
 
 
@@ -24,7 +23,7 @@ class User(db.Model):
         "Notebook", backref="user", cascade_backrefs="all, delete", lazy=True)
 
     @classmethod
-    def get_all(cls) -> List["User"]:
+    def get_all(cls) -> list["User"]:
         """Return all the users.
 
         :return: List of `User` instances.

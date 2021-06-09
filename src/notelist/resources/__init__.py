@@ -1,10 +1,10 @@
 """Package with the resources."""
 
-from typing import Optional, Union, Any, List, Dict
+from typing import Optional, Union
 
 
-Result = Optional[Union[Dict, List[Dict]]]
-Response = Dict[str, Union[str, Dict]]
+Result = Optional[Union[dict, list[dict]]]
+Response = dict[str, Union[str, dict]]
 
 # Codes 401 and 422 can be returned in all the endpoints that have user
 # authentication.
@@ -22,7 +22,7 @@ OPERATION_NOT_ALLOWED = "Operation not allowed."
 USER_UNAUTHORIZED = "User unauthorized."
 
 
-def get_response_codes(*codes: int) -> Dict[int, str]:
+def get_response_codes(*codes: int) -> dict[int, str]:
     """Return a dictionary contaning HTTP response status codes and names.
 
     :param codes: Status codes.

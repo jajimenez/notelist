@@ -5,7 +5,7 @@ Notelist is a note taking REST API.
 
 import os
 from os.path import dirname, join
-from typing import Optional, Union, List, Dict
+from typing import Optional, Union
 
 import click
 from flask import Flask, Blueprint, render_template
@@ -40,8 +40,8 @@ API_NAME = "Notelist"
 API_DESC = "Note taking REST API"
 
 # Typing types
-ValErrorData = Dict[str, List[str]]
-JwtData = Dict[str, Union[int, str]]
+ValErrorData = dict[str, list[str]]
+JwtData = dict[str, Union[int, str]]
 
 # Environment variables
 SECRET_KEY = "NOTELIST_SECRET_KEY"
@@ -210,7 +210,7 @@ def blocklist_loader(header: JwtData, payload: JwtData) -> bool:
 
 
 @jwt.additional_claims_loader
-def additional_claims_loader(identity) -> Dict[str, bool]:
+def additional_claims_loader(identity) -> dict[str, bool]:
     """Add additional information to the JWT payload when creating a JWT.
 
     :param identity: JWT identity. In this case, it's the user ID.

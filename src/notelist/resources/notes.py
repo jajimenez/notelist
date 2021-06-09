@@ -1,6 +1,7 @@
 """Module with the note resources."""
 
 from datetime import datetime
+
 from flask import request
 from flask_restx import Resource, fields
 from flask_jwt_extended import jwt_required, get_jwt

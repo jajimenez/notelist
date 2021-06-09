@@ -1,6 +1,6 @@
 """Module with the database note models."""
 
-from typing import List, Optional
+from typing import Optional
 from sqlalchemy import desc
 
 from notelist.db import db
@@ -43,9 +43,9 @@ class Note(db.Model):
     @classmethod
     def get_by_filter(
         cls, notebook_id: int, active: Optional[bool] = None,
-        tags: Optional[List[str]] = None, no_tags: bool = False,
+        tags: Optional[list[str]] = None, no_tags: bool = False,
         last_mod: bool = False, asc: bool = True
-    ) -> List["Note"]:
+    ) -> list["Note"]:
         """Return all the notes of a notebook by a filter.
 
         :param notebook_id: Notebook ID.
