@@ -1,6 +1,7 @@
 # Notelist
-Notelist is a tag based note taking REST API that can be used to manage **notebooks**,
-**tags** and **notes**. This API is based on the Flask framework.
+Notelist is a tag based note taking REST API that can be used to manage
+**notebooks**, **tags** and **notes**. This API is written in Python and is
+based on the Flask framework.
 
 #### Project information:
 - Version: 0.1.1
@@ -102,7 +103,7 @@ downloads the Docker image from the Docker Hub repository (if the image doesn't
 exist yet locally) and runs a container from the image:
 
 ```
-docker container run --name notelist -d -p 5000:5000 -e NOTELIST_SECRET_KEY=<key> -e NOTELIST_DB_URI=<uri> jajim/notelist:0.1.0
+docker container run --name notelist -d -p 5000:5000 -e NOTELIST_SECRET_KEY=<key> -e NOTELIST_DB_URI=<uri> jajim/notelist:0.1.1
 ```
 
 Once the container is running, we can create the database tables with this
@@ -133,7 +134,7 @@ PostgreSQL container to store the Notelist data. Create a file named
 version: "3.9"
 services:
   notelist-api:
-    image: jajim/notelist:0.1.0
+    image: jajim/notelist:0.1.1
     container_name: notelist-api
     ports:
       - "5000:5000"
