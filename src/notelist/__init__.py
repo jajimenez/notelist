@@ -8,7 +8,7 @@ from os.path import dirname, join
 from typing import Optional, Union
 
 import click
-from flask import Flask, Blueprint, render_template
+from flask import Flask, Blueprint
 from flask.cli import AppGroup
 from flask_restx import Api
 from flask_jwt_extended import JWTManager
