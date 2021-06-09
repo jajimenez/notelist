@@ -34,10 +34,10 @@ from notelist.resources.search import SearchResource
 from notelist.models.users import User
 
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 API_NAME = "Notelist"
-API_DESC = "Note taking REST API"
+API_DESC = "Tag based note taking REST API"
 
 # Typing types
 ValErrorData = dict[str, list[str]]
