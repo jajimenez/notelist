@@ -1,5 +1,6 @@
 0.1.1 - 09 Jun 2021
 -------------------
+* Notebook deletion fresh access token restriction removed
 * Method documentation fix
 * Typing improvement
 
