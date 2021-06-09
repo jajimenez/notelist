@@ -25,9 +25,9 @@ Then Notelist can be downloaded from the **PyPI** repository and installed with
 pip install notelist
 ```
 
-Alternatively, you can build the **Wheel** or the **Source** package from the
-source code and install any of the packages. To build and install the **Wheel**
-package (preferred):
+Alternatively, you can generate the **built package** or the **source archive**
+from the source code and install any of them. To generate and install the
+**built package** (preferred):
 
 ```
 pip install wheel
@@ -35,7 +35,7 @@ python setup.py bdist_wheel
 pip install ./dist/notelist*.whl
 ```
 
-To build and install the **Source** package:
+To generate and install the **source archive**:
 
 ```
 python setup.py sdist
