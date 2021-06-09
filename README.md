@@ -1,10 +1,10 @@
 # Notelist
-Notelist is a note taking REST API that can be used to manage **notebooks**,
+Notelist is a tag based note taking REST API that can be used to manage **notebooks**,
 **tags** and **notes**. This API is based on the Flask framework.
 
 #### Project information:
-- Version: 0.1.0<br>
-- Author: Jose A. Jimenez (jajimenezcarm@gmail.com)<br>
+- Version: 0.1.1
+- Author: Jose A. Jimenez (jajimenezcarm@gmail.com)
 - License: MIT License
 
 ## How to install
