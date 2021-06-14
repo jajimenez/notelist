@@ -1,3 +1,7 @@
+0.1.2 - Development
+-------------------
+* Autoincrement integer primary keys changed to UUID primary keys
+
 0.1.1 - 09 Jun 2021
 -------------------
 * Notebook deletion fresh access token restriction removed

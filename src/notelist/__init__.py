@@ -1,6 +1,8 @@
 """Notelist package.
 
-Notelist is a note taking REST API.
+Notelist is a tag based note taking REST API that can be used to manage
+notebooks, tags and notes. Notelist is written in Python and is based on the
+Flask framework.
 """
 
 import os
@@ -21,6 +23,9 @@ from notelist.ma import ma
 from notelist.apis import (
     auth_api, users_api, notebooks_api, tags_api, notes_api, search_api)
 from notelist.resources import get_response_data, Response
+
+# We need to import the resource classes, even if we don't use them in this
+# module, in order to enable them.
 from notelist.resources.users import (
     LoginResource, TokenRefreshResource, LogoutResource, UserListResource,
     NewUserResource, ExistingUserResource, blocklist)
@@ -31,10 +36,11 @@ from notelist.resources.tags import (
 from notelist.resources.notes import (
     NoteListResource, NewNoteResource, ExistingNoteResource)
 from notelist.resources.search import SearchResource
+
 from notelist.models.users import User
 
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 API_NAME = "Notelist"
 API_DESC = "Tag based note taking REST API"
