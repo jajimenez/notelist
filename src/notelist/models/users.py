@@ -1,7 +1,7 @@
 """Module with the database user models."""
 
 from notelist.db import db
-from notelist.tools import generate_uuid
+from notelist.tools import generate_uuid, get_current_ts
 
 
 MIN_PASSWORD = 8
@@ -22,6 +22,9 @@ class User(db.Model):
     email = db.Column(db.String(100), nullable=True)
     notebooks = db.relationship(
         "Notebook", backref="user", cascade_backrefs="all, delete", lazy=True)
+    created_ts = db.Column(db.Integer, nullable=False, default=get_current_ts)
+    last_modified_ts = db.Column(
+        db.Integer, nullable=False, default=get_current_ts)
 
     @classmethod
     def get_all(cls) -> list["User"]:

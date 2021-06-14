@@ -147,9 +147,11 @@ class NotebookTestCase(common.BaseTestCase):
         self.assertEqual(type(notebook), dict)
 
         # Check notebook
-        self.assertEqual(len(notebook), 2)
+        self.assertEqual(len(notebook), 4)
         self.assertIn("id", notebook)
         self.assertIn("name", notebook)
+        self.assertIn("created_ts", notebook)
+        self.assertIn("last_modified_ts", notebook)
         self.assertEqual(notebook["id"], notebook_id)
         self.assertEqual(notebook["name"], n["name"])
 
@@ -437,9 +439,11 @@ class NotebookTestCase(common.BaseTestCase):
         notebook = r.json["result"]
 
         # Check data
-        self.assertEqual(len(notebook), 2)
+        self.assertEqual(len(notebook), 4)
         self.assertIn("id", notebook)
         self.assertIn("name", notebook)
+        self.assertIn("created_ts", notebook)
+        self.assertIn("last_modified_ts", notebook)
         self.assertEqual(notebook["id"], notebook_id)
         self.assertEqual(notebook["name"], new_notebook["name"])
 

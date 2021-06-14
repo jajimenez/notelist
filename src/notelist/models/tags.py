@@ -1,7 +1,7 @@
 """Module with the database tag models."""
 
 from notelist.db import db
-from notelist.tools import generate_uuid
+from notelist.tools import generate_uuid, get_current_ts
 
 
 class Tag(db.Model):
@@ -13,9 +13,10 @@ class Tag(db.Model):
     notebook_id = db.Column(
         db.String(36), db.ForeignKey("notebooks.id"), nullable=False)
     name = db.Column(db.String(100), nullable=False)
-
-    # HTML (e.g. "#ffffff" or "ffffff")
-    color = db.Column(db.String(7), nullable=True)
+    color = db.Column(db.String(7), nullable=True)  # HTML (e.g. "#ffffff")
+    created_ts = db.Column(db.Integer, nullable=False, default=get_current_ts)
+    last_modified_ts = db.Column(
+        db.Integer, nullable=False, default=get_current_ts)
 
     # Constraint: A notebook can't have 2 or more tags with the same name
     __table_args__ = (

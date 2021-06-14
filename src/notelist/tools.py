@@ -1,6 +1,7 @@
 """Tools module."""
 
 from uuid import uuid4
+from datetime import datetime
 import hashlib as hl
 
 
@@ -10,6 +11,14 @@ def generate_uuid() -> str:
     :return: Random UUID. E.g. "2a7602ec-3198-48a7-82fb-3c39afaa0844".
     """
     return str(uuid4())
+
+
+def get_current_ts() -> int:
+    """Get current timestamp.
+
+    :return: 10-digit current timestamp in seconds. E.g. 1623706743.
+    """
+    return int(datetime.now().timestamp())
 
 
 def get_hash(text: str) -> str:

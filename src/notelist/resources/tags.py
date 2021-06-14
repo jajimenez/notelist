@@ -11,6 +11,7 @@ from notelist.schemas.tags import TagSchema
 from notelist.resources import (
     Response, VALIDATION_ERROR, USER_UNAUTHORIZED, get_response_data,
     get_response_codes)
+from notelist.tools import get_current_ts
 
 
 TAG_RETRIEVED_1 = "1 tag retrieved."
@@ -251,10 +252,8 @@ class ExistingTagResource(Resource):
         tag.name = new_tag.name
         tag.color = new_tag.color
 
-        message = TAG_UPDATED
-        code = 200
-
         # Save tag
+        tag.last_modified_ts = get_current_ts()
         tag.save()
 
         return get_response_data(TAG_UPDATED), 200

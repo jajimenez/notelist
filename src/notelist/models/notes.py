@@ -5,7 +5,7 @@ from typing import Optional
 from sqlalchemy import desc
 
 from notelist.db import db
-from notelist.tools import generate_uuid
+from notelist.tools import generate_uuid, get_current_ts
 
 
 # Many-to-Many relationship between notes and tags.
@@ -36,8 +36,9 @@ class Note(db.Model):
     active = db.Column(db.Boolean, nullable=False, default=True)
     title = db.Column(db.String(100), nullable=True)
     body = db.Column(db.String(1000), nullable=True)
-    created_ts = db.Column(db.Integer, nullable=True)
-    last_modified_ts = db.Column(db.Integer, nullable=True)
+    created_ts = db.Column(db.Integer, nullable=False, default=get_current_ts)
+    last_modified_ts = db.Column(
+        db.Integer, nullable=False, default=get_current_ts)
 
     tags = db.relationship(
         "Tag", secondary=note_tags, lazy="subquery",

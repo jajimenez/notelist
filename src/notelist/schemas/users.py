@@ -20,9 +20,10 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
 
         model = User
         fields = [
-            "id", "username", "password", "admin", "enabled", "name", "email"]
+            "id", "username", "password", "admin", "enabled", "name", "email",
+            "created_ts", "last_modified_ts"]
         load_only = ["password"]
-        dump_only = ["id"]
+        dump_only = ["id", "created_ts", "last_modified_ts"]
         ordered = True
         load_instance = True
 

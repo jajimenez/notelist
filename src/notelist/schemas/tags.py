@@ -13,6 +13,6 @@ class TagSchema(ma.SQLAlchemyAutoSchema):
         model = Tag
         include_fk = True
         load_only = ["notebook_id"]
-        dump_only = ["id"]
+        dump_only = ["id", "created_ts", "last_modified_ts"]
         ordered = True
         load_instance = True

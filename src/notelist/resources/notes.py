@@ -14,6 +14,7 @@ from notelist.schemas.notes import NoteSchema
 from notelist.resources import (
     Response, VALIDATION_ERROR, USER_UNAUTHORIZED, get_response_codes,
     get_response_data)
+from notelist.tools import get_current_ts
 
 
 NOTE_RETRIEVED_1 = "1 note retrieved."
@@ -151,14 +152,6 @@ class NoteListResource(Resource):
         return get_response_data(m, note_list_schema.dump(notes)), 200
 
 
-def _get_current_ts() -> int:
-    """Return current timestamp rounded.
-
-    :return: 10-digit integer timestamp.
-    """
-    return round(datetime.now().timestamp())
-
-
 def _select_tag(notebook_id: str, name: str) -> Tag:
     """Return a copy of a given request data tag if the tag doesn't exist in
     the notebook or the existing tag.
@@ -199,7 +192,7 @@ class NewNoteResource(Resource):
         data = request.get_json() or {}
 
         # Current timestamp
-        now = _get_current_ts()
+        # now = get_current_ts()
 
         # We validate the request data. If any of the Note model required
         # fields is missing, a "marshmallow.ValidationError" exception is
@@ -216,8 +209,8 @@ class NewNoteResource(Resource):
             return get_response_data(USER_UNAUTHORIZED), 403
 
         # Set Created and Last modified timestamps
-        note.created_ts = now
-        note.last_modified_ts = now
+        # note.created_ts = now
+        # note.last_modified_ts = now
 
         # For each request data tag, check if the tag already exists in the
         # notebook and if so, replace the request data tag by the existing tag.
@@ -384,10 +377,8 @@ class ExistingNoteResource(Resource):
         note.body = new_note.body
         note.tags = tags
 
-        # Update Last Modified timestamp
-        note.last_modified_ts = _get_current_ts()
-
         # Save note
+        note.last_modified_ts = get_current_ts()
         note.save()
 
         return get_response_data(NOTE_UPDATED), 200

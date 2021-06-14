@@ -1,8 +1,8 @@
 """v1
 
-Revision ID: fefcb2f53409
+Revision ID: 916c510752d0
 Revises: 
-Create Date: 2021-06-14 03:53:45.248193
+Create Date: 2021-06-15 00:35:37.822695
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'fefcb2f53409'
+revision = '916c510752d0'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -26,6 +26,8 @@ def upgrade():
     sa.Column('enabled', sa.Boolean(), nullable=False),
     sa.Column('name', sa.String(length=100), nullable=True),
     sa.Column('email', sa.String(length=100), nullable=True),
+    sa.Column('created_ts', sa.Integer(), nullable=False),
+    sa.Column('last_modified_ts', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('username')
     )
@@ -33,6 +35,8 @@ def upgrade():
     sa.Column('id', sa.String(length=36), nullable=False),
     sa.Column('user_id', sa.String(length=36), nullable=False),
     sa.Column('name', sa.String(length=100), nullable=False),
+    sa.Column('created_ts', sa.Integer(), nullable=False),
+    sa.Column('last_modified_ts', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('user_id', 'name', name='un_notebooks_uid_name')
@@ -43,8 +47,8 @@ def upgrade():
     sa.Column('active', sa.Boolean(), nullable=False),
     sa.Column('title', sa.String(length=100), nullable=True),
     sa.Column('body', sa.String(length=1000), nullable=True),
-    sa.Column('created_ts', sa.Integer(), nullable=True),
-    sa.Column('last_modified_ts', sa.Integer(), nullable=True),
+    sa.Column('created_ts', sa.Integer(), nullable=False),
+    sa.Column('last_modified_ts', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['notebook_id'], ['notebooks.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -53,6 +57,8 @@ def upgrade():
     sa.Column('notebook_id', sa.String(length=36), nullable=False),
     sa.Column('name', sa.String(length=100), nullable=False),
     sa.Column('color', sa.String(length=7), nullable=True),
+    sa.Column('created_ts', sa.Integer(), nullable=False),
+    sa.Column('last_modified_ts', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['notebook_id'], ['notebooks.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('notebook_id', 'name', name='un_tags_nid_name')

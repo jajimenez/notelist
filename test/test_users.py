@@ -862,12 +862,15 @@ class UserTestCase(common.BaseTestCase):
         user = r.json["result"]
 
         # Check data
-        self.assertEqual(len(user), 6)
+        self.assertEqual(len(user), 8)
 
-        for i in ("id", "username", "admin", "enabled", "name", "email"):
+        for i in (
+            "id", "username", "admin", "enabled", "name", "email",
+            "created_ts", "last_modified_ts"
+        ):
             self.assertIn(i, user)
 
-            if i not in ("id", "username"):
+            if i not in ("id", "username", "created_ts", "last_modified_ts"):
                 self.assertEqual(user[i], new_user[i])
 
         self.assertNotIn("password", user)
@@ -894,12 +897,15 @@ class UserTestCase(common.BaseTestCase):
         user = r.json["result"]
 
         # Check data
-        self.assertEqual(len(user), 6)
+        self.assertEqual(len(user), 8)
 
-        for i in ("id", "username", "admin", "enabled", "name", "email"):
+        for i in (
+            "id", "username", "admin", "enabled", "name", "email",
+            "created_ts", "last_modified_ts"
+        ):
             self.assertIn(i, user)
 
-            if i != "id":
+            if i not in ("id", "created_ts", "last_modified_ts"):
                 self.assertEqual(user[i], new_user[i])
 
         self.assertNotIn("password", user)
@@ -936,9 +942,12 @@ class UserTestCase(common.BaseTestCase):
         user = r.json["result"]
 
         # Check data
-        self.assertEqual(len(user), 6)
+        self.assertEqual(len(user), 8)
 
-        for i in ("id", "username", "admin", "enabled", "name", "email"):
+        for i in (
+            "id", "username", "admin", "enabled", "name", "email",
+            "created_ts", "last_modified_ts"
+        ):
             self.assertIn(i, user)
 
         self.assertNotIn("password", user)

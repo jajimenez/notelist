@@ -10,6 +10,7 @@ from notelist.schemas.notebooks import NotebookSchema
 from notelist.resources import (
     Response, VALIDATION_ERROR, USER_UNAUTHORIZED, get_response_codes,
     get_response_data)
+from notelist.tools import get_current_ts
 
 
 NOTEBOOK_RETRIEVED_1 = "1 notebook retrieved."
@@ -221,7 +222,8 @@ class ExistingNotebookResource(Resource):
         # Update notebook object
         notebook.name = new_notebook.name
 
-        # Save the notebook
+        # Save notebook
+        notebook.last_modified_ts = get_current_ts()
         notebook.save()
 
         return get_response_data(NOTEBOOK_UPDATED), 200

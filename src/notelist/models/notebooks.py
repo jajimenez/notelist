@@ -1,7 +1,7 @@
 """Module with the database notebook models."""
 
 from notelist.db import db
-from notelist.tools import generate_uuid
+from notelist.tools import generate_uuid, get_current_ts
 
 
 class Notebook(db.Model):
@@ -13,6 +13,10 @@ class Notebook(db.Model):
     user_id = db.Column(
         db.String(36), db.ForeignKey("users.id"), nullable=False)
     name = db.Column(db.String(100), nullable=False)
+    created_ts = db.Column(db.Integer, nullable=False, default=get_current_ts)
+    last_modified_ts = db.Column(
+        db.Integer, nullable=False, default=get_current_ts)
+
     tags = db.relationship(
         "Tag", backref="notebook", cascade_backrefs="all, delete", lazy=True)
     notes = db.relationship(

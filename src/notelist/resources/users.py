@@ -14,6 +14,7 @@ from notelist.schemas.users import UserSchema
 from notelist.resources import (
     Response, VALIDATION_ERROR, USER_UNAUTHORIZED, get_response_data,
     get_response_codes)
+from notelist.tools import get_current_ts
 
 
 USER_LOGGED_IN = "User logged in."
@@ -405,6 +406,7 @@ class ExistingUserResource(Resource):
         user.password = password if password else new_user.password
 
         # Save user
+        user.last_modified_ts = get_current_ts()
         user.save()
 
         return get_response_data(USER_UPDATED), 200

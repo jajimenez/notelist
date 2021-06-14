@@ -210,10 +210,12 @@ class TagTestCase(common.BaseTestCase):
         self.assertEqual(type(tag), dict)
 
         # Check data
-        self.assertEqual(len(tag), 3)
+        self.assertEqual(len(tag), 5)
         self.assertIn("id", tag)
         self.assertIn("name", tag)
         self.assertIn("color", tag)
+        self.assertIn("created_ts", tag)
+        self.assertIn("last_modified_ts", tag)
 
         self.assertEqual(tag["id"], tag_id)
         self.assertEqual(tag["name"], t["name"])
@@ -605,9 +607,9 @@ class TagTestCase(common.BaseTestCase):
         tag = r.json["result"]
 
         # Check tag
-        self.assertEqual(len(tag), 3)
+        self.assertEqual(len(tag), 5)
 
-        for i in ("id", "name", "color"):
+        for i in ("id", "name", "color", "created_ts", "last_modified_ts"):
             self.assertIn(i, tag)
 
         self.assertEqual(tag["id"], tag_id)
