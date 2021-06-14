@@ -1,6 +1,7 @@
 """Module with the database user models."""
 
 from notelist.db import db
+from notelist.tools import generate_uuid
 
 
 MIN_PASSWORD = 8
@@ -12,7 +13,7 @@ class User(db.Model):
 
     __tablename__ = "users"
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
     username = db.Column(db.String(100), nullable=False, unique=True)
     password = db.Column(db.String, nullable=False)
     admin = db.Column(db.Boolean, nullable=False, default=False)
@@ -28,10 +29,10 @@ class User(db.Model):
 
         :return: List of `User` instances.
         """
-        return cls.query.order_by(User.id).all()
+        return cls.query.order_by(User.username).all()
 
     @classmethod
-    def get_by_id(cls, _id: int) -> "User":
+    def get_by_id(cls, _id: str) -> "User":
         """Return a user given its ID.
 
         :param _id: User ID.

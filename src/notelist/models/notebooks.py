@@ -1,6 +1,7 @@
 """Module with the database notebook models."""
 
 from notelist.db import db
+from notelist.tools import generate_uuid
 
 
 class Notebook(db.Model):
@@ -8,8 +9,9 @@ class Notebook(db.Model):
 
     __tablename__ = "notebooks"
 
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
+    user_id = db.Column(
+        db.String(36), db.ForeignKey("users.id"), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     tags = db.relationship(
         "Tag", backref="notebook", cascade_backrefs="all, delete", lazy=True)
@@ -21,16 +23,17 @@ class Notebook(db.Model):
         db.UniqueConstraint(user_id, name, name="un_notebooks_uid_name"),)
 
     @classmethod
-    def get_all(cls, user_id: int) -> list["Notebook"]:
+    def get_all(cls, user_id: str) -> list["Notebook"]:
         """Return all the notebooks of a user.
 
         :param user_id: User ID.
         :return: List of `Notebook` instances.
         """
-        return cls.query.filter_by(user_id=user_id).order_by(Notebook.id).all()
+        return (
+            cls.query.filter_by(user_id=user_id).order_by(Notebook.name).all())
 
     @classmethod
-    def get_by_id(cls, _id: int) -> "Notebook":
+    def get_by_id(cls, _id: str) -> "Notebook":
         """Return a notebook given its ID.
 
         :param _id: Notebook ID.
@@ -39,7 +42,7 @@ class Notebook(db.Model):
         return cls.query.filter_by(id=_id).first()
 
     @classmethod
-    def get_by_name(cls, user_id: int, name: str) -> "Notebook":
+    def get_by_name(cls, user_id: str, name: str) -> "Notebook":
         """Return a notebook given the user ID and the notebook name.
 
         :param user_id: User ID.

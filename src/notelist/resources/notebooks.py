@@ -31,7 +31,7 @@ class NotebookListResource(Resource):
     @jwt_required()
     @notebooks_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 401, 422))
+        responses=get_response_codes(200, 401, 422, 500))
     def get(self) -> Response:
         """Get all the notebooks of the request user.
 
@@ -98,7 +98,7 @@ class NewNotebookResource(Resource):
     @notebooks_api.expect(req_fields)
     @notebooks_api.doc(
         security="apikey",
-        responses=get_response_codes(201, 400, 401, 422))
+        responses=get_response_codes(201, 400, 401, 422, 500))
     def post(self) -> Response:
         """Create a new notebook.
 
@@ -113,7 +113,7 @@ class NewNotebookResource(Resource):
     @notebooks_api.expect(req_fields)
     @notebooks_api.doc(
         security="apikey",
-        responses=get_response_codes(201, 400, 401, 422))
+        responses=get_response_codes(201, 400, 401, 422, 500))
     def put(self) -> Response:
         """Create a new notebook.
 
@@ -125,8 +125,8 @@ class NewNotebookResource(Resource):
         return self._create_notebook()
 
 
-@notebooks_api.route("/notebook/<int:notebook_id>")
-@notebooks_api.doc(params={"notebook_id": "Notebook ID (integer)"})
+@notebooks_api.route("/notebook/<notebook_id>")
+@notebooks_api.doc(params={"notebook_id": "Notebook ID (string)"})
 class ExistingNotebookResource(Resource):
     """Existing notebooks resource."""
 
@@ -140,8 +140,8 @@ class ExistingNotebookResource(Resource):
     @jwt_required()
     @notebooks_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 401, 403, 422))
-    def get(self, notebook_id: int) -> Response:
+        responses=get_response_codes(200, 401, 403, 422, 500))
+    def get(self, notebook_id: str) -> Response:
         """Get an existing notebook's data.
 
         The user can call this operation only for their own notebooks. This
@@ -168,8 +168,8 @@ class ExistingNotebookResource(Resource):
     @notebooks_api.expect(req_fields)
     @notebooks_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 400, 401, 403, 422))
-    def put(self, notebook_id: int) -> Response:
+        responses=get_response_codes(200, 400, 401, 403, 422, 500))
+    def put(self, notebook_id: str) -> Response:
         """Edit an existing notebook.
 
         The user can call this operation only for their own notebooks. This
@@ -229,8 +229,8 @@ class ExistingNotebookResource(Resource):
     @jwt_required()
     @notebooks_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 401, 403, 422))
-    def delete(self, notebook_id: int) -> Response:
+        responses=get_response_codes(200, 401, 403, 422, 500))
+    def delete(self, notebook_id: str) -> Response:
         """Delete an existing notebook.
 
         The user can call this operation only for their own notebooks. This

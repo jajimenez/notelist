@@ -256,7 +256,7 @@ class NotebookTestCase(common.BaseTestCase):
         # Check result
         self.assertIn("result", r.json)
         notebook_id = r.json["result"]
-        self.assertEqual(type(notebook_id), int)
+        self.assertEqual(type(notebook_id), str)
 
     def test_post_missing_access_token(self):
         """Test the Post method of the Notebook resource.
@@ -403,7 +403,7 @@ class NotebookTestCase(common.BaseTestCase):
         # Check result
         self.assertIn("result", r.json)
         notebook_id = r.json["result"]
-        self.assertEqual(type(notebook_id), int)
+        self.assertEqual(type(notebook_id), str)
 
     def test_put_edit(self):
         """Test the Put method of the Notebook resource.

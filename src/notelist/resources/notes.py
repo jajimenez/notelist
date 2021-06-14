@@ -27,8 +27,8 @@ note_list_schema = NoteSchema(many=True)
 note_schema = NoteSchema()
 
 
-@notes_api.route("/notes/<int:notebook_id>")
-@notes_api.doc(params={"notebook_id": "Notebook ID (integer)"})
+@notes_api.route("/notes/<notebook_id>")
+@notes_api.doc(params={"notebook_id": "Notebook ID (string)"})
 class NoteListResource(Resource):
     """Note list resource."""
 
@@ -48,8 +48,8 @@ class NoteListResource(Resource):
     @notes_api.expect(req_fields)
     @notes_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 400, 401, 403, 422))
-    def post(self, notebook_id: int) -> Response:
+        responses=get_response_codes(200, 400, 401, 403, 422, 500))
+    def post(self, notebook_id: str) -> Response:
         """Get all the notes of a notebook that match a filter.
 
         The user can call this operation only for their own notebooks. This
@@ -151,6 +151,26 @@ class NoteListResource(Resource):
         return get_response_data(m, note_list_schema.dump(notes)), 200
 
 
+def _get_current_ts() -> int:
+    """Return current timestamp rounded.
+
+    :return: 10-digit integer timestamp.
+    """
+    return round(datetime.now().timestamp())
+
+
+def _select_tag(notebook_id: str, name: str) -> Tag:
+    """Return a copy of a given request data tag if the tag doesn't exist in
+    the notebook or the existing tag.
+
+    :notebook_id: Notebook ID.
+    :param name: Request data tag name.
+    :return: Copy of `t` or the existing tag.
+    """
+    tag = Tag.get_by_name(notebook_id, name)
+    return tag if tag else Tag(notebook_id=notebook_id, name=name)
+
+
 @notes_api.route("/note")
 class NewNoteResource(Resource):
     """New notes resource."""
@@ -161,29 +181,11 @@ class NewNoteResource(Resource):
     # schemas" module.
     req_fields = notes_api.model(
         "NewNote", {
-            "notebook_id": fields.Integer(required=True),
+            "notebook_id": fields.String(required=True),
             "active": fields.Boolean(default=True),
             "title": fields.String(default=None),
             "body": fields.String(default=None),
             "tags": fields.List(fields.String, default=[])})
-
-    def _get_current_ts(self) -> int:
-        """Return current timestamp rounded.
-
-        :return: 10-digit integer timestamp.
-        """
-        return round(datetime.now().timestamp())
-
-    def _select_tag(self, notebook_id: int, name: str) -> Tag:
-        """Return a copy of a given request data tag if the tag doesn't exist
-        in the notebook or the existing tag.
-
-        :notebook_id: Notebook ID.
-        :param name: Request data tag name.
-        :return: Copy of `t` or the existing tag.
-        """
-        tag = Tag.get_by_name(notebook_id, name)
-        return tag if tag else Tag(notebook_id=notebook_id, name=name)
 
     def _create_note(self) -> Response:
         """Create a new note.
@@ -197,7 +199,7 @@ class NewNoteResource(Resource):
         data = request.get_json() or {}
 
         # Current timestamp
-        now = self._get_current_ts()
+        now = _get_current_ts()
 
         # We validate the request data. If any of the Note model required
         # fields is missing, a "marshmallow.ValidationError" exception is
@@ -222,7 +224,7 @@ class NewNoteResource(Resource):
         # This way, the request tags that already exist won't be created again,
         # as they will have their ID value defined (not None).
         note.tags = list(map(
-            lambda t: self._select_tag(note.notebook_id, t.name), note.tags))
+            lambda t: _select_tag(note.notebook_id, t.name), note.tags))
 
         # Save note
         note.save()
@@ -233,7 +235,7 @@ class NewNoteResource(Resource):
     @notes_api.expect(req_fields)
     @notes_api.doc(
         security="apikey",
-        responses=get_response_codes(201, 400, 401, 403, 422))
+        responses=get_response_codes(201, 400, 401, 403, 422, 500))
     def post(self) -> Response:
         """Create a new note.
 
@@ -249,7 +251,7 @@ class NewNoteResource(Resource):
     @notes_api.expect(req_fields)
     @notes_api.doc(
         security="apikey",
-        responses=get_response_codes(201, 400, 401, 403, 422))
+        responses=get_response_codes(201, 400, 401, 403, 422, 500))
     def put(self) -> Response:
         """Create a new note.
 
@@ -262,8 +264,8 @@ class NewNoteResource(Resource):
         return self._create_note()
 
 
-@notes_api.route("/note/<int:note_id>")
-@notes_api.doc(params={"note_id": "Note ID (integer)"})
+@notes_api.route("/note/<note_id>")
+@notes_api.doc(params={"note_id": "Note ID (string)"})
 class ExistingNoteResource(Resource):
     """Existing notes resource."""
 
@@ -278,29 +280,11 @@ class ExistingNoteResource(Resource):
             "body": fields.String,
             "tags": fields.List(fields.String)})
 
-    def _get_current_ts(self) -> int:
-        """Return current timestamp rounded.
-
-        :return: 10-digit integer timestamp.
-        """
-        return round(datetime.now().timestamp())
-
-    def _select_tag(self, notebook_id: int, name: str) -> Tag:
-        """Return a copy of a given request data tag if the tag doesn't exist
-        in the notebook or the existing tag.
-
-        :notebook_id: Notebook ID.
-        :param name: Request data tag name.
-        :return: Copy of `t` or the existing tag.
-        """
-        tag = Tag.get_by_name(notebook_id, name)
-        return tag if tag else Tag(notebook_id=notebook_id, name=name)
-
     @jwt_required()
     @notes_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 401, 403, 422))
-    def get(self, note_id: int) -> Response:
+        responses=get_response_codes(200, 401, 403, 422, 500))
+    def get(self, note_id: str) -> Response:
         """Get an existing note's data.
 
         The user can call this operation only for their own notebooks' notes.
@@ -326,8 +310,8 @@ class ExistingNoteResource(Resource):
     @notes_api.expect(req_fields)
     @notes_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 400, 401, 403, 422))
-    def put(self, note_id: int) -> Response:
+        responses=get_response_codes(200, 400, 401, 403, 422, 500))
+    def put(self, note_id: str) -> Response:
         """Edit an existing note.
 
         The user can call this operation only for their own notebooks' notes
@@ -389,7 +373,7 @@ class ExistingNoteResource(Resource):
         # created again as they will have their ID value defined (not
         # None).
         tags = list(map(
-            lambda t: self._select_tag(new_note.notebook_id, t.name),
+            lambda t: _select_tag(new_note.notebook_id, t.name),
             new_note.tags))
 
         # Update note object. Note: we can't run "note.tags =
@@ -401,7 +385,7 @@ class ExistingNoteResource(Resource):
         note.tags = tags
 
         # Update Last Modified timestamp
-        note.last_modified_ts = self._get_current_ts()
+        note.last_modified_ts = _get_current_ts()
 
         # Save note
         note.save()
@@ -411,8 +395,8 @@ class ExistingNoteResource(Resource):
     @jwt_required()
     @notes_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 401, 403, 422))
-    def delete(self, note_id: int) -> Response:
+        responses=get_response_codes(200, 401, 403, 422, 500))
+    def delete(self, note_id: str) -> Response:
         """Delete an existing note.
 
         The user can call this operation only for their own notebooks' notes.

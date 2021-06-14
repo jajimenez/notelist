@@ -28,7 +28,7 @@ class SearchResource(Resource):
     @jwt_required()
     @search_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 400, 401, 422))
+        responses=get_response_codes(200, 400, 401, 422, 500))
     def get(self, search: str) -> Response:
         """Get all the notebooks, tags and notes of the request user that match
         a text.

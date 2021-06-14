@@ -1,16 +1,15 @@
 """Tools module."""
 
+from uuid import uuid4
 import hashlib as hl
 
 
-def get_border_title(title: str) -> str:
-    """Return a string with borders given a title.
+def generate_uuid() -> str:
+    """Generate a random UUID.
 
-    :param title: Title.
-    :return: Title with borders.
+    :return: Random UUID. E.g. "2a7602ec-3198-48a7-82fb-3c39afaa0844".
     """
-    border = f'+{"-" * (len(title) + 2)}+'
-    return f"{border}\n| {title} |\n{border}"
+    return str(uuid4())
 
 
 def get_hash(text: str) -> str:

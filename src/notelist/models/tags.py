@@ -1,6 +1,7 @@
 """Module with the database tag models."""
 
 from notelist.db import db
+from notelist.tools import generate_uuid
 
 
 class Tag(db.Model):
@@ -8,9 +9,9 @@ class Tag(db.Model):
 
     __tablename__ = "tags"
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
     notebook_id = db.Column(
-        db.Integer, db.ForeignKey("notebooks.id"), nullable=False)
+        db.String(36), db.ForeignKey("notebooks.id"), nullable=False)
     name = db.Column(db.String(100), nullable=False)
 
     # HTML (e.g. "#ffffff" or "ffffff")
@@ -21,7 +22,7 @@ class Tag(db.Model):
         db.UniqueConstraint(notebook_id, name, name="un_tags_nid_name"),)
 
     @classmethod
-    def get_by_id(cls, _id: int) -> "Tag":
+    def get_by_id(cls, _id: str) -> "Tag":
         """Return a tag given its ID.
 
         :param _id: Tag ID.
@@ -30,7 +31,7 @@ class Tag(db.Model):
         return cls.query.filter_by(id=_id).first()
 
     @classmethod
-    def get_by_name(cls, notebook_id: int, name: str) -> "Tag":
+    def get_by_name(cls, notebook_id: str, name: str) -> "Tag":
         """Return a tag given the notebook ID and the tag name.
 
         :param notebook_id: Notebook ID.

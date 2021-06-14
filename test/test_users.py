@@ -52,7 +52,7 @@ class LoginTestCase(common.BaseTestCase):
         # Check user ID
         self.assertIn("user_id", result)
         user_id = result["user_id"]
-        self.assertEqual(type(user_id), int)
+        self.assertEqual(type(user_id), str)
         self.assertEqual(user_id, self.reg1["id"])
 
     def test_post_missing_fields(self):
@@ -353,7 +353,7 @@ class UserListTestCase(common.BaseTestCase):
 
             self.assertNotIn("password", u)
 
-        for i, u in enumerate((self.admin, self.reg1, self.reg2)):
+        for i, u in enumerate((self.reg1, self.reg2, self.admin)):
             self.assertEqual(users[i]["id"], u["id"])
             self.assertEqual(users[i]["username"], u["username"])
 
@@ -619,7 +619,7 @@ class UserTestCase(common.BaseTestCase):
         # Check result
         self.assertIn("result", r.json)
         user_id = r.json["result"]
-        self.assertEqual(type(user_id), int)
+        self.assertEqual(type(user_id), str)
 
         # Get user data
         r = self.client.get(f"/user/{user_id}", headers=headers, json=u)
@@ -806,7 +806,7 @@ class UserTestCase(common.BaseTestCase):
         # Check result
         self.assertIn("result", r.json)
         user_id = r.json["result"]
-        self.assertEqual(type(user_id), int)
+        self.assertEqual(type(user_id), str)
 
         # Get user data
         r = self.client.get(f"/user/{user_id}", headers=headers, json=u)
@@ -1276,8 +1276,8 @@ class UserTestCase(common.BaseTestCase):
 
         # Check list
         self.assertEqual(len(users), 2)
-        self.assertEqual(users[0]["id"], self.admin["id"])
-        self.assertEqual(users[1]["id"], self.reg2["id"])
+        self.assertEqual(users[0]["id"], self.reg2["id"])
+        self.assertEqual(users[1]["id"], self.admin["id"])
 
     def test_delete_missing_access_token(self):
         """Test the Delete method of the User resource.

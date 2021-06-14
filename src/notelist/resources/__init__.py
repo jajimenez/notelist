@@ -15,11 +15,13 @@ RESPONSE_STATUS = {
     401: "Unauthorized",
     403: "Forbidden",
     404: "Not Found",
-    422: "Unprocessable Entity"}
+    422: "Unprocessable Entity",
+    500: "Internal Error"}
 
 VALIDATION_ERROR = "Validation error: {}."
 OPERATION_NOT_ALLOWED = "Operation not allowed."
 USER_UNAUTHORIZED = "User unauthorized."
+INTERNAL_ERROR = "Internal error."
 
 
 def get_response_codes(*codes: int) -> dict[int, str]:

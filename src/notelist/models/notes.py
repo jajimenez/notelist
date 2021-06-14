@@ -1,9 +1,11 @@
 """Module with the database note models."""
 
 from typing import Optional
+
 from sqlalchemy import desc
 
 from notelist.db import db
+from notelist.tools import generate_uuid
 
 
 # Many-to-Many relationship between notes and tags.
@@ -14,10 +16,11 @@ from notelist.db import db
 note_tags = db.Table(
     "note_tags",
 
-    db.Column("id", db.Integer, primary_key=True),
+    db.Column("id", db.String(36), primary_key=True, default=generate_uuid),
     db.Column(
-        "note_id", db.Integer, db.ForeignKey("notes.id"), nullable=False),
-    db.Column("tag_id", db.Integer, db.ForeignKey("tags.id"), nullable=False),
+        "note_id", db.String(36), db.ForeignKey("notes.id"), nullable=False),
+    db.Column(
+        "tag_id", db.String(36), db.ForeignKey("tags.id"), nullable=False),
 
     db.UniqueConstraint("note_id", "tag_id", name="un_note_id_tag_id"))
 
@@ -27,9 +30,9 @@ class Note(db.Model):
 
     __tablename__ = "notes"
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
     notebook_id = db.Column(
-        db.Integer, db.ForeignKey("notebooks.id"), nullable=False)
+        db.String(36), db.ForeignKey("notebooks.id"), nullable=False)
     active = db.Column(db.Boolean, nullable=False, default=True)
     title = db.Column(db.String(100), nullable=True)
     body = db.Column(db.String(1000), nullable=True)
@@ -42,7 +45,7 @@ class Note(db.Model):
 
     @classmethod
     def get_by_filter(
-        cls, notebook_id: int, active: Optional[bool] = None,
+        cls, notebook_id: str, active: Optional[bool] = None,
         tags: Optional[list[str]] = None, no_tags: bool = False,
         last_mod: bool = False, asc: bool = True
     ) -> list["Note"]:
@@ -97,7 +100,7 @@ class Note(db.Model):
         return notes if tags is None else list(filter(select_note, notes))
 
     @classmethod
-    def get(cls, _id: int) -> "Note":
+    def get(cls, _id: str) -> "Note":
         """Return a note given its ID.
 
         :param _id: Note ID.

@@ -4,6 +4,7 @@ import os
 import unittest
 import tempfile
 import random
+from uuid import uuid4
 
 import paths
 from notelist import app, db, tools
@@ -38,6 +39,7 @@ class BaseTestCase(unittest.TestCase):
                 "name": "Root"}
 
             u = User(
+                id=str(uuid4()),
                 username=self.admin["username"],
                 password=tools.get_hash(self.admin["password"]), admin=True,
                 enabled=True, name=self.admin["name"], email=None)
@@ -52,6 +54,7 @@ class BaseTestCase(unittest.TestCase):
                 "name": "Regular User 1"}
 
             u = User(
+                id=str(uuid4()),
                 username=self.reg1["username"],
                 password=tools.get_hash(self.reg1["password"]), admin=False,
                 enabled=True, name=self.reg1["name"], email=None)
@@ -66,6 +69,7 @@ class BaseTestCase(unittest.TestCase):
                 "name": "Regular User 2"}
 
             u = User(
+                id=str(uuid4()),
                 username=self.reg2["username"],
                 password=tools.get_hash(self.reg2["password"]), admin=False,
                 enabled=False, name=self.reg2["name"], email=None)

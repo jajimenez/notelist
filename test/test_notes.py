@@ -1053,7 +1053,7 @@ class NoteTestCase(common.BaseTestCase):
         # Check result
         self.assertIn("result", r.json)
         note_id = r.json["result"]
-        self.assertEqual(type(note_id), int)
+        self.assertEqual(type(note_id), str)
 
         # Check notebook tags
         r = self.client.get(f"/tags/{notebook_id}", headers=headers)
@@ -1191,8 +1191,8 @@ class NoteTestCase(common.BaseTestCase):
         headers = _login(
             self.client, self.admin["username"], self.admin["password"])
 
-        # Create a note for the notebook with ID 1 (which doesn't exist)
-        n = {"notebook_id": 1}
+        # Create a note for the notebook with ID "1" (which doesn't exist)
+        n = {"notebook_id": "1"}
         r = self.client.post("/note", headers=headers, json=n)
 
         # Check status code
@@ -1225,7 +1225,7 @@ class NoteTestCase(common.BaseTestCase):
         # Check result
         self.assertIn("result", r.json)
         note_id = r.json["result"]
-        self.assertEqual(type(note_id), int)
+        self.assertEqual(type(note_id), str)
 
         # Check notebook tags
         r = self.client.get(f"/tags/{notebook_id}", headers=headers)
@@ -1572,9 +1572,9 @@ class NoteTestCase(common.BaseTestCase):
         headers = _login(
             self.client, self.admin["username"], self.admin["password"])
 
-        # Create note for the notebook with ID 1 (which doesn't exist)
+        # Create note for the notebook with ID "1" (which doesn't exist)
         n = {
-            "notebook_id": 1,
+            "notebook_id": "1",
             "active": True,
             "title": "Test Note 1",
             "body": "This is a test note",

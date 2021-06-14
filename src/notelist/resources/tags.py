@@ -9,8 +9,8 @@ from notelist.models.notebooks import Notebook
 from notelist.models.tags import Tag
 from notelist.schemas.tags import TagSchema
 from notelist.resources import (
-    Response, VALIDATION_ERROR, OPERATION_NOT_ALLOWED,
-    USER_UNAUTHORIZED, get_response_data, get_response_codes)
+    Response, VALIDATION_ERROR, USER_UNAUTHORIZED, get_response_data,
+    get_response_codes)
 
 
 TAG_RETRIEVED_1 = "1 tag retrieved."
@@ -25,15 +25,15 @@ tag_list_schema = TagSchema(many=True)
 tag_schema = TagSchema()
 
 
-@tags_api.route("/tags/<int:notebook_id>")
-@tags_api.doc(params={"notebook_id": "Notebook ID (integer)"})
+@tags_api.route("/tags/<notebook_id>")
+@tags_api.doc(params={"notebook_id": "Notebook ID (string)"})
 class TagListResource(Resource):
     """Tag list resource."""
 
     @jwt_required()
     @tags_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 401, 403, 422))
+        responses=get_response_codes(200, 401, 403, 422, 500))
     def get(self, notebook_id: int) -> Response:
         """Get all the tags of a notebook.
 
@@ -55,7 +55,7 @@ class TagListResource(Resource):
             return get_response_data(USER_UNAUTHORIZED), 403
 
         # Get notebook tags
-        tags = sorted(notebook.tags, key=lambda t: t.id)
+        tags = sorted(notebook.tags, key=lambda t: t.name)
         c = len(tags)
         m = TAG_RETRIEVED_1 if c == 1 else TAG_RETRIEVED_N.format(c)
 
@@ -72,7 +72,7 @@ class NewTagResource(Resource):
     # schemas" module.
     req_fields = tags_api.model(
         "NewTag", {
-            "notebook_id": fields.Integer(required=True),
+            "notebook_id": fields.String(required=True),
             "name": fields.String(required=True),
             "color": fields.String(default=None, example="#00ff00")})
 
@@ -115,7 +115,7 @@ class NewTagResource(Resource):
     @tags_api.expect(req_fields)
     @tags_api.doc(
         security="apikey",
-        responses=get_response_codes(201, 400, 401, 403, 422))
+        responses=get_response_codes(201, 400, 401, 403, 422, 500))
     def post(self) -> Response:
         """Create a new tag.
 
@@ -131,7 +131,7 @@ class NewTagResource(Resource):
     @tags_api.expect(req_fields)
     @tags_api.doc(
         security="apikey",
-        responses=get_response_codes(201, 400, 401, 403, 422))
+        responses=get_response_codes(201, 400, 401, 403, 422, 500))
     def put(self) -> Response:
         """Create a new tag.
 
@@ -144,8 +144,8 @@ class NewTagResource(Resource):
         return self._create_tag()
 
 
-@tags_api.route("/tag/<int:tag_id>")
-@tags_api.doc(params={"tag_id": "Tag ID (integer)"})
+@tags_api.route("/tag/<tag_id>")
+@tags_api.doc(params={"tag_id": "Tag ID (string)"})
 class ExistingTagResource(Resource):
     """Existing tags resource."""
 
@@ -159,8 +159,8 @@ class ExistingTagResource(Resource):
     @jwt_required()
     @tags_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 401, 403, 422))
-    def get(self, tag_id: int) -> Response:
+        responses=get_response_codes(200, 401, 403, 422, 500))
+    def get(self, tag_id: str) -> Response:
         """Get an existing tag's data.
 
         The user can call this operation only for their own notebooks' tags.
@@ -186,8 +186,8 @@ class ExistingTagResource(Resource):
     @tags_api.expect(req_fields)
     @tags_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 400, 401, 403, 422))
-    def put(self, tag_id: int) -> Response:
+        responses=get_response_codes(200, 400, 401, 403, 422, 500))
+    def put(self, tag_id: str) -> Response:
         """Edit an existing tag.
 
         The user can call this operation only for their own notebooks' tags and
@@ -262,8 +262,8 @@ class ExistingTagResource(Resource):
     @jwt_required()
     @tags_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 401, 403, 422))
-    def delete(self, tag_id: int) -> Response:
+        responses=get_response_codes(200, 401, 403, 422, 500))
+    def delete(self, tag_id: str) -> Response:
         """Delete an existing tag.
 
         The user can call this operation only for their own notebooks' tags.

@@ -7,7 +7,7 @@ from flask_jwt_extended import (
     jwt_required, create_access_token, create_refresh_token, get_jwt,
     get_jwt_identity)
 
-from notelist import tools
+from notelist.tools import get_hash
 from notelist.apis import auth_api, users_api
 from notelist.models.users import User
 from notelist.schemas.users import UserSchema
@@ -46,7 +46,7 @@ class LoginResource(Resource):
 
     @auth_api.expect(fields)
     @auth_api.doc(
-        responses=get_response_codes(200, 400, 401))
+        responses=get_response_codes(200, 400, 401, 500))
     def post(self) -> Response:
         """Log in.
 
@@ -75,7 +75,7 @@ class LoginResource(Resource):
         # We get the hash of the request password, as passwords are stored
         # encrypted in the database.
         user = User.get_by_username(data[fields[0]].strip())
-        req_pw = tools.get_hash(data[fields[1]].strip())
+        req_pw = get_hash(data[fields[1]].strip())
 
         # Check password
         if user and user.enabled and safe_str_cmp(req_pw, user.password):
@@ -98,7 +98,7 @@ class TokenRefreshResource(Resource):
     @jwt_required(refresh=True)
     @auth_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 401, 422))
+        responses=get_response_codes(200, 401, 422, 500))
     def get(self) -> Response:
         """Get a new, not fresh, access token.
 
@@ -124,7 +124,7 @@ class LogoutResource(Resource):
     @jwt_required()
     @auth_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 401, 422))
+        responses=get_response_codes(200, 401, 422, 500))
     def get(self) -> Response:
         """Log out.
 
@@ -151,7 +151,7 @@ class UserListResource(Resource):
     @jwt_required()
     @users_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 401, 403, 422))
+        responses=get_response_codes(200, 401, 403, 422, 500))
     def get(self) -> Response:
         """Get all existing users.
 
@@ -231,7 +231,7 @@ class NewUserResource(Resource):
     @users_api.expect(req_fields)
     @users_api.doc(
         security="apikey",
-        responses=get_response_codes(201, 400, 401, 403, 422))
+        responses=get_response_codes(201, 400, 401, 403, 422, 500))
     def post(self) -> Response:
         """Create a new user.
 
@@ -246,7 +246,7 @@ class NewUserResource(Resource):
     @users_api.expect(req_fields)
     @users_api.doc(
         security="apikey",
-        responses=get_response_codes(201, 400, 401, 403, 422))
+        responses=get_response_codes(201, 400, 401, 403, 422, 500))
     def put(self) -> Response:
         """Create a new user.
 
@@ -258,8 +258,8 @@ class NewUserResource(Resource):
         return self._create_user()
 
 
-@users_api.route("/user/<int:user_id>")
-@users_api.doc(params={"user_id": "User ID (integer)"})
+@users_api.route("/user/<user_id>")
+@users_api.doc(params={"user_id": "User ID (string)"})
 class ExistingUserResource(Resource):
     """Existing users resource."""
 
@@ -279,8 +279,8 @@ class ExistingUserResource(Resource):
     @jwt_required()
     @users_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 401, 403, 404, 422))
-    def get(self, user_id: int) -> Response:
+        responses=get_response_codes(200, 401, 403, 404, 422, 500))
+    def get(self, user_id: str) -> Response:
         """Get an existing user's data.
 
         The user can call this operation only for their own data, unless they
@@ -313,8 +313,8 @@ class ExistingUserResource(Resource):
     @users_api.expect(req_fields)
     @users_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 400, 401, 403, 404, 422))
-    def put(self, user_id: int) -> Response:
+        responses=get_response_codes(200, 400, 401, 403, 404, 422, 500))
+    def put(self, user_id: str) -> Response:
         """Edit an existing user.
 
         The user, if they aren't an administrator, can call this operation only
@@ -412,8 +412,8 @@ class ExistingUserResource(Resource):
     @jwt_required(fresh=True)
     @users_api.doc(
         security="apikey",
-        responses=get_response_codes(200, 401, 403, 404, 422))
-    def delete(self, user_id: int) -> Response:
+        responses=get_response_codes(200, 401, 403, 404, 422, 500))
+    def delete(self, user_id: str) -> Response:
         """Delete an existing user.
 
         This operation requires administrator permissions and the following

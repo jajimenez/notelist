@@ -332,7 +332,7 @@ class TagTestCase(common.BaseTestCase):
         # Check result
         self.assertIn("result", r.json)
         tag_id = r.json["result"]
-        self.assertEqual(type(tag_id), int)
+        self.assertEqual(type(tag_id), str)
 
     def test_post_missing_access_token(self):
         """Test the Post method of the Tag resource.
@@ -493,9 +493,9 @@ class TagTestCase(common.BaseTestCase):
         r = self.client.post("/login", json=data)
         access_token = r.json["result"]["access_token"]
 
-        # Create a tag for the notebook with ID 1 (which doesn't exist)
+        # Create a tag for the notebook with ID "1" (which doesn't exist)
         headers = {"Authorization": f"Bearer {access_token}"}
-        t = {"notebook_id": 1, "name": "Test Tag"}
+        t = {"notebook_id": "1", "name": "Test Tag"}
         r = self.client.post("/tag", headers=headers, json=t)
 
         # Check status code
@@ -565,7 +565,7 @@ class TagTestCase(common.BaseTestCase):
         # Check result
         self.assertIn("result", r.json)
         tag_id = r.json["result"]
-        self.assertEqual(type(tag_id), int)
+        self.assertEqual(type(tag_id), str)
 
     def test_put_edit(self):
         """Test the Put method of the Tag resource.
@@ -902,9 +902,9 @@ class TagTestCase(common.BaseTestCase):
         r = self.client.post("/login", json=data)
         access_token = r.json["result"]["access_token"]
 
-        # Create a tag for the notebook with ID 1 (which doesn't exist)
+        # Create a tag for the notebook with ID "1" (which doesn't exist)
         headers = {"Authorization": f"Bearer {access_token}"}
-        t = {"notebook_id": 1, "name": "Test Tag"}
+        t = {"notebook_id": "1", "name": "Test Tag"}
         r = self.client.put("/tag", headers=headers, json=t)
 
         # Check status code
