@@ -1,6 +1,8 @@
-0.1.2 - Development
+0.1.2 - 15 Jun 2021
 -------------------
-* Autoincrement integer primary keys changed to UUID primary keys
+* Autoincrement integer primary keys changed to random UUID primary keys
+* Note model Created and Last Modified timestamps fix
+* Created and Last Modified timestamps added for User, Notebook and Tag models.
 
 0.1.1 - 09 Jun 2021
 -------------------
