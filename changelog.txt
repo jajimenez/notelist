@@ -1,3 +1,8 @@
+0.1.3 - 16 Jun 2021
+-------------------
+* Typing fix in unit tests
+* 201 responses improved
+
 0.1.2 - 15 Jun 2021
 -------------------
 * Autoincrement integer primary keys changed to random UUID primary keys
