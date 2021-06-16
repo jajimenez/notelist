@@ -11,7 +11,7 @@ if __name__ == "__main__":
     # Setup
     st.setup(
         name="notelist",
-        version="0.1.2",
+        version="0.1.3",
         description="Tag based note taking REST API",
         author="Jose A. Jimenez",
         author_email="jajimenezcarm@gmail.com",

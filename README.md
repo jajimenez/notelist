@@ -4,7 +4,7 @@ notebooks, tags and notes. Notelist is written in Python and is based on the
 Flask framework.
 
 #### Project information:
-- Version: 0.1.2
+- Version: 0.1.3
 - Author: Jose A. Jimenez (jajimenezcarm@gmail.com)
 - License: MIT License
 - Repository: https://github.com/jajimenez/notelist
@@ -104,7 +104,7 @@ downloads the Docker image from the Docker Hub repository (if the image doesn't
 exist yet locally) and runs a container from the image:
 
 ```
-docker container run --name notelist -d -p 5000:5000 -e NOTELIST_SECRET_KEY=<key> -e NOTELIST_DB_URI=<uri> jajim/notelist:0.1.2
+docker container run --name notelist -d -p 5000:5000 -e NOTELIST_SECRET_KEY=<key> -e NOTELIST_DB_URI=<uri> jajim/notelist:0.1.3
 ```
 
 Once the container is running, we can create the database tables with this
@@ -135,7 +135,7 @@ PostgreSQL container to store the Notelist data. Create a file named
 version: "3.9"
 services:
   notelist-api:
-    image: jajim/notelist:0.1.2
+    image: jajim/notelist:0.1.3
     container_name: notelist-api
     ports:
       - "5000:5000"
@@ -212,7 +212,7 @@ headers = {"Authorization": f"Bearer {access_token}"}
 data = {"name": "Work"}
 r = requests.post("http://localhost:5000/notebook", headers=headers, json=data)
 
-notebook_id = r.json()["result"]
+notebook_id = r.json()["result"]["id"]
 ```
 
 Create a note:
@@ -226,7 +226,7 @@ data = {
   "tags": ["Test", "Important"]}
 
 r = requests.post("http://localhost:5000/note", headers=headers, json=data)
-note_id = r.json()["result"]
+note_id = r.json()["result"]["id"]
 ```
 
 Get all the notebook's notes by a given filter:
