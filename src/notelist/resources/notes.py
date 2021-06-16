@@ -221,8 +221,9 @@ class NewNoteResource(Resource):
 
         # Save note
         note.save()
+        result = {"id": note.id}
 
-        return get_response_data(NOTE_CREATED, note.id), 201
+        return get_response_data(NOTE_CREATED, result), 201
 
     @jwt_required()
     @notes_api.expect(req_fields)

@@ -71,7 +71,7 @@ def _login(client, username: str, password: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {access_token}"}
 
 
-def _create_notebook(client, headers: dict[str, str]) -> int:
+def _create_notebook(client, headers: dict[str, str]) -> str:
     """Create a notebook.
 
     :param client: Test API client.
@@ -81,7 +81,7 @@ def _create_notebook(client, headers: dict[str, str]) -> int:
     n = {"name": "Test Notebook"}
     r = client.post("/notebook", headers=headers, json=n)
 
-    return r.json["result"]
+    return r.json["result"]["id"]
 
 
 def _create_tags(client, headers: dict[str, str], tags: TagSet):
@@ -99,7 +99,7 @@ def _create_tags(client, headers: dict[str, str], tags: TagSet):
 def _create_notes(
     client, headers: dict[str, str], notes: NoteSet,
     delay: Optional[int] = None
-) -> list[int]:
+) -> list[str]:
     """Create notes.
 
     :param client: Test API client.
@@ -113,7 +113,7 @@ def _create_notes(
 
     for n in notes:
         r = client.post("/note", headers=headers, json=n)
-        note_ids.append(r.json["result"])
+        note_ids.append(r.json["result"]["id"])
 
         if delay:
             time.sleep(delay)
@@ -1052,7 +1052,9 @@ class NoteTestCase(common.BaseTestCase):
 
         # Check result
         self.assertIn("result", r.json)
-        note_id = r.json["result"]
+        result = r.json["result"]
+        self.assertIn("id", result)
+        note_id = result["id"]
         self.assertEqual(type(note_id), str)
 
         # Check notebook tags
@@ -1224,7 +1226,9 @@ class NoteTestCase(common.BaseTestCase):
 
         # Check result
         self.assertIn("result", r.json)
-        note_id = r.json["result"]
+        result = r.json["result"]
+        self.assertIn("id", result)
+        note_id = result["id"]
         self.assertEqual(type(note_id), str)
 
         # Check notebook tags
@@ -1254,7 +1258,7 @@ class NoteTestCase(common.BaseTestCase):
             "body": "This is a test note",
             "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
         r = self.client.put("/note", headers=headers, json=n)
-        note_id = r.json["result"]
+        note_id = r.json["result"]["id"]
 
         # Edit note
         new_tag = {
@@ -1332,7 +1336,7 @@ class NoteTestCase(common.BaseTestCase):
             "body": "This is a test note",
             "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
         r = self.client.put("/note", headers=headers, json=n)
-        note_id = r.json["result"]
+        note_id = r.json["result"]["id"]
 
         # Edit note
         new_tag = {
@@ -1392,7 +1396,7 @@ class NoteTestCase(common.BaseTestCase):
             "body": "This is a test note",
             "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
         r = self.client.put("/note", headers=headers, json=n)
-        note_id = r.json["result"]
+        note_id = r.json["result"]["id"]
 
         # Edit note providing an invalid access token ("1234")
         headers = {"Authorization": "Bearer 1234"}
@@ -1457,7 +1461,7 @@ class NoteTestCase(common.BaseTestCase):
             "body": "This is a test note",
             "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
         r = self.client.put("/note", headers=headers, json=n)
-        note_id = r.json["result"]
+        note_id = r.json["result"]["id"]
 
         # Edit note
         new_tag = {
@@ -1518,7 +1522,7 @@ class NoteTestCase(common.BaseTestCase):
             "body": "This is a test note",
             "tags": ["Test Tag 1", "Test Tag 2", "Test Tag 3"]}
         r = self.client.put("/note", headers=headers, json=n)
-        note_id = r.json["result"]
+        note_id = r.json["result"]["id"]
 
         # Edit note with an invalid field ("invalid_field")
         new_tag = {
@@ -1603,7 +1607,7 @@ class NoteTestCase(common.BaseTestCase):
             "active": True,
             "title": "Test Note 1"}
         r = self.client.put("/note", headers=headers, json=n)
-        note_id = r.json["result"]
+        note_id = r.json["result"]["id"]
 
         # Log in as another user
         headers = _login(
@@ -1635,7 +1639,7 @@ class NoteTestCase(common.BaseTestCase):
             "active": True,
             "title": "Test Note"}
         r = self.client.put("/note", headers=headers, json=n)
-        note_id = r.json["result"]
+        note_id = r.json["result"]["id"]
 
         # Get notebook note list
         r = self.client.post(f"/notes/{notebook_id}", headers=headers)
@@ -1679,7 +1683,7 @@ class NoteTestCase(common.BaseTestCase):
             "active": True,
             "title": "Test Note"}
         r = self.client.put("/note", headers=headers, json=n)
-        note_id = r.json["result"]
+        note_id = r.json["result"]["id"]
 
         # Delete note
         r = self.client.delete(f"/note/{note_id}")
@@ -1706,7 +1710,7 @@ class NoteTestCase(common.BaseTestCase):
             "active": True,
             "title": "Test Note"}
         r = self.client.put("/note", headers=headers, json=n)
-        note_id = r.json["result"]
+        note_id = r.json["result"]["id"]
 
         # Delete note providing an invalid access token ("1234")
         headers = {"Authorization": "Bearer 1234"}
@@ -1734,7 +1738,7 @@ class NoteTestCase(common.BaseTestCase):
             "active": True,
             "title": "Test Note"}
         r = self.client.put("/note", headers=headers, json=n)
-        note_id = r.json["result"]
+        note_id = r.json["result"]["id"]
 
         # Log in as another user
         headers = _login(

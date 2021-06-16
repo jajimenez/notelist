@@ -618,7 +618,9 @@ class UserTestCase(common.BaseTestCase):
 
         # Check result
         self.assertIn("result", r.json)
-        user_id = r.json["result"]
+        result = r.json["result"]
+        self.assertIn("id", result)
+        user_id = result["id"]
         self.assertEqual(type(user_id), str)
 
         # Get user data
@@ -805,7 +807,9 @@ class UserTestCase(common.BaseTestCase):
 
         # Check result
         self.assertIn("result", r.json)
-        user_id = r.json["result"]
+        result = r.json["result"]
+        self.assertIn("id", result)
+        user_id = result["id"]
         self.assertEqual(type(user_id), str)
 
         # Get user data

@@ -23,11 +23,11 @@ class SearchTestCase(common.BaseTestCase):
         # Create notebooks
         n = {"name": "Work"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        nb1_id = r.json["result"]
+        nb1_id = r.json["result"]["id"]
 
         n = {"name": "Home"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        nb2_id = r.json["result"]
+        nb2_id = r.json["result"]["id"]
 
         # Create tags
         t = {"notebook_id": nb1_id, "name": "Python"}

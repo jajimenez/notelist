@@ -109,8 +109,9 @@ class NewTagResource(Resource):
 
         # Save tag
         tag.save()
+        result = {"id": tag.id}
 
-        return get_response_data(TAG_CREATED, tag.id), 201
+        return get_response_data(TAG_CREATED, result), 201
 
     @jwt_required()
     @tags_api.expect(req_fields)

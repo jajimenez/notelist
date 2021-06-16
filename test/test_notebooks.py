@@ -2,6 +2,7 @@
 
 import unittest
 import common
+from notelist import resources
 
 
 class NotebookListTestCase(common.BaseTestCase):
@@ -38,7 +39,7 @@ class NotebookListTestCase(common.BaseTestCase):
         # Create notebook
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Get list
         r = self.client.get("/notebooks", headers=headers)
@@ -133,7 +134,7 @@ class NotebookTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Get the data of the notebook
         r = self.client.get(f"/notebook/{notebook_id}", headers=headers)
@@ -257,7 +258,9 @@ class NotebookTestCase(common.BaseTestCase):
 
         # Check result
         self.assertIn("result", r.json)
-        notebook_id = r.json["result"]
+        result = r.json["result"]
+        self.assertIn("id", result)
+        notebook_id = result["id"]
         self.assertEqual(type(notebook_id), str)
 
     def test_post_missing_access_token(self):
@@ -404,7 +407,9 @@ class NotebookTestCase(common.BaseTestCase):
 
         # Check result
         self.assertIn("result", r.json)
-        notebook_id = r.json["result"]
+        result = r.json["result"]
+        self.assertIn("id", result)
+        notebook_id = result["id"]
         self.assertEqual(type(notebook_id), str)
 
     def test_put_edit(self):
@@ -424,7 +429,7 @@ class NotebookTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.put("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Edit the notebook
         new_notebook = {"name": "Test Notebook 2"}
@@ -650,7 +655,7 @@ class NotebookTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.put("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Edit the notebook providing an invalid field ("invalid_field")
         n = {"name": "Test Notebook", "invalid_field": "1234"}
@@ -725,7 +730,7 @@ class NotebookTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.put("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Get user notebook list
         r = self.client.get("/notebooks", headers=headers)

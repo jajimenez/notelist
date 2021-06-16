@@ -24,7 +24,7 @@ class TagListTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tags
         tags = [
@@ -97,7 +97,7 @@ class TagListTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Log in as another user
         data = {
@@ -190,13 +190,13 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag
         t = {
             "notebook_id": notebook_id, "name": "Test Tag", "color": "#ffffff"}
         r = self.client.post("/tag", headers=headers, json=t)
-        tag_id = r.json["result"]
+        tag_id = r.json["result"]["id"]
 
         # Get tag
         r = self.client.get(f"/tag/{tag_id}", headers=headers)
@@ -265,12 +265,12 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag
         t = {"notebook_id": notebook_id, "name": "Test Tag"}
         r = self.client.post("/tag", headers=headers, json=t)
-        tag_id = r.json["result"]
+        tag_id = r.json["result"]["id"]
 
         # Log in as another user
         data = {
@@ -321,7 +321,7 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag
         t = {
@@ -333,7 +333,7 @@ class TagTestCase(common.BaseTestCase):
 
         # Check result
         self.assertIn("result", r.json)
-        tag_id = r.json["result"]
+        tag_id = r.json["result"]["id"]
         self.assertEqual(type(tag_id), str)
 
     def test_post_missing_access_token(self):
@@ -353,7 +353,7 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag
         t = {"notebook_id": notebook_id, "name": "Test Tag"}
@@ -379,7 +379,7 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create a tag providing an invalid access token ("1234")
         headers = {"Authorization": "Bearer 1234"}
@@ -406,7 +406,7 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag (without data)
         r = self.client.post("/tag", headers=headers)
@@ -438,7 +438,7 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create a tag with an invalid field ("invalid_field")
         t = {
@@ -465,7 +465,7 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Log in as another user
         data = {
@@ -520,7 +520,7 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag
         t = {
@@ -554,7 +554,7 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag
         t = {
@@ -566,7 +566,7 @@ class TagTestCase(common.BaseTestCase):
 
         # Check result
         self.assertIn("result", r.json)
-        tag_id = r.json["result"]
+        tag_id = r.json["result"]["id"]
         self.assertEqual(type(tag_id), str)
 
     def test_put_edit(self):
@@ -586,14 +586,14 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag
         t = {
             "notebook_id": notebook_id, "name": "Test Tag 1",
             "color": "#ff0000"}
         r = self.client.put("/tag", headers=headers, json=t)
-        tag_id = r.json["result"]
+        tag_id = r.json["result"]["id"]
 
         # Edit tag
         new_tag = {"name": "Test Tag 2", "color": "#00ff00"}
@@ -633,7 +633,7 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag
         t = {"notebook_id": notebook_id, "name": "Test Tag"}
@@ -659,14 +659,14 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag
         t = {
             "notebook_id": notebook_id, "name": "Test Tag 1",
             "color": "#ff0000"}
         r = self.client.put("/tag", headers=headers, json=t)
-        tag_id = r.json["result"]
+        tag_id = r.json["result"]["id"]
 
         # Edit tag
         new_tag = {"name": "Test Tag 2", "color": "#00ff00"}
@@ -692,7 +692,7 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag providing an invalid access token ("1234")
         headers = {"Authorization": "Bearer 1234"}
@@ -719,14 +719,14 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag
         t = {
             "notebook_id": notebook_id, "name": "Test Tag 1",
             "color": "#ff0000"}
         r = self.client.put("/tag", headers=headers, json=t)
-        tag_id = r.json["result"]
+        tag_id = r.json["result"]["id"]
 
         # Edit tag providing an invalid access token ("1234")
         headers = {"Authorization": "Bearer 1234"}
@@ -753,7 +753,7 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag (without data)
         r = self.client.put("/tag", headers=headers)
@@ -785,12 +785,12 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag
         t = {"notebook_id": notebook_id, "name": "Test Tag"}
         r = self.client.put("/tag", headers=headers, json=t)
-        tag_id = r.json["result"]
+        tag_id = r.json["result"]["id"]
 
         # Edit tag
         new_tag = {"notebook_id": notebook_id, "name": "Test Tag"}
@@ -816,7 +816,7 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create a tag with an invalid field ("invalid_field")
         t = {
@@ -843,12 +843,12 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag
         t = {"notebook_id": notebook_id, "name": "Test Tag"}
         r = self.client.put("/tag", headers=headers, json=t)
-        tag_id = r.json["result"]
+        tag_id = r.json["result"]["id"]
 
         # Edit tag with an invalid field ("invalid_field")
         new_tag = {"name": "Test Tag", "invalid_field": 1}
@@ -874,7 +874,7 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Log in as another user
         data = {
@@ -929,12 +929,12 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag
         t = {"notebook_id": notebook_id, "name": "Test Tag"}
         r = self.client.put("/tag", headers=headers, json=t)
-        tag_id = r.json["result"]
+        tag_id = r.json["result"]["id"]
 
         # Log in as another user
         data = {
@@ -968,7 +968,7 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag
         t = {
@@ -1001,14 +1001,14 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tags
         t1 = {"notebook_id": notebook_id, "name": "Test Tag 1"}
         t2 = {"notebook_id": notebook_id, "name": "Test Tag 2"}
 
         r = self.client.put("/tag", headers=headers, json=t1)
-        tag_id = r.json["result"]
+        tag_id = r.json["result"]["id"]
 
         self.client.put("/tag", headers=headers, json=t2)
 
@@ -1042,12 +1042,12 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         nb = {"name": "Test Notebook"}
         r = self.client.put("/notebook", headers=headers, json=nb)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag
         t = {"notebook_id": notebook_id, "name": "Test Tag"}
         r = self.client.post("/tag", headers=headers, json=t)
-        tag_id = r.json["result"]
+        tag_id = r.json["result"]["id"]
 
         # Get notebook tag list
         r = self.client.get(f"/tags/{notebook_id}", headers=headers)
@@ -1064,7 +1064,7 @@ class TagTestCase(common.BaseTestCase):
             "title": "Test Note",
             "tags": [t["name"]]}
         r = self.client.post("/note", headers=headers, json=n)
-        note_id = r.json["result"]
+        note_id = r.json["result"]["id"]
 
         # Delete tag
         r = self.client.delete(f"/tag/{tag_id}", headers=headers)
@@ -1101,12 +1101,12 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag
         t = {"notebook_id": notebook_id, "name": "Test Tag"}
         r = self.client.post("/tag", headers=headers, json=t)
-        tag_id = r.json["result"]
+        tag_id = r.json["result"]["id"]
 
         # Delete tag
         r = self.client.delete(f"/tag/{tag_id}")
@@ -1131,12 +1131,12 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag
         t = {"notebook_id": notebook_id, "name": "Test Tag"}
         r = self.client.post("/tag", headers=headers, json=t)
-        tag_id = r.json["result"]
+        tag_id = r.json["result"]["id"]
 
         # Delete tag providing an invalid access token ("1234")
         headers = {"Authorization": "Bearer 1234"}
@@ -1162,12 +1162,12 @@ class TagTestCase(common.BaseTestCase):
         headers = {"Authorization": f"Bearer {access_token}"}
         n = {"name": "Test Notebook"}
         r = self.client.post("/notebook", headers=headers, json=n)
-        notebook_id = r.json["result"]
+        notebook_id = r.json["result"]["id"]
 
         # Create tag
         t = {"notebook_id": notebook_id, "name": "Test Tag"}
         r = self.client.post("/tag", headers=headers, json=t)
-        tag_id = r.json["result"]
+        tag_id = r.json["result"]["id"]
 
         # Log in as another user
         data = {

@@ -225,8 +225,9 @@ class NewUserResource(Resource):
 
         # Save the user
         user.save()
+        result = {"id": user.id}
 
-        return get_response_data(USER_CREATED, user.id), 201
+        return get_response_data(USER_CREATED, result), 201
 
     @jwt_required()
     @users_api.expect(req_fields)

@@ -92,8 +92,9 @@ class NewNotebookResource(Resource):
         # Save notebook
         notebook.user_id = uid
         notebook.save()
+        result = {"id": notebook.id}
 
-        return get_response_data(NOTEBOOK_CREATED, notebook.id), 201
+        return get_response_data(NOTEBOOK_CREATED, result), 201
 
     @jwt_required()
     @notebooks_api.expect(req_fields)
