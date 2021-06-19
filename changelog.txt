@@ -3,6 +3,7 @@
 * About resource added
 * Notes returned by Note List and Search resources changed to lightweight notes
   (without the Body field)
+* Maximum length of the Title and Body fields of the Note model increased
 * Fresh access token restriction added back to the Delete method of the
   Notebook resource. Restriction added to the Delete method of the Note and Tag
   resources.
