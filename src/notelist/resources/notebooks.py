@@ -229,7 +229,7 @@ class ExistingNotebookResource(Resource):
 
         return get_response_data(NOTEBOOK_UPDATED), 200
 
-    @jwt_required()
+    @jwt_required(fresh=True)
     @notebooks_api.doc(
         security="apikey",
         responses=get_response_codes(200, 401, 403, 422, 500))

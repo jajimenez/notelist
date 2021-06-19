@@ -388,7 +388,7 @@ class ExistingNoteResource(Resource):
 
         return get_response_data(NOTE_UPDATED), 200
 
-    @jwt_required()
+    @jwt_required(fresh=True)
     @notes_api.doc(
         security="apikey",
         responses=get_response_codes(200, 401, 403, 422, 500))
