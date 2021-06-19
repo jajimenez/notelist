@@ -40,7 +40,7 @@ from notelist.resources.search import SearchResource
 from notelist.models.users import User
 
 
-__version__ = "0.1.3"
+__version__ = "0.2.0"
 
 API_NAME = "Notelist"
 API_DESC = "Tag based note taking REST API"

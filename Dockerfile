@@ -1,4 +1,4 @@
-# Notelist 0.1.3 Dockerfile - Jose A. Jimenez (jajimenezcarm@gmail.com)
+# Notelist 0.2.0 Dockerfile - Jose A. Jimenez (jajimenezcarm@gmail.com)
 #
 # Build the image:
 #     docker image build -t notelist .
