@@ -1,13 +1,16 @@
-0.2.0 - Development
+0.2.0 - 20 Jun 2021
 -------------------
-* Note list result items changed to lightweight items (without the Body field)
-* Notebook deletion fresh access token restriction added back. Restriction
-  added for Note and Tag.
+* About resource added
+* Notes returned by Note List and Search resources changed to lightweight notes
+  (without the Body field)
+* Fresh access token restriction added back to the Delete method of the
+  Notebook resource. Restriction added to the Delete method of the Note and Tag
+  resources.
 
 0.1.3 - 16 Jun 2021
 -------------------
 * Typing fix in unit tests
-* 201 responses improved
+* 201 responses improvement
 
 0.1.2 - 15 Jun 2021
 -------------------
@@ -17,7 +20,8 @@
 
 0.1.1 - 09 Jun 2021
 -------------------
-* Notebook deletion fresh access token restriction removed
+* Fresh access token restriction removed from the Delete method of the Notebook
+  resource
 * Method documentation fix
 * Typing improvement
 
