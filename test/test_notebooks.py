@@ -2,7 +2,6 @@
 
 import unittest
 import common
-from notelist import resources
 
 
 class NotebookListTestCase(common.BaseTestCase):
