@@ -32,7 +32,7 @@ class AboutTestCase(common.BaseTestCase):
 
         This test tries to call the Post method, which shouldn't work.
         """
-        r = self.client.post("/")
+        r = self.client.post("/about")
 
         # Check status code
         self.assertEqual(r.status_code, 405)
@@ -42,7 +42,7 @@ class AboutTestCase(common.BaseTestCase):
 
         This test tries to call the Put method, which shouldn't work.
         """
-        r = self.client.put("/")
+        r = self.client.put("/about")
 
         # Check status code
         self.assertEqual(r.status_code, 405)
@@ -52,7 +52,7 @@ class AboutTestCase(common.BaseTestCase):
 
         This test tries to call the Delete method, which shouldn't work.
         """
-        r = self.client.delete("/")
+        r = self.client.delete("/about")
 
         # Check status code
         self.assertEqual(r.status_code, 405)
