@@ -34,8 +34,8 @@ class Note(db.Model):
     notebook_id = db.Column(
         db.String(36), db.ForeignKey("notebooks.id"), nullable=False)
     active = db.Column(db.Boolean, nullable=False, default=True)
-    title = db.Column(db.String(100), nullable=True)
-    body = db.Column(db.String(1000), nullable=True)
+    title = db.Column(db.String(200), nullable=True)
+    body = db.Column(db.String(10000000), nullable=True)
     created_ts = db.Column(db.Integer, nullable=False, default=get_current_ts)
     last_modified_ts = db.Column(
         db.Integer, nullable=False, default=get_current_ts)
