@@ -24,7 +24,11 @@ NOTE_CREATED = "Note created."
 NOTE_UPDATED = "Note updated."
 NOTE_DELETED = "Note deleted."
 
-note_list_schema = NoteSchema(many=True)
+note_list_schema = NoteSchema(
+    many=True, only=(
+        "id", "notebook_id", "active", "title", "created_ts",
+        "last_modified_ts", "tags"))
+
 note_schema = NoteSchema()
 
 

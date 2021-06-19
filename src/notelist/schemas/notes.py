@@ -22,7 +22,6 @@ class NoteSchema(ma.SQLAlchemyAutoSchema):
             "id", "notebook_id", "active", "title", "body", "created_ts",
             "last_modified_ts", "tags"]
         include_fk = True
-        load_only = ["notebook_id"]
         dump_only = ["id", "created_ts", "last_modified_ts"]
         ordered = True
         load_instance = True

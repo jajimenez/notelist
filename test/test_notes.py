@@ -172,15 +172,15 @@ class NoteListTestCase(common.BaseTestCase):
             self.assertEqual(len(res_notes[i]), 7)
 
             for j in (
-                "id", "active", "title", "body", "created_ts",
+                "id", "notebook_id", "active", "title", "created_ts",
                 "last_modified_ts", "tags"
             ):
                 self.assertIn(j, res_notes[i])
 
-            self.assertNotIn("notebook_id", res_notes[i])
+            self.assertNotIn("body", res_notes[i])
             self.assertEqual(res_notes[i]["id"], note_ids[i])
 
-            for j in ("active", "title", "body", "tags"):
+            for j in ("notebook_id", "active", "title", "tags"):
                 self.assertEqual(res_notes[i][j], notes[i][j])
 
             self.assertEqual(
@@ -224,16 +224,16 @@ class NoteListTestCase(common.BaseTestCase):
             self.assertEqual(len(res_notes[i]), 7)
 
             for j in (
-                "id", "active", "title", "body", "created_ts",
+                "id", "notebook_id", "active", "title", "created_ts",
                 "last_modified_ts", "tags"
             ):
                 self.assertIn(j, res_notes[i])
 
-            self.assertNotIn("notebook_id", res_notes[i])
+            self.assertNotIn("body", res_notes[i])
             self.assertEqual(res_notes[i]["id"], note_ids[i])
 
         for i in range(2):
-            for j in ("active", "title", "body", "tags"):
+            for j in ("notebook_id", "active", "title", "tags"):
                 self.assertEqual(res_notes[i][j], notes[i][j])
 
             self.assertEqual(
@@ -282,15 +282,15 @@ class NoteListTestCase(common.BaseTestCase):
         self.assertEqual(len(n), 7)
 
         for k in (
-            "id", "active", "title", "body", "created_ts", "last_modified_ts",
-            "tags"
+            "id", "notebook_id", "active", "title", "created_ts",
+            "last_modified_ts", "tags"
         ):
             self.assertIn(k, n)
 
-        self.assertNotIn("notebook_id", n)
+        self.assertNotIn("body", n)
         self.assertEqual(n["id"], note_ids[j])
 
-        for k in ("active", "title", "body", "tags"):
+        for k in ("notebook_id", "active", "title", "tags"):
             self.assertEqual(n[k], notes[j][k])
 
         self.assertEqual(n["created_ts"], n["last_modified_ts"])
@@ -339,15 +339,15 @@ class NoteListTestCase(common.BaseTestCase):
         j = 0
 
         for k in (
-            "id", "active", "title", "body", "created_ts", "last_modified_ts",
-            "tags"
+            "id", "notebook_id", "active", "title", "created_ts",
+            "last_modified_ts", "tags"
         ):
             self.assertIn(k, n)
 
-        self.assertNotIn("notebook_id", n)
+        self.assertNotIn("body", n)
         self.assertEqual(n["id"], note_ids[j])
 
-        for k in ("active", "title", "body", "tags"):
+        for k in ("notebook_id", "active", "title", "tags"):
             self.assertEqual(n[k], notes[j][k])
 
         self.assertEqual(n["created_ts"], n["last_modified_ts"])
@@ -394,15 +394,15 @@ class NoteListTestCase(common.BaseTestCase):
             self.assertEqual(len(res_notes[i]), 7)
 
             for k in (
-                "id", "active", "title", "body", "created_ts",
+                "id", "notebook_id", "active", "title", "created_ts",
                 "last_modified_ts", "tags"
             ):
                 self.assertIn(k, res_notes[i])
 
-            self.assertNotIn("notebook_id", res_notes[i])
+            self.assertNotIn("body", res_notes[i])
             self.assertEqual(res_notes[i]["id"], note_ids[j])
 
-            for k in ("active", "title", "body", "tags"):
+            for k in ("notebook_id", "active", "title", "tags"):
                 self.assertEqual(res_notes[i][k], notes[j][k])
 
             self.assertEqual(
@@ -451,15 +451,15 @@ class NoteListTestCase(common.BaseTestCase):
         self.assertEqual(len(n), 7)
 
         for k in (
-            "id", "active", "title", "body", "created_ts", "last_modified_ts",
-            "tags"
+            "id", "notebook_id", "active", "title", "created_ts",
+            "last_modified_ts", "tags"
         ):
             self.assertIn(k, n)
 
-        self.assertNotIn("notebook_id", n)
+        self.assertNotIn("body", n)
         self.assertEqual(n["id"], note_ids[j])
 
-        for k in ("active", "title", "body", "tags"):
+        for k in ("notebook_id", "active", "title", "tags"):
             self.assertEqual(n[k], notes[j][k])
 
         self.assertEqual(n["created_ts"], n["last_modified_ts"])
@@ -508,15 +508,15 @@ class NoteListTestCase(common.BaseTestCase):
             self.assertEqual(len(res_notes[i]), 7)
 
             for k in (
-                "id", "active", "title", "body", "created_ts",
+                "id", "notebook_id", "active", "title", "created_ts",
                 "last_modified_ts", "tags"
             ):
                 self.assertIn(k, res_notes[i])
 
-            self.assertNotIn("notebook_id", res_notes[i])
+            self.assertNotIn("body", res_notes[i])
             self.assertEqual(res_notes[i]["id"], note_ids[j])
 
-            for k in ("active", "title", "body", "tags"):
+            for k in ("notebook_id", "active", "title", "tags"):
                 self.assertEqual(res_notes[i][k], notes[j][k])
 
             self.assertEqual(
@@ -564,15 +564,15 @@ class NoteListTestCase(common.BaseTestCase):
             self.assertEqual(len(res_notes[i]), 7)
 
             for k in (
-                "id", "active", "title", "body", "created_ts",
+                "id", "notebook_id", "active", "title", "created_ts",
                 "last_modified_ts", "tags"
             ):
                 self.assertIn(k, res_notes[i])
 
-            self.assertNotIn("notebook_id", res_notes[i])
+            self.assertNotIn("body", res_notes[i])
             self.assertEqual(res_notes[i]["id"], note_ids[j])
 
-            for k in ("active", "title", "body", "tags"):
+            for k in ("notebook_id", "active", "title", "tags"):
                 self.assertEqual(res_notes[i][k], notes[j][k])
 
             self.assertEqual(
@@ -622,15 +622,15 @@ class NoteListTestCase(common.BaseTestCase):
             self.assertEqual(len(res_notes[i]), 7)
 
             for k in (
-                "id", "active", "title", "body", "created_ts",
+                "id", "notebook_id", "active", "title", "created_ts",
                 "last_modified_ts", "tags"
             ):
                 self.assertIn(k, res_notes[i])
 
-            self.assertNotIn("notebook_id", res_notes[i])
+            self.assertNotIn("body", res_notes[i])
             self.assertEqual(res_notes[i]["id"], note_ids[j2])
 
-            for k in ("active", "title", "body", "tags"):
+            for k in ("notebook_id", "active", "title", "tags"):
                 self.assertEqual(res_notes[i][k], notes[j2][k])
 
             self.assertEqual(
@@ -679,15 +679,15 @@ class NoteListTestCase(common.BaseTestCase):
         self.assertEqual(len(n), 7)
 
         for k in (
-            "id", "active", "title", "body", "created_ts", "last_modified_ts",
-            "tags"
+            "id", "notebook_id", "active", "title", "created_ts",
+            "last_modified_ts", "tags"
         ):
             self.assertIn(k, n)
 
-        self.assertNotIn("notebook_id", n)
+        self.assertNotIn("body", n)
         self.assertEqual(n["id"], note_ids[j])
 
-        for k in ("active", "title", "body", "tags"):
+        for k in ("notebook_id", "active", "title", "tags"):
             self.assertEqual(n[k], notes[j][k])
 
         self.assertEqual(n["created_ts"], n["last_modified_ts"])
@@ -937,15 +937,14 @@ class NoteTestCase(common.BaseTestCase):
         self.assertIn("result", r.json)
         note = r.json["result"]
         self.assertEqual(type(note), dict)
-        self.assertEqual(len(note), 7)
+        self.assertEqual(len(note), 8)
 
         for i in (
-            "id", "active", "title", "body", "created_ts", "last_modified_ts",
-            "tags"
+            "id", "notebook_id", "active", "title", "body", "created_ts",
+            "last_modified_ts", "tags"
         ):
             self.assertIn(i, note)
 
-        self.assertNotIn("notebook_id", note)
         self.assertEqual(note["id"], note_id)
 
         for i in ("active", "title", "body", "tags"):
@@ -1277,12 +1276,11 @@ class NoteTestCase(common.BaseTestCase):
 
         # Check note
         for i in (
-            "id", "active", "title", "body", "created_ts", "last_modified_ts",
-            "tags"
+            "id", "notebook_id", "active", "title", "body", "created_ts",
+            "last_modified_ts", "tags"
         ):
             self.assertIn(i, note)
 
-        self.assertNotIn("notebook_id", note)
         self.assertEqual(note["id"], note_id)
 
         for i in ("active", "title", "body", "tags"):

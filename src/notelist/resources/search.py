@@ -17,7 +17,11 @@ ITEM_RETRIEVED_N = "{} items retrieved."
 
 notebook_list_schema = NotebookSchema(many=True)
 tag_list_schema = TagSchema(many=True)
-note_list_schema = NoteSchema(many=True)
+
+note_list_schema = NoteSchema(
+    many=True, only=(
+        "id", "notebook_id", "active", "title", "created_ts",
+        "last_modified_ts", "tags"))
 
 
 @search_api.route("/search/<search>")
