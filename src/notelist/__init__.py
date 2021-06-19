@@ -21,7 +21,8 @@ from notelist import tools
 from notelist.db import db
 from notelist.ma import ma
 from notelist.apis import (
-    auth_api, users_api, notebooks_api, tags_api, notes_api, search_api)
+    auth_api, users_api, notebooks_api, tags_api, notes_api, search_api,
+    about_api)
 from notelist.resources import get_response_data, Response
 
 # We need to import the resource classes, even if we don't use them in this
@@ -36,6 +37,7 @@ from notelist.resources.tags import (
 from notelist.resources.notes import (
     NoteListResource, NewNoteResource, ExistingNoteResource)
 from notelist.resources.search import SearchResource
+from notelist.resources.about import AboutResource
 
 from notelist.models.users import User
 
@@ -91,6 +93,7 @@ api.add_namespace(notebooks_api)
 api.add_namespace(tags_api)
 api.add_namespace(notes_api)
 api.add_namespace(search_api)
+api.add_namespace(about_api)
 
 app.register_blueprint(blue)
 
