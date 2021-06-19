@@ -6,7 +6,10 @@ import tempfile
 import random
 from uuid import uuid4
 
+# We import "paths" to include the "src" directory in "sys.path" so that we
+# can import "notelist".
 import paths
+
 from notelist import app, db, tools
 from notelist.models.users import User
 
