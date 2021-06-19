@@ -1,3 +1,9 @@
+0.2.0 - Development
+-------------------
+* Note list result items changed to lightweight items (without the Body field)
+* Notebook deletion fresh access token restriction added back. Restriction
+  added for Note and Tag.
+
 0.1.3 - 16 Jun 2021
 -------------------
 * Typing fix in unit tests
