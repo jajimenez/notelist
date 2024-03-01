@@ -1,0 +1,29 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "notelist"
+version = "0.1.0"
+description = "Note taking REST API"
+authors = ["Jose A. Jimenez <jajimenezcarm@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.12"
+Django = ">=5.0.2,<5.1.0"
+psycopg2 = ">=2.9.9,<2.10.0"
+SQLAlchemy = ">=2.0.27,<2.1.0"
+djangorestframework = ">=3.14.0,<3.15.0"
+drf-spectacular = ">=0.27.1,<0.28.0"
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+black = ">=24.2.0,<24.3.0"
+
+[project.urls]
+repository = "https://github.com/jajimenez/notelist"

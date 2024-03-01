@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    volumes:
+      - ../:/workspaces/notelist:cached
+    environment:
+      - SECRET_KEY=example
+      - DB_HOST=db
+      - DB_NAME=notelist
+      - DB_USER=notelist
+      - DB_PASSWORD=notelist
+
+    # This overrides the default command so things don't shut down after the
+    # process ends.
+    command: sleep infinity
+
+  db:
+    image: postgres:latest
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=notelist
+      - POSTGRES_USER=notelist
+      - POSTGRES_PASSWORD=notelist
+
+volumes:
+  db-data:
