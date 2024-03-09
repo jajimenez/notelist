@@ -1,0 +1,29 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Django (application)",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/src/notelist",
+            "program": "manage.py",
+            "args": [
+                "runserver"
+            ],
+            "django": true,
+            "autoStartBrowser": false
+        },
+        {
+            "name": "Python Debugger: Django (tests)",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/src/notelist",
+            "program": "manage.py",
+            "args": [
+                "test"
+            ],
+            "django": true,
+            "autoStartBrowser": false
+        }
+    ]
+}
