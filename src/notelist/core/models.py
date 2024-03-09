@@ -29,10 +29,19 @@ def get_preview(text: str) -> str:
 class Notebook(Model):
     """Notebook model."""
 
-    user = ForeignKey(User, null=False, blank=False, on_delete=CASCADE)
+    user = ForeignKey(
+        User,
+        null=False,
+        blank=False,
+        on_delete=CASCADE,
+        related_name="notebooks",
+    )
+
     name = CharField(null=False, blank=False, max_length=200)
 
-    created = DateTimeField(null=False, blank=False, auto_now_add=True, editable=False)
+    created = DateTimeField(
+        null=False, blank=False, auto_now_add=True, editable=False
+    )
 
     updated = DateTimeField(null=False, blank=False, auto_now=True)
 
@@ -50,11 +59,20 @@ class Notebook(Model):
 class Tag(Model):
     """Tag model."""
 
-    notebook = ForeignKey(Notebook, null=False, blank=False, on_delete=CASCADE)
+    notebook = ForeignKey(
+        Notebook,
+        null=False,
+        blank=False,
+        on_delete=CASCADE,
+        related_name="tags",
+    )
+
     name = CharField(null=False, blank=False, max_length=200)
     color = CharField(null=True, blank=True, max_length=7, default=None)
 
-    created = DateTimeField(null=False, blank=False, auto_now_add=True, editable=False)
+    created = DateTimeField(
+        null=False, blank=False, auto_now_add=True, editable=False
+    )
 
     updated = DateTimeField(null=False, blank=False, auto_now=True)
 
@@ -72,13 +90,22 @@ class Tag(Model):
 class Note(Model):
     """Note model."""
 
-    notebook = ForeignKey(Notebook, null=False, blank=False, on_delete=CASCADE)
+    notebook = ForeignKey(
+        Notebook,
+        null=False,
+        blank=False,
+        on_delete=CASCADE,
+        related_name="notes",
+    )
+
     title = CharField(null=True, blank=True, max_length=200)
     body = TextField(null=True, blank=True)
     tags = ManyToManyField(Tag, blank=True, related_name="notes")
     active = BooleanField(null=False, blank=False, default=True)
 
-    created = DateTimeField(null=False, blank=False, auto_now_add=True, editable=False)
+    created = DateTimeField(
+        null=False, blank=False, auto_now_add=True, editable=False
+    )
 
     updated = DateTimeField(null=False, blank=False, auto_now=True)
 

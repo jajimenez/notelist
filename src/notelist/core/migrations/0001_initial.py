@@ -57,14 +57,17 @@ class Migration(migrations.Migration):
                 ("name", models.CharField(max_length=200)),
                 (
                     "color",
-                    models.CharField(blank=True, default=None, max_length=7, null=True),
+                    models.CharField(
+                        blank=True, default=None, max_length=7, null=True
+                    ),
                 ),
                 ("created", models.DateTimeField(auto_now_add=True)),
                 ("updated", models.DateTimeField(auto_now=True)),
                 (
                     "notebook",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="core.notebook"
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="core.notebook",
                     ),
                 ),
             ],
@@ -85,7 +88,10 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("title", models.CharField(blank=True, max_length=200, null=True)),
+                (
+                    "title",
+                    models.CharField(blank=True, max_length=200, null=True),
+                ),
                 ("body", models.TextField(blank=True, null=True)),
                 ("active", models.BooleanField(default=True)),
                 ("created", models.DateTimeField(auto_now_add=True)),
@@ -93,7 +99,8 @@ class Migration(migrations.Migration):
                 (
                     "notebook",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="core.notebook"
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="core.notebook",
                     ),
                 ),
                 (

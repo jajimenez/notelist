@@ -11,6 +11,9 @@ license = "MIT"
 readme = "README.md"
 package-mode = false
 
+[project.urls]
+repository = "https://github.com/jajimenez/notelist"
+
 [tool.poetry.dependencies]
 python = ">=3.12"
 Django = ">=5.0.2,<5.1.0"
@@ -27,5 +30,5 @@ pycodestyle = ">=2.11.1,<2.12.0"
 pydocstyle = ">=6.3.0,<6.4.0"
 black = ">=24.2.0,<24.3.0"
 
-[project.urls]
-repository = "https://github.com/jajimenez/notelist"
+[tool.black]
+line-length = 79

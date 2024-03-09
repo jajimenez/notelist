@@ -21,7 +21,9 @@ class Command(BaseCommand):
                 self.check(databases=["default"])
                 up = True
             except (OperationalError, PgOperationalError):
-                self.stdout.write("The database is unavailable, waiting 1 second...")
+                self.stdout.write(
+                    "The database is unavailable, waiting 1 second..."
+                )
 
                 time.sleep(1)
 
