@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
-    "drf_spectacular"
+    "drf_spectacular",
+    "core",
 ]
 
 MIDDLEWARE = [
@@ -82,7 +83,7 @@ DATABASES = {
         "HOST": getenv("DB_HOST"),
         "NAME": getenv("DB_NAME"),
         "USER": getenv("DB_USER"),
-        "PASSWORD": getenv("DB_PASSWORD")
+        "PASSWORD": getenv("DB_PASSWORD"),
     }
 }
 
